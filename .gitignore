@@ -1,1 +1,8 @@
-Java.gitignore
+.idea/
+gradle/
+gradle.properties
+gradlew
+gradlew.bat
+settings.gradle
+out/
+.gradle/
