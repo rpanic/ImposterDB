@@ -55,7 +55,8 @@ object DB{
 
 }
 
-open class DBSingleton{
+
+open class DBSingleton : Observable(){
 
     @Json(ignored = true)
     private var changedF = {}
