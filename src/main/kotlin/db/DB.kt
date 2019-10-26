@@ -55,22 +55,6 @@ object DB{
 
 }
 
-
-open class DBSingleton : Observable(){
-
-    @Json(ignored = true)
-    private var changedF = {}
-
-    fun setListener(f: () -> Unit){
-        changedF = f
-    }
-
-    fun changed(){
-        changedF.invoke()
-    }
-
-}
-
 fun userdir() = File(System.getProperty("user.dir"))
 
 fun File.child(s: String) = File(this.absolutePath + "${File.separator}$s").apply { if(name.lastIndexOf('.') == -1){ mkdir() } }
