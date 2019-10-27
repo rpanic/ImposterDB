@@ -61,7 +61,7 @@ object DB{
         GenericChangeObserver(obj!!){
             val s = klaxon.toJsonString(obj)
             file.writeText(s)
-        }
+        }.all("")
 
         parsedObjects.put(key, obj)
 
