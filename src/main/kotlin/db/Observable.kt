@@ -66,10 +66,12 @@ abstract class ChangeObserver<T : Observable>(val t: T){
                 }
             }
             if(function.name == "all"){
-                t.addListener<Any>{ _, old, new ->
+                t.addListener<Any>{ prop, old, new ->
                     if(old != new){
-                        if(function.parameters.size == 3){
-                            function.call(this, old, new)
+                        if(function.parameters.size == 4){  //TODO Can be optimized to call by parameter types
+                            function.call(this, prop, old, new)
+                        }else if(function.parameters.size == 3){
+                            function.call(this, prop, new)
                         }else if(function.parameters.size == 2){
                             function.call(this, new)
                         }
