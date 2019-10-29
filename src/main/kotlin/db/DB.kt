@@ -1,6 +1,7 @@
 package db
 
 import com.beust.klaxon.Klaxon
+import models.ChangeListElement
 import models.ChangeProperty
 import java.io.File
 
@@ -67,11 +68,15 @@ object DB {
     }
 
     val changedObjects = mutableMapOf<ChangeListener<Any?>, ChangeProperty<*>>()
+    val changedLists = mutableMapOf<ElementChangedListener<Any?>, ChangeListElement<*>>()
     fun commit(transaction: () -> Unit) {
         transaction()
         try {
             changedObjects.forEach {
                 it.key(it.value.prop, it.value.old, it.value.new)
+            }
+            changedLists.forEach {
+                it.key(it.value.type, it.value.element)
             }
         } catch (ex: Exception) {
             changedObjects.forEach {
