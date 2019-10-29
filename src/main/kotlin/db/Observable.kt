@@ -22,12 +22,17 @@ abstract class Observable{
     val classListeners = mutableListOf<GeneralChangeListener>()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T){
-//        println("${prop.name}: $old -> $new")
+        println("${prop.name}: $old -> $new")
         if(listeners.containsKey(prop.name)){
             val list = listeners[prop.name]!! as List<ChangeListener<T>>
-            list.forEach { it(prop, old, new) }
+            list.forEach {
+                DB.changed[(it as ChangeListener<Any?>)] = ChangeProperty(prop,old,new)
+            }
         }
-        (classListeners as List<ChangeListener<T>>).forEach { it(prop, old, new) }
+
+        (classListeners as List<ChangeListener<T>>).forEach {
+            DB.changed[it as ChangeListener<Any?>] = ChangeProperty(prop,old,new)
+        }
     }
 
     fun <T> addListener(prop: KProperty<T>, listener: ChangeListener<T>){
