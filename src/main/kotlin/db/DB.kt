@@ -78,10 +78,14 @@ object DB {
             changedLists.forEach {
                 it.key(it.value.type, it.value.element)
             }
+            changedObjects.clear()
+            changedLists.clear()
         } catch (ex: Exception) {
             changedObjects.forEach {
                 it.key(it.value.prop, it.value.old, it.value.old)
             }
+            changedObjects.clear()
+            changedLists.clear()
         }
     }
 }
