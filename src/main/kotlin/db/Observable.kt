@@ -1,13 +1,12 @@
 package db
 
 import com.beust.klaxon.Json
-import java.lang.reflect.Proxy
+import models.ChangeProperty
 import kotlin.reflect.KProperty
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.full.functions
 import kotlin.reflect.full.memberProperties
-import kotlin.system.measureTimeMillis
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T) -> Unit
 
@@ -26,12 +25,12 @@ abstract class Observable{
         if(listeners.containsKey(prop.name)){
             val list = listeners[prop.name]!! as List<ChangeListener<T>>
             list.forEach {
-                DB.changed[(it as ChangeListener<Any?>)] = ChangeProperty(prop,old,new)
+                DB.changedObjects[(it as ChangeListener<Any?>)] = ChangeProperty(prop,old,new)
             }
         }
 
         (classListeners as List<ChangeListener<T>>).forEach {
-            DB.changed[it as ChangeListener<Any?>] = ChangeProperty(prop,old,new)
+            DB.changedObjects[it as ChangeListener<Any?>] = ChangeProperty(prop,old,new)
         }
     }
 
