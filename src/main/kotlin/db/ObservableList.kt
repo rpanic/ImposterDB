@@ -22,7 +22,7 @@ class ObservableArrayList<X : Observable>{
     private val listeners = mutableListOf<ElementChangedListener<X>>()
 
     private fun signalChanged(type: ElementChangeType, element: X){
-        listeners.forEach { it.invoke(type, element) }
+        listeners.forEach { it(type, element) }
     }
 
     fun addListener(f: ElementChangedListener<X>){
