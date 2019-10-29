@@ -69,6 +69,19 @@ object DB{
 
     }
 
+    val changed = mutableMapOf<ChangeListener<Any?>, ChangeProperty<*>>()
+    fun commit(transaction: () -> Unit) {
+        transaction()
+        try {
+            changed.forEach {
+                it.key(it.value.prop, it.value.old, it.value.new)
+            }
+        } catch(ex: Exception) {
+            changed.forEach {
+                it.key(it.value.prop, it.value.old, it.value.old)
+            }
+        }
+    }
 }
 
 fun userdir() = File(System.getProperty("user.dir"))
