@@ -1,14 +1,10 @@
 package db
 
-import com.beust.klaxon.Json
-import com.beust.klaxon.JsonArray
 import com.beust.klaxon.Klaxon
 import models.ChangeProperty
 import java.io.File
-import java.io.FileReader
-import java.nio.file.FileSystem
 
-object DB{
+object DB {
 
     val klaxon = Klaxon()
 
@@ -18,17 +14,17 @@ object DB{
 
     val parsedObjects = mutableMapOf<String, Observable>()
 
-    inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T>{
+    inline fun <reified T : Observable> getList(key: String): ObservableArrayList<T> {
 
-        if(parsed.containsKey(key)){
+        if (parsed.containsKey(key)) {
             return parsed[key]!! as ObservableArrayList<T>
         }
 
         val file = baseFile.child("$key.json")
 
-        val lread : List<T>? = if(file.exists()){
+        val lread: List<T>? = if (file.exists()) {
             klaxon.parseArray<T>(file)
-        }else{
+        } else {
             listOf()
         }
 
@@ -45,40 +41,40 @@ object DB{
 
     }
 
-    inline fun <reified T : Observable> getObject(key: String, init : () -> T) : T{
+    inline fun <reified T : Observable> getObject(key: String, init: () -> T): T {
 
-        if(parsedObjects.containsKey(key)){
+        if (parsedObjects.containsKey(key)) {
             return parsedObjects[key]!! as T
         }
 
         val file = baseFile.child("$key.json")
 
-        val obj = if(file.exists()){
+        val obj = if (file.exists()) {
             klaxon.parse<T>(file)
-        }else{
+        } else {
             init.invoke()
         }
 
-        GenericChangeObserver(obj!!){
+        GenericChangeObserver(obj!!) {
             val s = klaxon.toJsonString(obj)
             file.writeText(s)
         }.all("")
 
-        parsedObjects.put(key, obj)
+        parsedObjects[key] = obj
 
         return obj
 
     }
 
-    val changed = mutableMapOf<ChangeListener<Any?>, ChangeProperty<*>>()
+    val changedObjects = mutableMapOf<ChangeListener<Any?>, ChangeProperty<*>>()
     fun commit(transaction: () -> Unit) {
         transaction()
         try {
-            changed.forEach {
+            changedObjects.forEach {
                 it.key(it.value.prop, it.value.old, it.value.new)
             }
-        } catch(ex: Exception) {
-            changed.forEach {
+        } catch (ex: Exception) {
+            changedObjects.forEach {
                 it.key(it.value.prop, it.value.old, it.value.old)
             }
         }
@@ -87,4 +83,8 @@ object DB{
 
 fun userdir() = File(System.getProperty("user.dir"))
 
-fun File.child(s: String) = File(this.absolutePath + "${File.separator}$s").apply { if(name.lastIndexOf('.') == -1){ mkdir() } }
+fun File.child(s: String) = File(this.absolutePath + "${File.separator}$s").apply {
+    if (name.lastIndexOf('.') == -1) {
+        mkdir()
+    }
+}
