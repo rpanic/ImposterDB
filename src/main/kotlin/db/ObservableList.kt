@@ -1,5 +1,7 @@
 package db
 
+import models.ChangeListElement
+
 typealias ElementChangedListener<X> = (ElementChangeType, X) -> Unit
 
 enum class ElementChangeType{
@@ -22,7 +24,9 @@ class ObservableArrayList<X : Observable>{
     private val listeners = mutableListOf<ElementChangedListener<X>>()
 
     private fun signalChanged(type: ElementChangeType, element: X){
-        listeners.forEach { it.invoke(type, element) }
+        listeners.forEach {
+            DB.changedLists[it as ElementChangedListener<Any?>] = ChangeListElement(type, element)
+        }
     }
 
     fun addListener(f: ElementChangedListener<X>){
