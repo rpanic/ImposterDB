@@ -1,41 +1,53 @@
 package db
 
+import com.beust.klaxon.Json
+import kotlin.reflect.KProperty
+
 typealias ElementChangedListener<X> = (ElementChangeType, X) -> Unit
 
 enum class ElementChangeType{
     Add, Update, Remove
 }
 
-class ObservableArrayList<X : Observable>{
+class ObservableArrayList<X : Observable> : ArrayList<X>{
 
-    constructor()
+    override fun iterator() = collection.iterator()
 
-    constructor(vararg arr: X){
+    constructor(vararg arr: X) {
         collection.addAll(arr)
         arr.forEach { addHook(it) }
     }
 
+    constructor(arr: List<X>) {
+        collection.addAll(arr)
+        arr.forEach { addHook(it) }
+    }
+
+    @Json(ignored = true)
     val hooks = mutableListOf<ChangeObserver<X>>()
 
-    val collection = mutableListOf<X>()
+    var collection = mutableListOf<X>()
 
-    private val listeners = mutableListOf<ElementChangedListener<X>>()
+    @Json(ignored = true)
+    private val listListeners = mutableListOf<ElementChangedListener<X>>()
 
     private fun signalChanged(type: ElementChangeType, element: X){
-        listeners.forEach { it.invoke(type, element) }
+        listListeners.forEach { it.invoke(type, element) }
     }
 
     fun addListener(f: ElementChangedListener<X>){
-        listeners.add(f)
+        listListeners.add(f)
     }
 
-    fun add(element: X) : X {
+    fun add2(element: X) : X {
         collection.add(element)
         addHook(element)
         signalChanged(ElementChangeType.Add, element)
-//        element.updateHook = { l -> signalChanged(ElementChangeType.Update, l) }
-//        element.deleteHook = { l -> signalChanged(ElementChangeType.Remove, l) }
         return element
+    }
+
+    override fun add(element: X): Boolean {
+        return add2(element) != null
     }
 
     fun addHook(element: X){
@@ -46,20 +58,18 @@ class ObservableArrayList<X : Observable>{
 
     }
 
-    fun addAll(elements: Collection<X>): Boolean {
+    override fun addAll(elements: Collection<X>): Boolean {
         val added = collection.addAll(elements)
         if (added){
             elements.forEach {
                 addHook(it)
                 signalChanged(ElementChangeType.Add, it)
-//                it.updateHook = { l -> signalChanged(ElementChangeType.Update, l) }
-//                it.deleteHook = { l -> signalChanged(ElementChangeType.Remove, l) }
             }
         }
         return added
     }
 
-    fun remove(element: X) : Boolean{
+    override fun remove(element: X) : Boolean{
 
         val b = collection.remove(element)
         signalChanged(ElementChangeType.Remove, element)
@@ -75,9 +85,28 @@ class ObservableArrayList<X : Observable>{
 
     fun list() = collection.toList()
 
-    operator fun iterator() = list().iterator()
+//    operator fun iterator() = list().iterator()
 
-    operator fun get(i : Int) = collection.get(i)
+    override operator fun get(i : Int) = collection.get(i)
+
+    override val size: Int
+        get() = collection.size
+
+    override fun contains(element: X): Boolean {
+        return collection.contains(element)
+    }
+
+    override fun containsAll(elements: Collection<X>) = collection.containsAll(elements)
+
+    override fun indexOf(element: X) = collection.indexOf(element)
+
+    override fun isEmpty(): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun lastIndexOf(element: X): Int {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
 }
 
