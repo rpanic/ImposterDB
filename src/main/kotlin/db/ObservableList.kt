@@ -8,7 +8,7 @@ enum class ElementChangeType{
     Add, Update, Remove
 }
 
-class ObservableArrayList<X : Observable> : ArrayList<X>{
+class ObservableArrayList<X> : MutableList<X>{
 
     override fun iterator() = collection.iterator()
 
@@ -23,7 +23,7 @@ class ObservableArrayList<X : Observable> : ArrayList<X>{
     }
 
     @Json(ignored = true)
-    val hooks = mutableListOf<ChangeObserver<X>>()
+    val hooks = mutableListOf<ChangeObserver<Observable>>()
 
     var collection = mutableListOf<X>()
 
@@ -38,10 +38,14 @@ class ObservableArrayList<X : Observable> : ArrayList<X>{
         listListeners.add(f)
     }
 
-    fun addAndReturn(element: X) : X {
-        collection.add(element)
+    private fun addActions(element: X){
         addHook(element)
         signalChanged(ElementChangeType.Add, element)
+    }
+
+    fun addAndReturn(element: X) : X {
+        collection.add(element)
+        addActions(element)
         return element
     }
 
@@ -50,12 +54,18 @@ class ObservableArrayList<X : Observable> : ArrayList<X>{
         return true
     }
 
+    override fun add(index: Int, element: X) {
+        collection.add(index, element)
+        addActions(element)
+    }
+
     fun addHook(element: X){
 
-        hooks.add(GenericChangeObserver(element){
-            signalChanged(ElementChangeType.Update, element)
-        })
-
+        if(element is Observable){
+            hooks.add(GenericChangeObserver(element){
+                signalChanged(ElementChangeType.Update, element)
+            })
+        }
     }
 
     override fun addAll(elements: Collection<X>): Boolean {
@@ -76,12 +86,12 @@ class ObservableArrayList<X : Observable> : ArrayList<X>{
         return b
     }
 
-    @Deprecated("")
-    fun update(element: X){
-        if(element in collection){
-            signalChanged(ElementChangeType.Update, element)
-        }
-    }
+//    @Deprecated("")
+//    fun update(element: X){
+//        if(element in collection){
+//            signalChanged(ElementChangeType.Update, element)
+//        }
+//    }
 
     fun list() = collection.toList()
 
@@ -100,14 +110,48 @@ class ObservableArrayList<X : Observable> : ArrayList<X>{
 
     override fun indexOf(element: X) = collection.indexOf(element)
 
-    override fun isEmpty(): Boolean {
+    override fun isEmpty() = collection.isEmpty()
+
+    override fun lastIndexOf(element: X) = collection.lastIndexOf(element)
+
+    override fun listIterator() = collection.listIterator()
+
+    override fun listIterator(index: Int) = collection.listIterator(index)
+
+    override fun addAll(index: Int, elements: Collection<X>): Boolean {
+        throw UnsupportedOperationException()
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun lastIndexOf(element: X): Int {
+    override fun clear() {
+        throw UnsupportedOperationException()
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
+    override fun removeAll(elements: Collection<X>): Boolean {
+        throw UnsupportedOperationException()
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun removeAt(index: Int): X {
+        throw UnsupportedOperationException()
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun retainAll(elements: Collection<X>): Boolean {
+        throw UnsupportedOperationException()
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun set(index: Int, element: X): X {
+        throw UnsupportedOperationException()
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<X> {
+        throw UnsupportedOperationException()
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 }
 
 class GenericChangeObserver <X : Observable> (t : X, val f: () -> Unit) : ChangeObserver<X>(t){
@@ -117,4 +161,4 @@ class GenericChangeObserver <X : Observable> (t : X, val f: () -> Unit) : Change
     }
 }
 
-fun <X : Observable> observableListOf(vararg initial: X) = ObservableArrayList(*initial)
+fun <X> observableListOf(vararg initial: X) = ObservableArrayList(*initial)

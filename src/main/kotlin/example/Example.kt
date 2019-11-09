@@ -12,7 +12,7 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
-    var traits: ArrayList<Trait> by observableList()
+    var traits: MutableList<Trait> by observableList()
 
     var trait: Trait by observable(Trait())
 

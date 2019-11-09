@@ -48,11 +48,7 @@ abstract class Observable{
             }
         } else if(obj is ObservableArrayList<*>){
             obj.addListener { elementChangeType, observable ->
-                if(elementChangeType == ElementChangeType.Add){
-                    changed(ObservableArrayList<*>::collection, observable, observable)
-                } else if(elementChangeType == ElementChangeType.Update){
-                    changed(ObservableArrayList<*>::collection, observable, observable)
-                }
+                changed(ObservableArrayList<*>::collection, observable, observable)
             }
         }
     }
@@ -69,13 +65,13 @@ abstract class Observable{
     }
 
     //TODO Why is observable a requirement for the type for the List?
-    fun <S: Observable> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ArrayList<S>>{
+    fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, MutableList<S>>{
 
         val list = observableListOf(*initialValues)
         hookToObservable(list)
 
-        return object : ObservableProperty<ArrayList<S>>(list) {
-            override fun afterChange(property: KProperty<*>, oldValue: ArrayList<S>, newValue: ArrayList<S>){
+        return object : ObservableProperty<MutableList<S>>(list) {
+            override fun afterChange(property: KProperty<*>, oldValue: MutableList<S>, newValue: MutableList<S>){
 
                 if(newValue !is ObservableArrayList){
                     if(property is KMutableProperty<*>){
