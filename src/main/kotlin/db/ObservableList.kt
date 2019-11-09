@@ -1,7 +1,6 @@
 package db
 
 import com.beust.klaxon.Json
-import kotlin.reflect.KProperty
 
 typealias ElementChangedListener<X> = (ElementChangeType, X) -> Unit
 
@@ -39,7 +38,7 @@ class ObservableArrayList<X : Observable> : ArrayList<X>{
         listListeners.add(f)
     }
 
-    fun add2(element: X) : X {
+    fun addAndReturn(element: X) : X {
         collection.add(element)
         addHook(element)
         signalChanged(ElementChangeType.Add, element)
@@ -47,7 +46,8 @@ class ObservableArrayList<X : Observable> : ArrayList<X>{
     }
 
     override fun add(element: X): Boolean {
-        return add2(element) != null
+        addAndReturn(element)
+        return true
     }
 
     fun addHook(element: X){

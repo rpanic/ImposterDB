@@ -1,10 +1,10 @@
 package db
 
 import com.beust.klaxon.Json
-import org.omg.CORBA.OBJECT_NOT_EXIST
-import kotlin.reflect.KProperty
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.functions
 import kotlin.reflect.full.memberProperties
 
@@ -27,7 +27,7 @@ abstract class Observable{
             val list = listeners[prop.name]!! as List<ChangeListener<T>>
             list.forEach { it(prop, old, new) }
         }
-        (classListeners as List<ChangeListener<T>>).forEach { it(prop, old, new) }
+        (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old, new) }
     }
 
     fun <T> addListener(prop: KProperty<T>, listener: ChangeListener<T>){
@@ -50,6 +50,8 @@ abstract class Observable{
             obj.addListener { elementChangeType, observable ->
                 if(elementChangeType == ElementChangeType.Add){
                     changed(ObservableArrayList<*>::collection, observable, observable)
+                } else if(elementChangeType == ElementChangeType.Update){
+                    changed(ObservableArrayList<*>::collection, observable, observable)
                 }
             }
         }
@@ -60,22 +62,28 @@ abstract class Observable{
         hookToObservable(initialValue)
 
         return object : ObservableProperty<T>(initialValue) {
-            override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = changed(property, oldValue, newValue)
+            override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T){
+                changed(property, oldValue, newValue)
+            }
         }
     }
 
     //TODO Why is observable a requirement for the type for the List?
-    fun <S: Observable> observableList(vararg initialValues: S) : ReadWriteProperty<S, List<S>>{
+    fun <S: Observable> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ArrayList<S>>{
 
         val list = observableListOf(*initialValues)
-
         hookToObservable(list)
 
-        return object : ObservableProperty<List<S>>(list) {
-            override fun afterChange(property: KProperty<*>, oldValue: List<S>, newValue: List<S>){
+        return object : ObservableProperty<ArrayList<S>>(list) {
+            override fun afterChange(property: KProperty<*>, oldValue: ArrayList<S>, newValue: ArrayList<S>){
 
                 if(newValue !is ObservableArrayList){
-                    property.call(ObservableArrayList(newValue))
+                    if(property is KMutableProperty<*>){
+                        val tranformedlist = ObservableArrayList(newValue)
+                        property.setter.call(this@Observable, tranformedlist)
+                    }else{
+                        throw Exception("Property ${property.name} is not mutable but has by observable")
+                    }
                 } else
                     changed(property, oldValue, newValue)
             }
@@ -103,7 +111,7 @@ abstract class ChangeObserver<T : Observable>(val t: T){
             }
             if(function.name == "all"){
                 t.addListener<Any?>{ prop, old, new ->
-                    if(old != new){
+//                    if(old != new){ //TODO Implement equality checks the right way
                         if(function.parameters.size == 4){  //TODO Can be optimized to call by parameter types
                             function.call(this, prop, old, new)
                         }else if(function.parameters.size == 3){
@@ -111,7 +119,7 @@ abstract class ChangeObserver<T : Observable>(val t: T){
                         }else if(function.parameters.size == 2){
                             function.call(this, new)
                         }
-                    }
+//                    }
                 }
             }
         }
