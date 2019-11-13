@@ -2,6 +2,7 @@ package example
 
 import db.ChangeObserver
 import db.DB
+import json.JsonBackend
 import db.Observable
 
 class Person : Observable(){
@@ -25,6 +26,8 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 }
 
 fun main() {
+
+    DB.primaryBackend = JsonBackend()
 
     val obj = DB.getObject("person") {
         Person()
