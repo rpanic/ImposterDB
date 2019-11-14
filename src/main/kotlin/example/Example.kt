@@ -2,6 +2,7 @@ package example
 
 import db.ChangeObserver
 import db.DB
+import json.JsonBackend
 import db.Observable
 import db.ObservableArrayList
 import kotlin.reflect.KProperty
@@ -41,6 +42,7 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 fun main() {
 
 //    File(userdir().absolutePath + "/data/person.json").delete()
+    DB.primaryBackend = JsonBackend()
 
     val obj = DB.getObject("person") {
         Person()
