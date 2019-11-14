@@ -1,21 +1,26 @@
 package db
 
-import com.beust.klaxon.Json
-import com.beust.klaxon.JsonArray
-import com.beust.klaxon.Klaxon
-import java.io.File
-import java.io.FileReader
-import java.nio.file.FileSystem
-
 object DB{
-
-    val klaxon = Klaxon()
-
-    val baseFile = userdir().child("data/")
 
     val parsed = mutableMapOf<String, ObservableArrayList<*>>()
 
     val parsedObjects = mutableMapOf<String, Observable>()
+
+    val backends = mutableListOf<Backend>()
+
+    fun addBackend(backend: Backend){
+        backends.add(backend)
+    }
+
+    fun setBackend(backend: Backend){
+        if (::primaryBackend.isInitialized){
+            throw IllegalAccessException("Primary Backend already set. Use addBackend to add additional backends")
+        }else{
+            primaryBackend = backend
+        }
+    }
+
+    lateinit var primaryBackend: Backend
 
     inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T>{
 
@@ -23,10 +28,8 @@ object DB{
             return parsed[key]!! as ObservableArrayList<T>
         }
 
-        val file = baseFile.child("$key.json")
-
-        val lread : List<T>? = if(file.exists()){
-            klaxon.parseArray<T>(file)
+        val lread : List<T>? = if(primaryBackend.keyExists(key)){
+            primaryBackend.loadList(key, T::class)
         }else{
             listOf()
         }
@@ -34,8 +37,9 @@ object DB{
         val list = observableListOf(*lread!!.toTypedArray())
 
         list.addListener { _, _ ->
-            val s = klaxon.toJsonString(list.collection)
-            file.writeText(s)
+            for (backend in listOf(primaryBackend) + backends){
+                backend.saveList(key, T::class, list.collection)
+            }
         }
 
         parsed.put(key, list)
@@ -50,17 +54,16 @@ object DB{
             return parsedObjects[key]!! as T
         }
 
-        val file = baseFile.child("$key.json")
-
-        val obj = if(file.exists()){
-            klaxon.parse<T>(file)
+        val obj = if(primaryBackend.keyExists(key)){
+            primaryBackend.load(key, T::class)
         }else{
             init.invoke()
         }
 
         GenericChangeObserver(obj!!){
-            val s = klaxon.toJsonString(obj)
-            file.writeText(s)
+            for (backend in listOf(primaryBackend) + backends){
+                backend.save(key, T::class, obj)
+            }
         }.all("")
 
         parsedObjects.put(key, obj)
@@ -70,7 +73,3 @@ object DB{
     }
 
 }
-
-fun userdir() = File(System.getProperty("user.dir"))
-
-fun File.child(s: String) = File(this.absolutePath + "${File.separator}$s").apply { if(name.lastIndexOf('.') == -1){ mkdir() } }
