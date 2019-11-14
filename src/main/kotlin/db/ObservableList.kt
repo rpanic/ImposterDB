@@ -31,7 +31,22 @@ class ObservableArrayList<X> : MutableList<X>{
     private val listListeners = mutableListOf<ElementChangedListener<X>>()
 
     private fun signalChanged(type: ElementChangeType, element: X){
-        listListeners.forEach { it.invoke(type, element) }
+
+        val action = object : RevertableAction{
+            override fun action() {
+                listListeners.forEach { it.invoke(type, element) }
+            }
+
+            override fun revert() {
+                //TODO Not implemented
+            }
+
+        }
+
+        if(DB.txActive){
+
+        }
+
     }
 
     fun addListener(f: ElementChangedListener<X>){
