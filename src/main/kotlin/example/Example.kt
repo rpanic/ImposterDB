@@ -24,7 +24,6 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 
 }
 
-typealias db = DB
 fun main() {
 
     val obj = DB.getObject("person") {
@@ -52,10 +51,5 @@ fun main() {
     // #####
     //look into data/tournaments.json
     // #####
-
-
-    db.commit {
-        p2.name = "John Doe"
-    }
 
 }
