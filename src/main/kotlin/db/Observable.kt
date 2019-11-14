@@ -1,17 +1,16 @@
 package db
 
 import com.beust.klaxon.Json
-import java.lang.reflect.Proxy
-import kotlin.reflect.KProperty
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.functions
 import kotlin.reflect.full.memberProperties
-import kotlin.system.measureTimeMillis
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T) -> Unit
 
-typealias GeneralChangeListener = (prop: KProperty<*>, old: Any?, new: Any?) -> Unit
+//typealias GeneralChangeListener = (prop: KProperty<*>, old: Any?, new: Any?) -> Unit
 
 abstract class Observable{
 
@@ -19,15 +18,16 @@ abstract class Observable{
     val listeners = mutableMapOf<String, MutableList<ChangeListener<*>>>()
 
     @Json(ignored = true)
-    val classListeners = mutableListOf<GeneralChangeListener>()
+    val classListeners = mutableListOf<ChangeListener<*>>()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T){
 //        println("${prop.name}: $old -> $new")
+        hookToObservable(new)
         if(listeners.containsKey(prop.name)){
             val list = listeners[prop.name]!! as List<ChangeListener<T>>
             list.forEach { it(prop, old, new) }
         }
-        (classListeners as List<ChangeListener<T>>).forEach { it(prop, old, new) }
+        (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old, new) }
     }
 
     fun <T> addListener(prop: KProperty<T>, listener: ChangeListener<T>){
@@ -37,14 +37,54 @@ abstract class Observable{
         listeners[prop.name]!!.add(listener)
     }
 
-    fun <T> addListener(listener: GeneralChangeListener){
+    fun <T : Any?> addListener(listener: ChangeListener<T>){
         classListeners.add(listener)
     }
 
-    fun <T : Any?> observable(initialValue: T) : ReadWriteProperty<Any?, T>{
-        return object : ObservableProperty<T>(initialValue) {
-            override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = changed(property, oldValue, newValue)
+    private fun <T> hookToObservable(obj: T){
+        if(obj is Observable){
+            obj.addListener { prop: KProperty<*>, old: T, new: T ->
+                changed(prop, old, new)
+            }
+        } else if(obj is ObservableArrayList<*>){
+            obj.addListener { elementChangeType, observable ->
+                changed(ObservableArrayList<*>::collection, observable, observable)
+            }
         }
+    }
+
+    fun <T : Any?> observable(initialValue: T) : ReadWriteProperty<Any?, T>{
+
+        hookToObservable(initialValue)
+
+        return object : ObservableProperty<T>(initialValue) {
+            override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T){
+                changed(property, oldValue, newValue)
+            }
+        }
+    }
+
+    //TODO Why is observable a requirement for the type for the List?
+    fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, MutableList<S>>{
+
+        val list = observableListOf(*initialValues)
+        hookToObservable(list)
+
+        return object : ObservableProperty<MutableList<S>>(list) {
+            override fun afterChange(property: KProperty<*>, oldValue: MutableList<S>, newValue: MutableList<S>){
+
+                if(newValue !is ObservableArrayList){
+                    if(property is KMutableProperty<*>){
+                        val tranformedlist = ObservableArrayList(newValue)
+                        property.setter.call(this@Observable, tranformedlist)
+                    }else{
+                        throw Exception("Property ${property.name} is not mutable but has by observable")
+                    }
+                } else
+                    changed(property, oldValue, newValue)
+            }
+        }
+
     }
 
 }
@@ -66,8 +106,8 @@ abstract class ChangeObserver<T : Observable>(val t: T){
                 }
             }
             if(function.name == "all"){
-                t.addListener<Any>{ prop, old, new ->
-                    if(old != new){
+                t.addListener<Any?>{ prop, old, new ->
+//                    if(old != new){ //TODO Implement equality checks the right way
                         if(function.parameters.size == 4){  //TODO Can be optimized to call by parameter types
                             function.call(this, prop, old, new)
                         }else if(function.parameters.size == 3){
@@ -75,7 +115,7 @@ abstract class ChangeObserver<T : Observable>(val t: T){
                         }else if(function.parameters.size == 2){
                             function.call(this, new)
                         }
-                    }
+//                    }
                 }
             }
         }

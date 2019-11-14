@@ -4,12 +4,26 @@ import db.ChangeObserver
 import db.DB
 import json.JsonBackend
 import db.Observable
+import db.ObservableArrayList
+import kotlin.reflect.KProperty
 
 class Person : Observable(){
 
     var name: String by observable("")
 
     var description: String? by observable(null)
+
+    var traits: MutableList<Trait> by observableList()
+
+    var trait: Trait by observable(Trait())
+
+}
+
+class Trait : Observable(){
+
+    var name: String by observable("")
+
+    var value: Int by observable(0)
 
 }
 
@@ -19,23 +33,36 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
         println("New name: $new!!!!")
     }
 
-    fun all(new: Any?){
-        println("Prop changed $new")
+    fun all(prop: KProperty<Any?>, new: Any?){
+        println("Prop ${prop.name} changed to $new")
     }
 
 }
 
 fun main() {
 
+//    File(userdir().absolutePath + "/data/person.json").delete()
     DB.primaryBackend = JsonBackend()
 
     val obj = DB.getObject("person") {
         Person()
     }
 
+    PersonObserver(obj)
+
     obj.name = "John Miller"
 
     obj.description = "This is some random stuff"
+
+    obj.trait = Trait()
+
+    obj.trait.value = 10
+
+    obj.traits.add(Trait())
+
+    obj.traits[0].value = 1337
+
+    println("Finished")
 
     val list = DB.getList<Person>("persons")
 
@@ -46,7 +73,13 @@ fun main() {
     p1.name = "John Miller 2"
     p1.description = "Something"
 
-    val p2 = list.add(Person())
+    val trait = Trait()
+
+    p1.traits.add(trait)
+
+    trait.name = "Test Trait"
+
+    val p2 = list.addAndReturn(Person())
 
     p2.name = "John Miller 3"
     p2.description = "Something else"
