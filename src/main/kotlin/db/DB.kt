@@ -51,7 +51,12 @@ object DB{
                     txActive = false
 
                     for (j in (i) downTo 0) {
-                        txQueue[j].revert()
+                        try{
+                            txQueue[j].revert()
+                        }catch(e: Exception){
+                            println("Error reverting Transaction step $j:")
+                            e.printStackTrace()
+                        }
                     }
 
                     break

@@ -15,9 +15,11 @@ typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T) -> Unit
 abstract class Observable{
 
     @Json(ignored = true)
+    @Ignored
     val listeners = mutableMapOf<String, MutableList<ChangeListener<*>>>()
 
     @Json(ignored = true)
+    @Ignored
     val classListeners = mutableListOf<ChangeListener<*>>()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T){
@@ -144,12 +146,8 @@ abstract class ObservableRevertableAction<T>(val observable: Observable, val pro
     }
 
     override fun revert() {
-        try{
-            executeListeners(prop, new, old)
-        }finally {
-            if(prop is KMutableProperty<*>){
-                prop.setter.call(observable, old)
-            }
+        if(prop is KMutableProperty<*>){
+            prop.setter.call(observable, old)
         }
     }
 

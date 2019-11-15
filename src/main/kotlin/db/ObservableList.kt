@@ -23,11 +23,13 @@ class ObservableArrayList<X> : MutableList<X>{
     }
 
     @Json(ignored = true)
+    @Ignored
     val hooks = mutableListOf<ChangeObserver<Observable>>()
 
     var collection = mutableListOf<X>()
 
     @Json(ignored = true)
+    @Ignored
     private val listListeners = mutableListOf<ElementChangedListener<X>>()
 
     private fun signalChanged(type: ElementChangeType, element: X){
