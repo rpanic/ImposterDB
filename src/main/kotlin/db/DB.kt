@@ -40,6 +40,8 @@ object DB{
 
                 try {
 
+                    txActive = false
+
                     txQueue[i].action()
 
                 } catch (e: Exception) {
@@ -47,8 +49,6 @@ object DB{
                     e.printStackTrace()
 
                     println("Reverting Transaction...")
-
-                    txActive = false
 
                     for (j in (i) downTo 0) {
                         try{
