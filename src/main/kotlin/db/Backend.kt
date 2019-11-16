@@ -15,3 +15,7 @@ interface Backend {
     fun <T : Observable> saveList(key: String, clazz: KClass<T>, obj: List<T>)
 
 }
+
+annotation class Ignored {
+
+}

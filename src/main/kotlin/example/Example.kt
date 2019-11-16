@@ -5,6 +5,8 @@ import db.DB
 import json.JsonBackend
 import db.Observable
 import db.ObservableArrayList
+import json.userdir
+import java.io.File
 import kotlin.reflect.KProperty
 
 class Person : Observable(){
@@ -31,6 +33,8 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 
     fun name(new: String){
         println("New name: $new!!!!")
+
+        throw IllegalAccessException()
     }
 
     fun all(prop: KProperty<Any?>, new: Any?){
@@ -48,41 +52,45 @@ fun main() {
         Person()
     }
 
-    PersonObserver(obj)
+    DB.tx {
 
-    obj.name = "John Miller"
+        PersonObserver(obj)
 
-    obj.description = "This is some random stuff"
+        obj.description = "This is some random stuff"
 
-    obj.trait = Trait()
+        obj.trait = Trait()
 
-    obj.trait.value = 10
+        obj.trait.value = 10
 
-    obj.traits.add(Trait())
+        obj.traits.add(Trait())
 
-    obj.traits[0].value = 1337
+        obj.traits[0].value = 1337
 
-    println("Finished")
+        obj.name = "John Miller"
 
-    val list = DB.getList<Person>("persons")
+        println("Finished")
 
-    val p1 = Person()
+    }
 
-    list.add(p1)
-
-    p1.name = "John Miller 2"
-    p1.description = "Something"
-
-    val trait = Trait()
-
-    p1.traits.add(trait)
-
-    trait.name = "Test Trait"
-
-    val p2 = list.addAndReturn(Person())
-
-    p2.name = "John Miller 3"
-    p2.description = "Something else"
+//    val list = DB.getList<Person>("persons")
+//
+//    val p1 = Person()
+//
+//    list.add(p1)
+//
+//    p1.name = "John Miller 2"
+//    p1.description = "Something"
+//
+//    val trait = Trait()
+//
+//    p1.traits.add(trait)
+//
+//    trait.name = "Test Trait"
+//
+//    val p2 = list.addAndReturn(Person())
+//
+//    p2.name = "John Miller 3"
+//    p2.description = "Something else"
 
     // #####
     //look into data/tournaments.json

@@ -15,19 +15,34 @@ typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T) -> Unit
 abstract class Observable{
 
     @Json(ignored = true)
+    @Ignored
     val listeners = mutableMapOf<String, MutableList<ChangeListener<*>>>()
 
     @Json(ignored = true)
+    @Ignored
     val classListeners = mutableListOf<ChangeListener<*>>()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T){
 //        println("${prop.name}: $old -> $new")
         hookToObservable(new)
-        if(listeners.containsKey(prop.name)){
-            val list = listeners[prop.name]!! as List<ChangeListener<T>>
-            list.forEach { it(prop, old, new) }
+
+        val action = object : ObservableRevertableAction<T>(this, prop, old, new){
+
+            override fun executeListeners(prop: KProperty<*>, old_p: T, new_p: T) {
+                if(listeners.containsKey(prop.name)){
+                    val list = listeners[prop.name]!! as List<ChangeListener<T>>
+                    list.forEach { it(prop, old_p, new_p) }
+                }
+                (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old_p, new_p) }
+            }
         }
-        (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old, new) }
+
+        if(DB.txActive){
+            DB.txQueue.add(action)
+        }else{
+            action.action()
+        }
+
     }
 
     fun <T> addListener(prop: KProperty<T>, listener: ChangeListener<T>){
@@ -122,4 +137,20 @@ abstract class ChangeObserver<T : Observable>(val t: T){
     }
 
     fun getObserved() = t
+}
+
+abstract class ObservableRevertableAction<T>(val observable: Observable, val prop: KProperty<*>, val old: T, val new: T) : RevertableAction{
+
+    override fun action() {
+        executeListeners(prop, old, new)
+    }
+
+    override fun revert() {
+        if(prop is KMutableProperty<*>){
+            prop.setter.call(observable, old)
+        }
+    }
+
+    abstract fun executeListeners(prop: KProperty<*>, old_p: T, new_p: T)
+
 }

@@ -1,5 +1,7 @@
 package db
 
+import java.lang.Exception
+
 object DB{
 
     val parsed = mutableMapOf<String, ObservableArrayList<*>>()
@@ -7,6 +9,10 @@ object DB{
     val parsedObjects = mutableMapOf<String, Observable>()
 
     val backends = mutableListOf<Backend>()
+
+    var txActive = false
+
+    val txQueue = mutableListOf<RevertableAction>()
 
     fun addBackend(backend: Backend){
         backends.add(backend)
@@ -20,7 +26,50 @@ object DB{
         }
     }
 
-    lateinit var primaryBackend: Backend
+    lateinit var primaryBackend: Backend  //TODO make private
+
+    fun tx(f: () -> Unit){
+
+        txActive = true
+
+        try {
+
+            f()
+
+            for (i in txQueue.indices) {
+
+                try {
+
+                    txActive = false
+
+                    txQueue[i].action()
+
+                } catch (e: Exception) {
+
+                    e.printStackTrace()
+
+                    println("Reverting Transaction...")
+
+                    for (j in (i) downTo 0) {
+                        try{
+                            txQueue[j].revert()
+                        }catch(e: Exception){
+                            println("Error reverting Transaction step $j:")
+                            e.printStackTrace()
+                        }
+                    }
+
+                    break
+                }
+            }
+
+        }catch(e: Exception){
+            e.printStackTrace()
+        }finally {
+            txActive = false
+            txQueue.clear()
+        }
+    }
 
     inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T>{
 
