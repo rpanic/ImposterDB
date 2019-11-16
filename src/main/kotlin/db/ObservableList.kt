@@ -1,11 +1,13 @@
 package db
 
 import com.beust.klaxon.Json
+import com.sun.org.apache.xpath.internal.operations.Bool
+import java.lang.Exception
 
 typealias ElementChangedListener<X> = (ElementChangeType, X) -> Unit
 
 enum class ElementChangeType{
-    Add, Update, Remove
+    Add, Update, Remove, Set
 }
 
 class ObservableArrayList<X> : MutableList<X>{
@@ -32,7 +34,9 @@ class ObservableArrayList<X> : MutableList<X>{
     @Ignored
     private val listListeners = mutableListOf<ElementChangedListener<X>>()
 
-    private fun signalChanged(type: ElementChangeType, element: X){
+    private fun signalChanged(type: ElementChangeType, element: X, revert: () -> Unit){
+
+        println("New size: $size")
 
         val action = object : RevertableAction{
             override fun action() {
@@ -40,13 +44,15 @@ class ObservableArrayList<X> : MutableList<X>{
             }
 
             override fun revert() {
-                //TODO Not implemented
+                revert()
             }
 
         }
 
         if(DB.txActive){
-
+            DB.txQueue.add(action)
+        }else{
+            action.action()
         }
 
     }
@@ -55,14 +61,15 @@ class ObservableArrayList<X> : MutableList<X>{
         listListeners.add(f)
     }
 
-    private fun addActions(element: X){
+    private fun addActions(index: Int, element: X){
         addHook(element)
-        signalChanged(ElementChangeType.Add, element)
+        signalChanged(ElementChangeType.Add, element){
+            removeAt(index)
+        }
     }
 
     fun addAndReturn(element: X) : X {
-        collection.add(element)
-        addActions(element)
+        add(size, element)
         return element
     }
 
@@ -73,24 +80,30 @@ class ObservableArrayList<X> : MutableList<X>{
 
     override fun add(index: Int, element: X) {
         collection.add(index, element)
-        addActions(element)
+        addActions(index, element)
     }
 
     fun addHook(element: X){
 
         if(element is Observable){
             hooks.add(GenericChangeObserver(element){
-                signalChanged(ElementChangeType.Update, element)
+                signalChanged(ElementChangeType.Update, element){}
             })
         }
     }
 
     override fun addAll(elements: Collection<X>): Boolean {
+        return addAll(size, elements)
+    }
+
+    override fun addAll(index: Int, elements: Collection<X>): Boolean {
         val added = collection.addAll(elements)
         if (added){
             elements.forEach {
                 addHook(it)
-                signalChanged(ElementChangeType.Add, it)
+                signalChanged(ElementChangeType.Add, it){
+                    (index until (index + elements.size)).forEach { i -> removeAt(i) }
+                }
             }
         }
         return added
@@ -98,21 +111,42 @@ class ObservableArrayList<X> : MutableList<X>{
 
     override fun remove(element: X) : Boolean{
 
-        val b = collection.remove(element)
-        signalChanged(ElementChangeType.Remove, element)
-        return b
+//        val b = collection.remove(element)
+        val indizes = collection.indices.filter { x -> collection[x] == element }
+        //signalChanged(ElementChangeType.Remove, element)
+        return removeAt(indizes)
     }
 
-//    @Deprecated("")
-//    fun update(element: X){
-//        if(element in collection){
-//            signalChanged(ElementChangeType.Update, element)
-//        }
-//    }
+    override fun removeAll(elements: Collection<X>): Boolean {
+        val indizes = collection.indices.filter { x -> collection[x] in elements }
+        return removeAt(indizes)
+    }
+
+    override fun removeAt(index: Int): X {
+        val x = collection[index]
+        if(removeAt(listOf(index)))
+            return x
+        else
+            throw Exception("Should not happen")
+    }
+
+    private fun removeAt(indizes: List<Int>) : Boolean {
+
+        var removed = mutableListOf<X>()
+        for(i in indizes){
+            removed.add(collection.removeAt(i - removed.size))
+        }
+        signalChanged(ElementChangeType.Remove, removed[0]){
+            for(i in indizes.reversed()){
+                add(i + removed.size - 1, removed.removeAt(removed.size - 1))
+            }
+        } //TODO checken wie es sich mit mehreren signalChanged calls verhält
+
+        return removed.size == indizes.size
+
+    }
 
     fun list() = collection.toList()
-
-//    operator fun iterator() = list().iterator()
 
     override operator fun get(i : Int) = collection.get(i)
 
@@ -135,24 +169,8 @@ class ObservableArrayList<X> : MutableList<X>{
 
     override fun listIterator(index: Int) = collection.listIterator(index)
 
-    override fun addAll(index: Int, elements: Collection<X>): Boolean {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     override fun clear() {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun removeAll(elements: Collection<X>): Boolean {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun removeAt(index: Int): X {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        removeAt(collection.indices.toList())
     }
 
     override fun retainAll(elements: Collection<X>): Boolean {
@@ -161,8 +179,11 @@ class ObservableArrayList<X> : MutableList<X>{
     }
 
     override fun set(index: Int, element: X): X {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val old = collection.set(index, element)
+        signalChanged(ElementChangeType.Set, element){
+            set(index, old)
+        }
+        return old
     }
 
     override fun subList(fromIndex: Int, toIndex: Int): MutableList<X> {
