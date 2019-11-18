@@ -41,6 +41,8 @@ or Maven:
 
 ## Implementation
 
+### State
+
 To demonstrate the implementation of a ImposterDB table we'll create an object called `Person`:
 
 ```kotlin
@@ -50,12 +52,19 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
+    var hobbies: MutableList<Hobby> by observableList()
+
 }
 ```
 
-It's your typical class with the big difference being it extending Observable and each variable being a delegated property of `observable`. This class only holds variables and thus can be compared to a data class. You can pass the default value of the variable in the parentheses of `observable`.
+It's your typical class with the only difference being it extending Observable and each variable being a delegated property of `observable`. You can pass the default value of the variable in the parentheses of `observable`. 
 
-Any observable events gets outsourced to another class, in this case called `PersonObserver`. The constructor takes Person as a parameter and passes this on to the extended class `ChangeObserver`. The function names need to either match any member name of the class passed in the constructor or be named "all" to be affected by any change happening to a Person.
+If you need collections in your class, you can use `observableList` to make changes to your lists and to objects in that list get passed down to the base object or list. This process can be repeated indefinitely.
+
+### Imposter Pattern
+
+Any changes made to the observable gets outsourced as events to another class, in this case called `PersonObserver`. Every Imposter or Observer is attached to one object and is used to relay the state of an Observable object to another layer or system. 
+
 ```kotlin
 class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 
@@ -63,7 +72,7 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
         println("New name: $new!!!!")
     }
 
-    fun all(new: Any?){
+    fun all(prop: KProperty<Any?>, new: Any?){
         println("Prop changed $new")
     }
 
@@ -90,9 +99,19 @@ list.add(p1)
 
 p1.name = "John Miller 2"
 p1.description = "Something"
-
-val p2 = list.add(Person())
-
-p2.name = "John Miller 3"
-p2.description = "Something else"
+p1.hobbies.add(Hobby("Coding"))
 ```
+
+### Transactions
+
+To not execute Imposters immediatly after changing an Observable while also keeping an ACID state in all connected systems, one can use Transactions.
+
+```kotlin
+DB.tx {
+  person.name = "Random name"
+}
+```
+
+When a exception occures in one of the Imposters, all previously done changes get rolled back and the state of the object is the same as before the transaction.
+
+To keep this consistent state also in your connected system, it is important to base your imposter´s functionality only on the parameters given in the observing method. Using outside or old states can distort the outcome of a rollback-call and therefore break the ACID state.
