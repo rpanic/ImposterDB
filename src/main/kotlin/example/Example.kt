@@ -1,12 +1,10 @@
 package example
 
-import db.ChangeObserver
-import db.DB
+import db.*
 import json.JsonBackend
-import db.Observable
-import db.ObservableArrayList
 import json.userdir
 import java.io.File
+import java.nio.MappedByteBuffer
 import kotlin.reflect.KProperty
 
 class Person : Observable(){
@@ -15,7 +13,7 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
-    var traits: MutableList<Trait> by observableList()
+    var traits: ObservableArrayList<Trait> by observableList()
 
     var trait: Trait by observable(Trait())
 
@@ -23,7 +21,7 @@ class Person : Observable(){
 
 class Trait : Observable(){
 
-    var name: String by observable("")
+//    var name: String by observable("")
 
     var value: Int by observable(0)
 
@@ -34,7 +32,7 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
     fun name(new: String){
         println("New name: $new!!!!")
 
-        throw IllegalAccessException()
+//        throw IllegalAccessException()
     }
 
     fun all(prop: KProperty<Any?>, new: Any?){
@@ -45,7 +43,7 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 
 fun main() {
 
-//    File(userdir().absolutePath + "/data/person.json").delete()
+    File(userdir().absolutePath + "/data/person.json").delete()
     DB.primaryBackend = JsonBackend()
 
     val obj = DB.getObject("person") {
@@ -71,6 +69,16 @@ fun main() {
         println("Finished")
 
     }
+
+    val mapped = obj.traits.map ({ "${it.value}Heyo" }){
+        Trait().apply { value = it.replace("Heyo", "").toInt() }
+    }
+
+    println(mapped.collection)
+
+    obj.traits.add(Trait().apply { value = 110 })
+
+    println(mapped.collection)
 
 //    val list = DB.getList<Person>("persons")
 //
