@@ -2,7 +2,13 @@ package db
 
 import com.beust.klaxon.Json
 
-open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, List<T>{
+typealias ElementChangedListener<X> = (ElementChangeType, X, LevelInformation) -> Unit
+
+enum class ElementChangeType {
+    Add, Update, Remove, Set
+}
+
+open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, List<T> {
     override fun subList(fromIndex: Int, toIndex: Int): List<T> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -22,12 +28,16 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
     var collection = mutableListOf<T>()
 
     protected fun signalChanged(type: ElementChangeType, element: T, revert: () -> Unit){
+        signalChanged(type, element, LevelInformation(listOf(ObservableListLevel(this, type))), revert)
+    }
+
+    protected fun signalChanged(type: ElementChangeType, element: T, levels: LevelInformation, revert: () -> Unit) {
 
         println("New size: $size")
 
-        val action = object : RevertableAction{
+        val action = object : RevertableAction {
             override fun action() {
-                listeners.forEach { it.invoke(type, element) }
+                listeners.forEach { it.invoke(type, element, levels) }
             }
 
             override fun revert() {
@@ -36,9 +46,9 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
 
         }
 
-        if(DB.txActive){
+        if (DB.txActive) {
             DB.txQueue.add(action)
-        }else{
+        } else {
             action.action()
         }
 
@@ -48,11 +58,11 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
     @Ignored
     val hooks = mutableListOf<ChangeObserver<Observable>>()
 
-    fun addHook(element: T){
+    fun addHook(element: T) {
 
-        if(element is Observable){
-            hooks.add(GenericChangeObserver(element){
-                signalChanged(ElementChangeType.Update, element){}
+        if (element is Observable) {
+            hooks.add(GenericChangeObserver(element) { levels ->
+                signalChanged(ElementChangeType.Update, element, levels) {}
             })
         }
     }
@@ -65,7 +75,7 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
 
     fun list() = collection.toList()
 
-    override operator fun get(i : Int) = collection.get(i)
+    override operator fun get(i: Int) = collection.get(i)
 
 
     override fun contains(element: T): Boolean {
@@ -109,7 +119,6 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
 //    fun forEach(f: (T) -> Unit){
 //
 //    }
-
 
 
 }

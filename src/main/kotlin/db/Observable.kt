@@ -8,7 +8,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.full.functions
 import kotlin.reflect.full.memberProperties
 
-typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T) -> Unit
+typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
 //typealias GeneralChangeListener = (prop: KProperty<*>, old: Any?, new: Any?) -> Unit
 
@@ -22,7 +22,7 @@ abstract class Observable{
     @Ignored
     val classListeners = mutableListOf<ChangeListener<*>>()
 
-    fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T){
+    fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T, levels: LevelInformation){
 //        println("${prop.name}: $old -> $new")
         hookToObservable(new)
 
@@ -31,9 +31,9 @@ abstract class Observable{
             override fun executeListeners(prop: KProperty<*>, old_p: T, new_p: T) {
                 if(listeners.containsKey(prop.name)){
                     val list = listeners[prop.name]!! as List<ChangeListener<T>>
-                    list.forEach { it(prop, old_p, new_p) }
+                    list.forEach { it(prop, old_p, new_p, levels) }
                 }
-                (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old_p, new_p) }
+                (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old_p, new_p, levels) }
             }
         }
 
@@ -58,12 +58,12 @@ abstract class Observable{
 
     private fun <T> hookToObservable(obj: T){
         if(obj is Observable){
-            obj.addListener { prop: KProperty<*>, old: T, new: T ->
-                changed(prop, old, new)
+            obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
+                changed(prop, old, new, levels.append(this))
             }
         } else if(obj is ObservableArrayList<*>){
-            obj.addListener { elementChangeType, observable ->
-                changed(ObservableArrayList<*>::collection, observable, observable)
+            obj.addListener { elementChangeType, observable, levels ->
+                changed(ObservableArrayList<*>::collection, observable, observable, levels.append(ObservableListLevel(obj, elementChangeType)))
             }
         }
     }
@@ -74,21 +74,21 @@ abstract class Observable{
 
         return object : ObservableProperty<T>(initialValue) {
             override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T){
-                changed(property, oldValue, newValue)
+                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable))))
             }
         }
     }
 
     //TODO Why is observable a requirement for the type for the List?
-    fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, MutableList<S>>{
+    fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ObservableArrayList<S>>{
 
         val list = observableListOf(*initialValues)
         hookToObservable(list)
 
-        return object : ObservableProperty<MutableList<S>>(list) {
-            override fun afterChange(property: KProperty<*>, oldValue: MutableList<S>, newValue: MutableList<S>){
+        return object : ObservableProperty<ObservableArrayList<S>>(list) {
+            override fun afterChange(property: KProperty<*>, oldValue: ObservableArrayList<S>, newValue: ObservableArrayList<S>){
 
-                if(newValue !is ObservableArrayList){
+                if(newValue !is ObservableArrayList<*>){
                     if(property is KMutableProperty<*>){
                         val tranformedlist = ObservableArrayList(newValue)
                         property.setter.call(this@Observable, tranformedlist)
@@ -96,7 +96,7 @@ abstract class Observable{
                         throw Exception("Property ${property.name} is not mutable but has by observable")
                     }
                 } else
-                    changed(property, oldValue, newValue)
+                    changed(property, oldValue, newValue, LevelInformation(emptyList()))
             }
         }
 
@@ -110,9 +110,11 @@ abstract class ChangeObserver<T : Observable>(val t: T){
         this::class.functions.forEach {function ->
             val p = t::class.memberProperties.find { it.name == function.name }
             if(p != null){
-                t.addListener(p){ prop, old, new ->
+                t.addListener(p){ prop, old, new, levels ->
                     if(old != new) {
-                        if (function.parameters.size == 3) {
+                        if (function.parameters.size == 4){
+                            function.call(this, old, new, levels)
+                        } else if (function.parameters.size == 3) {
                             function.call(this, old, new)
                         } else if (function.parameters.size == 2) {
                             function.call(this, new)
@@ -121,9 +123,11 @@ abstract class ChangeObserver<T : Observable>(val t: T){
                 }
             }
             if(function.name == "all"){
-                t.addListener<Any?>{ prop, old, new ->
+                t.addListener<Any?>{ prop, old, new, levels ->
 //                    if(old != new){ //TODO Implement equality checks the right way
-                        if(function.parameters.size == 4){  //TODO Can be optimized to call by parameter types
+                        if(function.parameters.size == 5){
+                            function.call(this, prop, old, new, levels)
+                        } else if(function.parameters.size == 4){  //TODO Can be optimized to call by parameter types
                             function.call(this, prop, old, new)
                         }else if(function.parameters.size == 3){
                             function.call(this, prop, new)

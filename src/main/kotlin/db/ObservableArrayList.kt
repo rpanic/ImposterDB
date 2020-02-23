@@ -2,12 +2,7 @@ package db
 
 import com.beust.klaxon.Json
 import java.lang.Exception
-
-typealias ElementChangedListener<X> = (ElementChangeType, X) -> Unit
-
-enum class ElementChangeType{
-    Add, Update, Remove, Set
-}
+import kotlin.reflect.KProperty
 
 class ObservableArrayList<X> : ObservableList<X> {
 
@@ -16,7 +11,7 @@ class ObservableArrayList<X> : ObservableList<X> {
 
     private fun addActions(index: Int, element: X){
         addHook(element)
-        signalChanged(ElementChangeType.Add, element){
+        signalChanged(ElementChangeType.Add, element, LevelInformation(emptyList())){
             removeAt(index)
         }
     }
@@ -108,10 +103,10 @@ class ObservableArrayList<X> : ObservableList<X> {
     }
 }
 
-class GenericChangeObserver <X : Observable> (t : X, val f: () -> Unit) : ChangeObserver<X>(t){
+class GenericChangeObserver <X : Observable> (t : X, val f: (LevelInformation) -> Unit) : ChangeObserver<X>(t){
 
-    fun all(new: Any?){
-        f()
+    fun all(prop: KProperty<*>, new: Any?, old: Any?, levels: LevelInformation){
+        f(levels)
     }
 }
 

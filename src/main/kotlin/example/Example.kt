@@ -35,8 +35,10 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 //        throw IllegalAccessException()
     }
 
-    fun all(prop: KProperty<Any?>, new: Any?){
+    fun all(prop: KProperty<Any?>, new: Any?, old: Any?, levelInformation: LevelInformation){
         println("Prop ${prop.name} changed to $new")
+
+        println(levelInformation)
     }
 
 }
@@ -70,9 +72,10 @@ fun main() {
 
     }
 
-    val mapped = obj.traits.map ({ "${it.value}Heyo" }){
-        Trait().apply { value = it.replace("Heyo", "").toInt() }
-    }
+    val mapped = obj.traits.map ({ "${it.value}Heyo" })
+//    {
+//        Trait().apply { value = it.replace("Heyo", "").toInt() }
+//    }
 
     println(mapped.collection)
 
