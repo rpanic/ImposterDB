@@ -60,8 +60,8 @@ abstract class Observable{
                 changed(prop, old, new, levels.append(this))
             }
         } else if(obj is ObservableArrayList<*>){
-            obj.addListener { elementChangeType, observable, levels ->
-                changed(ObservableArrayList<*>::collection, observable, observable, levels.append(ObservableListLevel(obj, elementChangeType)))
+            obj.addListener { args, levels ->
+                changed(ObservableArrayList<*>::collection, args.elements[0], args.elements[0], levels.append(ObservableListLevel(obj, args)))
             }
         }
     }

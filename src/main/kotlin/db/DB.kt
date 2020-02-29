@@ -85,7 +85,7 @@ object DB{
 
         val list = observableListOf(*lread!!.toTypedArray())
 
-        list.addListener { _, _, _ -> //TODO Add Level stuff to Backend interface for incremental saves
+        list.addListener { _,  _ -> //TODO Add Level stuff to Backend interface for incremental saves
             for (backend in listOf(primaryBackend) + backends){
                 backend.saveList(key, T::class, list.collection)
             }

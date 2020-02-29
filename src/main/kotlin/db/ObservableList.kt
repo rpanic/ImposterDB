@@ -2,7 +2,7 @@ package db
 
 import com.beust.klaxon.Json
 
-typealias ElementChangedListener<X> = (ElementChangeType, X, LevelInformation) -> Unit
+typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
 
 enum class ElementChangeType {
     Add, Update, Remove, Set
@@ -27,17 +27,20 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
     @Ignored
     var collection = mutableListOf<T>()
 
-    protected fun signalChanged(type: ElementChangeType, element: T, revert: () -> Unit){
-        signalChanged(type, element, LevelInformation(listOf(ObservableListLevel(this, type))), revert)
+    protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
+        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
     }
 
-    protected fun signalChanged(type: ElementChangeType, element: T, levels: LevelInformation, revert: () -> Unit) {
+    //TODO A lot of information gets lost here, which will be needed in the transformations to work efficiently
+    //F.e. Add Index, Remove Indizes etc.
+    //Maybe add Event Objects to contain this information as a Level Subtype
+    protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
         println("New size: $size")
 
         val action = object : RevertableAction {
             override fun action() {
-                listeners.forEach { it.invoke(type, element, levels) }
+                listeners.forEach { it.invoke(args, levels) }
             }
 
             override fun revert() {
@@ -62,7 +65,7 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
 
         if (element is Observable) {
             hooks.add(GenericChangeObserver(element) { levels ->
-                signalChanged(ElementChangeType.Update, element, levels) {}
+                signalChanged(ListChangeArgs<T>(ElementChangeType.Update, listOf(element) /*TODO getIndizesFromElements(listOf(element), this)*/), levels) {}
             })
         }
     }

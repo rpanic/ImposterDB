@@ -24,13 +24,32 @@ class ObservableLevel(
     override fun getArrayList() = throw IllegalAccessException("Field of Level is not a ObservableArrayList")
 }
 
+//TODO Make this whole class generic and add Dynamic Casting to Imposter Method Calls
 class ObservableListLevel(
         val list: ObservableList<*>,
-        val elementChangeType: ElementChangeType
+        changeArgs: ListChangeArgs<*>
 ) : Level{
     override fun isObservable() = false
 
     override fun getObservable() = throw IllegalAccessException("Field of Level is not a ObservableArrayList")
 
     override fun getArrayList() = list
+}
+
+data class ListChangeArgs<T>(
+        val elementChangeType: ElementChangeType,
+        val elements: List<T>,
+        val indizes: List<Int>? = null
+){
+    constructor(elementChangeType: ElementChangeType,
+                element: T,
+                index: Int) : this(elementChangeType, listOf(element), listOf(index))
+}
+fun <T> getIndizesFromElements(list: List<T>, arrayList: ObservableList<T>) : List<Int>{
+    val indizes = mutableListOf<Int>()
+    arrayList.collection.forEachIndexed { index, t ->
+        if(t in list)
+            indizes += index
+    }
+    return indizes
 }

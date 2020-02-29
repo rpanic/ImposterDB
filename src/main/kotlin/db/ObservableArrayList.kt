@@ -11,7 +11,8 @@ class ObservableArrayList<X> : ObservableList<X> {
 
     private fun addActions(index: Int, element: X){
         addHook(element)
-        signalChanged(ElementChangeType.Add, element, LevelInformation(emptyList())){
+        val args = ListChangeArgs(ElementChangeType.Add, listOf(element), listOf(index))
+        signalChanged(args, LevelInformation(listOf())){ //TODO Why empty List?
             removeAt(index)
         }
     }
@@ -38,9 +39,10 @@ class ObservableArrayList<X> : ObservableList<X> {
     fun addAll(index: Int, elements: Collection<X>): Boolean {
         val added = collection.addAll(elements)
         if (added){
-            elements.forEach {
+            elements.forEachIndexed { index2, it ->
                 addHook(it)
-                signalChanged(ElementChangeType.Add, it){
+                val args = ListChangeArgs(ElementChangeType.Add, it, index + index2)
+                signalChanged(args){
                     (index until (index + elements.size)).forEach { i -> removeAt(i) }
                 }
             }
@@ -75,7 +77,8 @@ class ObservableArrayList<X> : ObservableList<X> {
         for(i in indizes){
             removed.add(collection.removeAt(i - removed.size))
         }
-        signalChanged(ElementChangeType.Remove, removed[0]){
+        val args = ListChangeArgs(ElementChangeType.Remove, removed, indizes)
+        signalChanged(args){
             for(i in indizes.reversed()){
                 add(i + removed.size - 1, removed.removeAt(removed.size - 1))
             }
@@ -87,7 +90,8 @@ class ObservableArrayList<X> : ObservableList<X> {
 
     fun set(index: Int, element: X): X {
         val old = collection.set(index, element)
-        signalChanged(ElementChangeType.Set, element){
+        val args = ListChangeArgs(ElementChangeType.Set, element, index)
+        signalChanged(args){
             set(index, old)
         }
         return old
