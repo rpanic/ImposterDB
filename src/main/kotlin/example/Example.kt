@@ -27,7 +27,7 @@ class Trait : Observable(){
 
 }
 
-class PersonObserver(t: Person) : ChangeObserver<Person>(t){
+open class PersonObserver(t: Person) : ChangeObserver<Person>(t){
 
     fun name(new: String){
         println("New name: $new!!!!")
@@ -72,16 +72,16 @@ fun main() {
 
     }
 
-    val mapped = obj.traits.map ({ "${it.value}Heyo" })
+//    val mapped = obj.traits.map ({ "${it.value}Heyo" })
 //    {
 //        Trait().apply { value = it.replace("Heyo", "").toInt() }
 //    }
-
-    println(mapped.collection)
-
-    obj.traits.add(Trait().apply { value = 110 })
-
-    println(mapped.collection)
+//
+//            println(mapped.collection)
+//
+//            obj.traits.add(Trait().apply { value = 110 })
+//
+//            println(mapped.collection)
 
 //    val list = DB.getList<Person>("persons")
 //
