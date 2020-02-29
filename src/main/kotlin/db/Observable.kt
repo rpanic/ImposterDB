@@ -5,8 +5,6 @@ import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.functions
-import kotlin.reflect.full.memberProperties
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
@@ -102,45 +100,6 @@ abstract class Observable{
 
     }
 
-}
-
-abstract class ChangeObserver<T : Observable>(val t: T){
-
-    init {
-        this::class.functions.forEach {function ->
-            val p = t::class.memberProperties.find { it.name == function.name }
-            if(p != null){
-                t.addListener(p){ prop, old, new, levels ->
-                    if(old != new) {
-                        if (function.parameters.size == 4){
-                            function.call(this, old, new, levels)
-                        } else if (function.parameters.size == 3) {
-                            function.call(this, old, new)
-                        } else if (function.parameters.size == 2) {
-                            function.call(this, new)
-                        }
-                    }
-                }
-            }
-            if(function.name == "all"){
-                t.addListener<Any?>{ prop, old, new, levels ->
-//                    if(old != new){ //TODO Implement equality checks the right way
-                        if(function.parameters.size == 5){
-                            function.call(this, prop, old, new, levels)
-                        } else if(function.parameters.size == 4){  //TODO Can be optimized to call by parameter types
-                            function.call(this, prop, old, new)
-                        }else if(function.parameters.size == 3){
-                            function.call(this, prop, new)
-                        }else if(function.parameters.size == 2){
-                            function.call(this, new)
-                        }
-//                    }
-                }
-            }
-        }
-    }
-
-    fun getObserved() = t
 }
 
 abstract class ObservableRevertableAction<T>(val observable: Observable, val prop: KProperty<*>, val old: T, val new: T) : RevertableAction{
