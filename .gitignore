@@ -6,3 +6,5 @@ gradlew.bat
 settings.gradle
 out/
 .gradle/
+build/
+data/
