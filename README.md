@@ -72,12 +72,14 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
         println("New name: $new!!!!")
     }
 
-    fun all(prop: KProperty<Any?>, new: Any?){
+    fun all(prop: KProperty<Any?>, old, Any?, new: Any?){
         println("Prop changed $new")
     }
 
 }
 ```
+
+The order of parameters is not important, except for the `old` and `new` parameters. When both are required by the imposter method, the old comes before new, but when only one is supplied, new is prioritized.
 
 To get the reference to a single object, `DB.getObject("...") { }` is called.
 ```kotlin
