@@ -1,46 +1,46 @@
 package db
 
 import com.beust.klaxon.Json
-import com.sun.org.apache.xpath.internal.operations.Bool
-import java.lang.Exception
 
-typealias ElementChangedListener<X> = (ElementChangeType, X) -> Unit
+typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
 
-enum class ElementChangeType{
+enum class ElementChangeType {
     Add, Update, Remove, Set
 }
 
-class ObservableArrayList<X> : MutableList<X>{
+open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, List<T> {
+    override fun subList(fromIndex: Int, toIndex: Int): List<T> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
-    override fun iterator() = collection.iterator()
-
-    constructor(vararg arr: X) {
+    constructor(vararg arr: T) {
         collection.addAll(arr)
         arr.forEach { addHook(it) }
     }
 
-    constructor(arr: List<X>) {
+    constructor(arr: List<T>) {
         collection.addAll(arr)
         arr.forEach { addHook(it) }
     }
 
     @Json(ignored = true)
     @Ignored
-    val hooks = mutableListOf<ChangeObserver<Observable>>()
+    var collection = mutableListOf<T>()
 
-    var collection = mutableListOf<X>()
+    protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
+        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
+    }
 
-    @Json(ignored = true)
-    @Ignored
-    private val listListeners = mutableListOf<ElementChangedListener<X>>()
-
-    private fun signalChanged(type: ElementChangeType, element: X, revert: () -> Unit){
+    //TODO A lot of information gets lost here, which will be needed in the transformations to work efficiently
+    //F.e. Add Index, Remove Indizes etc.
+    //Maybe add Event Objects to contain this information as a Level Subtype
+    protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
         println("New size: $size")
 
-        val action = object : RevertableAction{
+        val action = object : RevertableAction {
             override fun action() {
-                listListeners.forEach { it.invoke(type, element) }
+                listeners.forEach { it.invoke(args, levels) }
             }
 
             override fun revert() {
@@ -49,154 +49,86 @@ class ObservableArrayList<X> : MutableList<X>{
 
         }
 
-        if(DB.txActive){
+        if (DB.txActive) {
             DB.txQueue.add(action)
-        }else{
+        } else {
             action.action()
         }
 
     }
 
-    fun addListener(f: ElementChangedListener<X>){
-        listListeners.add(f)
-    }
+    @Json(ignored = true)
+    @Ignored
+    val hooks = mutableListOf<ChangeObserver<Observable>>()
 
-    private fun addActions(index: Int, element: X){
-        addHook(element)
-        signalChanged(ElementChangeType.Add, element){
-            removeAt(index)
-        }
-    }
+    fun addHook(element: T) {
 
-    fun addAndReturn(element: X) : X {
-        add(size, element)
-        return element
-    }
-
-    override fun add(element: X): Boolean {
-        addAndReturn(element)
-        return true
-    }
-
-    override fun add(index: Int, element: X) {
-        collection.add(index, element)
-        addActions(index, element)
-    }
-
-    fun addHook(element: X){
-
-        if(element is Observable){
-            hooks.add(GenericChangeObserver(element){
-                signalChanged(ElementChangeType.Update, element){}
+        if (element is Observable) {
+            hooks.add(GenericChangeObserver(element) { levels ->
+                signalChanged(ListChangeArgs<T>(ElementChangeType.Update, listOf(element) /*TODO getIndizesFromElements(listOf(element), this)*/), levels) {}
             })
         }
     }
 
-    override fun addAll(elements: Collection<X>): Boolean {
-        return addAll(size, elements)
-    }
-
-    override fun addAll(index: Int, elements: Collection<X>): Boolean {
-        val added = collection.addAll(elements)
-        if (added){
-            elements.forEach {
-                addHook(it)
-                signalChanged(ElementChangeType.Add, it){
-                    (index until (index + elements.size)).forEach { i -> removeAt(i) }
-                }
-            }
-        }
-        return added
-    }
-
-    override fun remove(element: X) : Boolean{
-
-//        val b = collection.remove(element)
-        val indizes = collection.indices.filter { x -> collection[x] == element }
-        //signalChanged(ElementChangeType.Remove, element)
-        return removeAt(indizes)
-    }
-
-    override fun removeAll(elements: Collection<X>): Boolean {
-        val indizes = collection.indices.filter { x -> collection[x] in elements }
-        return removeAt(indizes)
-    }
-
-    override fun removeAt(index: Int): X {
-        val x = collection[index]
-        if(removeAt(listOf(index)))
-            return x
-        else
-            throw Exception("Should not happen")
-    }
-
-    private fun removeAt(indizes: List<Int>) : Boolean {
-
-        var removed = mutableListOf<X>()
-        for(i in indizes){
-            removed.add(collection.removeAt(i - removed.size))
-        }
-        signalChanged(ElementChangeType.Remove, removed[0]){
-            for(i in indizes.reversed()){
-                add(i + removed.size - 1, removed.removeAt(removed.size - 1))
-            }
-        } //TODO checken wie es sich mit mehreren signalChanged calls verhält
-
-        return removed.size == indizes.size
-
-    }
-
-    fun list() = collection.toList()
-
-    override operator fun get(i : Int) = collection.get(i)
-
     override val size: Int
         get() = collection.size
 
-    override fun contains(element: X): Boolean {
+
+    override fun iterator() = collection.iterator()
+
+    fun list() = collection.toList()
+
+    override operator fun get(i: Int) = collection.get(i)
+
+
+    override fun contains(element: T): Boolean {
         return collection.contains(element)
     }
 
-    override fun containsAll(elements: Collection<X>) = collection.containsAll(elements)
+    override fun containsAll(elements: Collection<T>) = collection.containsAll(elements)
 
-    override fun indexOf(element: X) = collection.indexOf(element)
+    override fun indexOf(element: T) = collection.indexOf(element)
 
     override fun isEmpty() = collection.isEmpty()
 
-    override fun lastIndexOf(element: X) = collection.lastIndexOf(element)
+    override fun lastIndexOf(element: T) = collection.lastIndexOf(element)
 
     override fun listIterator() = collection.listIterator()
 
     override fun listIterator(index: Int) = collection.listIterator(index)
 
-    override fun clear() {
-        removeAt(collection.indices.toList())
-    }
+//    lateinit var transform: (ObservableList<T>) -> ObservableList<S>
 
-    override fun retainAll(elements: Collection<X>): Boolean {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+//    fun <S> map(f: (T) -> S){
+//
+//        val next = ObservableList<S>()
+//
+//        val criteria = {type: ElementChangeType, t: T ->
+//            true
+//        }
+//
+//        addListener{ type, t ->
+//            if(criteria(type, t)){
+//                next.listeners.forEach { it(type, t) }
+//            }
+//        }
+//
+//        next.transform = {
+//            ObservableArrayList(it.map(f))
+//        }
+//
+//    }
+//
+//    fun forEach(f: (T) -> Unit){
+//
+//    }
 
-    override fun set(index: Int, element: X): X {
-        val old = collection.set(index, element)
-        signalChanged(ElementChangeType.Set, element){
-            set(index, old)
-        }
-        return old
-    }
 
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<X> {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 }
 
-class GenericChangeObserver <X : Observable> (t : X, val f: () -> Unit) : ChangeObserver<X>(t){
-
-    fun all(new: Any?){
-        f()
-    }
-}
-
-fun <X> observableListOf(vararg initial: X) = ObservableArrayList(*initial)
+//fun <T> ObservableArrayList<T>.view(){
+//    val view = ObservableListView<T>()
+//    this.addListener { elementChangeType, t ->
+//        view.listeners.forEach { it.invoke(elementChangeType, t) }
+//    }
+//}

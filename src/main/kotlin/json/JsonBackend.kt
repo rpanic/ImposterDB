@@ -10,11 +10,15 @@ import java.io.FileReader
 import kotlin.reflect.KClass
 
 
-class JsonBackend : Backend {
+open class JsonBackend : Backend {
 
     val klaxon = Klaxon()
 
     val baseFile = userdir().child("data/")
+
+//    constructor(basedir: File){ //TODO Better configurability of Json Backend
+//        baseFile = basedir
+//    }
 
     override fun keyExists(key: String) = this.baseFile.child("$key.json").exists()
 
