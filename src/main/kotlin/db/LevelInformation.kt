@@ -39,12 +39,13 @@ class ObservableListLevel(
 data class ListChangeArgs<T>(
         val elementChangeType: ElementChangeType,
         val elements: List<T>,
-        val indizes: List<Int>? = null
+        val indizes: List<Int>
 ){
     constructor(elementChangeType: ElementChangeType,
                 element: T,
                 index: Int) : this(elementChangeType, listOf(element), listOf(index))
 }
+
 fun <T> getIndizesFromElements(list: List<T>, arrayList: ObservableList<T>) : List<Int>{
     val indizes = mutableListOf<Int>()
     arrayList.collection.forEachIndexed { index, t ->

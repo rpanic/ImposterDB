@@ -116,10 +116,6 @@ class ListTest{
         Mockito.validateMockitoUsage()
     }
 
-    class TestObject : Observable(){
-        var testProperty: String by observable("")
-    }
-
     open class MockableImposter<T : Observable, M : Any>(t: T) : ChangeObserver<T>(t) {
         fun target(mock: M) = init(mock)
     }
@@ -167,4 +163,12 @@ open class X : L{
 
 interface L{
     fun x(x: String)
+}
+
+class TestObject() : Observable(){
+    var testProperty: String by observable("")
+
+    constructor(s: String) : this(){
+        testProperty = s
+    }
 }
