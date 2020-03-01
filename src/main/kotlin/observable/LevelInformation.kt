@@ -24,7 +24,6 @@ class ObservableLevel(
     override fun getArrayList() = throw IllegalAccessException("Field of Level is not a ObservableArrayList")
 }
 
-//TODO Make this whole class generic and add Dynamic Casting to Imposter Method Calls
 class ObservableListLevel(
         val list: ObservableList<*>,
         changeArgs: ListChangeArgs<*>

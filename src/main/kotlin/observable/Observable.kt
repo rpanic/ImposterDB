@@ -78,7 +78,6 @@ abstract class Observable{
         }
     }
 
-    //TODO Why is observable a requirement for the type for the List?
     fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ObservableArrayList<S>>{
 
         val list = observableListOf(*initialValues)

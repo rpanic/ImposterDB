@@ -32,9 +32,6 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
         signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
     }
 
-    //TODO A lot of information gets lost here, which will be needed in the transformations to work efficiently
-    //F.e. Add Index, Remove Indizes etc.
-    //Maybe add Event Objects to contain this information as a Level Subtype
     protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
         println("New size: $size")

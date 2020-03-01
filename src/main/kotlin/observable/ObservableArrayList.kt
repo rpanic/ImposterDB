@@ -100,11 +100,6 @@ class ObservableArrayList<X> : ObservableList<X> {
     fun clear() {
         removeAt(collection.indices.toList())
     }
-
-    fun retainAll(elements: Collection<X>): Boolean {
-        throw UnsupportedOperationException()
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
 }
 
 class GenericChangeObserver <X : Observable> (t : X, val f: (LevelInformation) -> Unit) : ChangeObserver<X>(t){
