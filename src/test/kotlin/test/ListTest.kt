@@ -84,9 +84,22 @@ class ListTest{
 //            true
 //        })
 
-        verify(mock).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
+        Mockito.verify(mock).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
 
         val verifier = QuadrupleVerifier(property.allValues, old.allValues, new.allValues, levelInfo.allValues)
+        verifier.apply {
+
+            verify(Person::description, null, "This is some random stuff"){
+                assertThat(list.size).isEqualTo(1)
+                assertThat(list[0].getObservable()).isEqualTo(obj)
+            }
+
+            verify(Person::trait, null, trait){
+                assertThat(list.size).isEqualTo(2)
+                assertThat(list[0].getObservable()).isEqualTo(obj)
+            }
+
+        }
 
         verify(mock).name("John Miller")
 
@@ -150,12 +163,12 @@ class ListTest{
     class QuadrupleVerifier<A, B, C, D>(val aa: List<A>, val bs: List<B>, val cs: List<C>, val ds: List<D>){
         var index = 0
 
-        fun verify(a: A, b: B, c: C, d: (D) -> Unit){
+        fun verify(a: A, b: B, c: C, d: D.() -> Unit){
 
             assertThat(aa[index]).isEqualTo(a)
             assertThat(bs[index]).isEqualTo(b)
             assertThat(cs[index]).isEqualTo(c)
-            assertThat(d)
+            d(ds[index])
 
             index++
         }
