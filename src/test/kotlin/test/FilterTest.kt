@@ -13,11 +13,6 @@ import kotlin.reflect.KProperty
 
 class FilterTest{
 
-//    @Before
-//    fun setup(){
-//        DB.primaryBackend = Mockito.mock(JsonBackend::class.java)
-//    }
-
     @Test
     fun testFilter(){
 
@@ -31,37 +26,27 @@ class FilterTest{
         Assertions.assertThat(list2[0]).isEqualTo(objs[1])
         Assertions.assertThat(list2[2]).isEqualTo(objs[3])
 
-//        val listener: ElementChangedListener<TestObject> = {
-//
-//        }
-
         val listenerMock = mock<ElementChangedListener<TestObject>>()
 
         list2.addListener(listenerMock)
 
         list.add(0, TestObject("four"))
-        list.add(4, TestObject("five"))
+        list.add(TestObject("five"))
+        list.add(4, TestObject("six"))
         list.add(TestObject()) //Should not execute the listener
 
         list.removeAt(2)
 
         val argCaptor = argumentCaptor<ListChangeArgs<TestObject>>()
 
-        verify(listenerMock, times(3)).invoke(argCaptor.capture(), any())
+        verify(listenerMock, times(4)).invoke(argCaptor.capture(), any())
 
         val allValues = argCaptor.allValues
 
         Assertions.assertThat(allValues[0].indizes[0]).isEqualTo(0)
-        Assertions.assertThat(allValues[1].indizes[0]).isEqualTo(3)
-        Assertions.assertThat(allValues[2].indizes[0]).isEqualTo(1)
-
-//        argThat {
-            //            println("--")
-//            println(indizes)
-//            println(elements)
-//            println(elementChangeType)
-//            this.indizes[0] == 1
-//        }
+        Assertions.assertThat(allValues[1].indizes[0]).isEqualTo(4)
+        Assertions.assertThat(allValues[2].indizes[0]).isEqualTo(3)
+        Assertions.assertThat(allValues[3].indizes[0]).isEqualTo(1)
 
     }
 
