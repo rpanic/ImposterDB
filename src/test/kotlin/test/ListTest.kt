@@ -1,29 +1,21 @@
 package test
 
 import com.beust.klaxon.Klaxon
-import com.nhaarman.mockitokotlin2.argThat
-import com.nhaarman.mockitokotlin2.eq
-import com.nhaarman.mockitokotlin2.isNull
+import com.nhaarman.mockitokotlin2.argumentCaptor
+import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
-import com.sun.org.apache.xpath.internal.operations.Bool
 import db.*
 import example.Person
 import example.Trait
 import json.JsonBackend
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
-import org.junit.Ignore
 import org.junit.Test
-import org.mockito.ArgumentCaptor
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
-import java.lang.RuntimeException
 import kotlin.reflect.KProperty
 
 class ListTest{
 
-//    val jsonBackend = Mockito.mock(JsonBackend::class.java)
-//
 //    @Before
 //    fun setup(){
 //        DB.primaryBackend = jsonBackend//.apply { baseFile = baseFile.resolve("test") }
@@ -43,14 +35,10 @@ class ListTest{
         val imposter = PersonObserver(obj)
 
         val mock = Mockito.spy(imposter as IPersonObserver)
-//        val mock = Mockito.mock(PersonObserver::class.java)
 
         imposter.target(mock)
 
-//        val p2 = PersonObserver(obj)
-//
-//        imposter.target(p2)
-
+        val originalTrait = obj.trait
         val trait = Trait()
 
         DB.tx {
@@ -70,21 +58,12 @@ class ListTest{
             println("Finished")
         }
 
-        val property = ArgumentCaptor.forClass(KProperty::class.java)
-        val old = ArgumentCaptor.forClass(Any::class.java)
-        val new = ArgumentCaptor.forClass(Any::class.java)
-        val levelInfo = ArgumentCaptor.forClass(LevelInformation::class.java)
+        val property = argumentCaptor<KProperty<*>>()
+        val old = argumentCaptor<Any>()
+        val new = argumentCaptor<Any>()
+        val levelInfo = argumentCaptor<LevelInformation>()
 
-//        verify(mock).all(eq(Person::description), isNull(), eq("This is some random stuff"), argThat {
-//            list.size == 1 &&
-//            list[0].getObservable() == obj
-//        })
-//
-//        verify(mock).all(eq(Person::trait), isNull(), eq(trait), argThat {
-//            true
-//        })
-
-        Mockito.verify(mock).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
+        verify(mock, times(3)).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
 
         val verifier = QuadrupleVerifier(property.allValues, old.allValues, new.allValues, levelInfo.allValues)
         verifier.apply {
@@ -94,8 +73,8 @@ class ListTest{
                 assertThat(list[0].getObservable()).isEqualTo(obj)
             }
 
-            verify(Person::trait, null, trait){
-                assertThat(list.size).isEqualTo(2)
+            verify(Person::trait, originalTrait, trait){
+                assertThat(list.size).isEqualTo(1)
                 assertThat(list[0].getObservable()).isEqualTo(obj)
             }
 
@@ -126,15 +105,14 @@ class ListTest{
 
         list.add(obj2)
 
-        Mockito.verify(jsonBackend).keyExists("test1")
+        verify(jsonBackend).keyExists("test1")
 
-        Mockito.verify(jsonBackend).saveList("test1", TestObject::class, list.collection)
+        verify(jsonBackend).saveList("test1", TestObject::class, list.collection)
 
     }
 
     @After
     fun tearDown(){
-//        DB.primaryBackend = Mockito.mock(Backend::class.java)
         Mockito.validateMockitoUsage()
     }
 
@@ -163,7 +141,7 @@ class ListTest{
     class QuadrupleVerifier<A, B, C, D>(val aa: List<A>, val bs: List<B>, val cs: List<C>, val ds: List<D>){
         var index = 0
 
-        fun verify(a: A, b: B, c: C, d: D.() -> Unit){
+        fun verify(a: A?, b: B?, c: C?, d: D.() -> Unit){
 
             assertThat(aa[index]).isEqualTo(a)
             assertThat(bs[index]).isEqualTo(b)

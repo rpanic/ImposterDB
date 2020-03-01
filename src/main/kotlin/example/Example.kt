@@ -27,21 +27,21 @@ class Trait : Observable(){
 
 }
 
-//open class PersonObserver(t: Person) : ChangeObserver<Person>(t){
-//
-//    fun name(new: String){
-//        println("New name: $new!!!!")
-//
-////        throw IllegalAccessException()
-//    }
-//
-//    fun all(prop: KProperty<Any?>, new: Any?, old: Any?, levelInformation: LevelInformation){
-//        println("Prop ${prop.name} changed to $new")
-//
-//        println(levelInformation)
-//    }
-//
-//}
+class ExamplePersonObserver(t: Person) : ChangeObserver<Person>(t){
+
+    fun name(new: String){
+        println("New name: $new!!!!")
+
+//        throw IllegalAccessException()
+    }
+
+    fun all(prop: KProperty<Any?>, new: Any?, old: Any?, levelInformation: LevelInformation){
+        println("Prop ${prop.name} changed to $new")
+
+        println(levelInformation)
+    }
+
+}
 
 fun main() {
 
@@ -54,7 +54,7 @@ fun main() {
 
     DB.tx {
 
-//        PersonObserver(obj)
+        ExamplePersonObserver(obj)
 
         obj.description = "This is some random stuff"
 
