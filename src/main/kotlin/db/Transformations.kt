@@ -1,6 +1,9 @@
 package db
 
-fun <T, R> ObservableList<T>.map(f: (T) -> R) : ObservableList<R>{
+import observable.ListChangeArgs
+import observable.ObservableList
+
+fun <T, R> ObservableList<T>.map(f: (T) -> R) : ObservableList<R> {
     val next = ObservableList<R>()
 
     val transform = { next.collection = this.collection.map(f).toMutableList()}
@@ -33,7 +36,7 @@ fun <T, R> ObservableList<T>.map(f: (T) -> R) : ObservableList<R>{
 //    return next
 //}
 
-fun <T> ObservableList<T>.filter(f: (T) -> Boolean) : ObservableList<T>{
+fun <T> ObservableList<T>.filter(f: (T) -> Boolean) : ObservableList<T> {
 
     val next = ObservableList<T>()
     addListener{ args, levels ->

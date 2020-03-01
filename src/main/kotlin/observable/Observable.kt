@@ -1,6 +1,7 @@
-package db
+package observable
 
 import com.beust.klaxon.Json
+import db.*
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty
@@ -102,7 +103,7 @@ abstract class Observable{
 
 }
 
-abstract class ObservableRevertableAction<T>(val observable: Observable, val prop: KProperty<*>, val old: T, val new: T) : RevertableAction{
+abstract class ObservableRevertableAction<T>(val observable: Observable, val prop: KProperty<*>, val old: T, val new: T) : RevertableAction {
 
     override fun action() {
         executeListeners(prop, old, new)

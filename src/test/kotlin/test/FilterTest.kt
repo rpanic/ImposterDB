@@ -2,14 +2,11 @@ package test
 
 import com.nhaarman.mockitokotlin2.*
 import db.*
-import json.JsonBackend
+import observable.ElementChangedListener
+import observable.ListChangeArgs
+import observable.observableListOf
 import org.assertj.core.api.Assertions
-import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito
-import org.mockito.internal.verification.VerificationModeFactory
-import org.mockito.verification.VerificationMode
-import kotlin.reflect.KProperty
 
 class FilterTest{
 

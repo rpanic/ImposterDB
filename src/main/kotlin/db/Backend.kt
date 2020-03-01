@@ -1,5 +1,6 @@
 package db
 
+import observable.Observable
 import kotlin.reflect.KClass
 
 interface Backend {

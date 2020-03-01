@@ -3,8 +3,10 @@ package example
 import db.*
 import json.JsonBackend
 import json.userdir
+import observable.LevelInformation
+import observable.Observable
+import observable.ObservableArrayList
 import java.io.File
-import java.nio.MappedByteBuffer
 import kotlin.reflect.KProperty
 
 class Person : Observable(){

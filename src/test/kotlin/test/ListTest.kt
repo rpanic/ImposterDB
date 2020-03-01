@@ -8,6 +8,8 @@ import db.*
 import example.Person
 import example.Trait
 import json.JsonBackend
+import observable.LevelInformation
+import observable.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Test

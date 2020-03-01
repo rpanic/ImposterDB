@@ -1,8 +1,8 @@
-package db
+package observable
 
 class LevelInformation(val list: List<Level>){
 
-    fun append(level: Level) = LevelInformation(list.toMutableList().apply{ add(0, level)})
+    fun append(level: Level) = LevelInformation(list.toMutableList().apply { add(0, level) })
 
     fun append(obj: Observable) = append(ObservableLevel(obj))
 

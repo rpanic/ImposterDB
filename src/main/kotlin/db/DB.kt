@@ -1,5 +1,6 @@
 package db
 
+import observable.*
 import java.lang.Exception
 
 object DB{
@@ -71,7 +72,7 @@ object DB{
         }
     }
 
-    inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T>{
+    inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T> {
 
         if(parsed.containsKey(key)){
             return parsed[key]!! as ObservableArrayList<T>
@@ -109,8 +110,8 @@ object DB{
             init.invoke()
         }
 
-        GenericChangeObserver(obj!!){
-            for (backend in listOf(primaryBackend) + backends){
+        GenericChangeObserver(obj!!) {
+            for (backend in listOf(primaryBackend) + backends) {
                 backend.save(key, T::class, obj)
             }
         }.all(LevelInformation::list /* unused, so doesn´t whats in there*/, null, null, LevelInformation(emptyList()))

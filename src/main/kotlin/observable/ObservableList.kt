@@ -1,6 +1,7 @@
-package db
+package observable
 
 import com.beust.klaxon.Json
+import db.*
 
 typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
 

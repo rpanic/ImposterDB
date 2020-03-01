@@ -4,7 +4,7 @@ import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
 import db.Backend
-import db.Observable
+import observable.Observable
 import java.io.File
 import java.io.FileReader
 import kotlin.reflect.KClass
