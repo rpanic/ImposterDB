@@ -2,6 +2,7 @@
 
 ImposterDB is a database which uses a unique concept for abstraction. It combines a classical data layer in the background with the observer pattern to allow the creation of imposter classes which control immediate events connected with the data. This system will get more obvious in the Usage section.
 
+[![Build Status](https://drone.rpanic.com/api/badges/rpanic/ImposterDB/status.svg)](https://drone.rpanic.com/rpanic/ImposterDB)
 
 ## Installation
 
