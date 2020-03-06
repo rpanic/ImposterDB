@@ -98,6 +98,10 @@ object DB{
 
     }
 
+    fun <T : Observable> registerObservable(obj: T){
+        
+    }
+
     inline fun <reified T : Observable> getObject(key: String, init : () -> T) : T{
 
         if(parsedObjects.containsKey(key)){

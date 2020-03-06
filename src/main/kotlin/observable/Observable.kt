@@ -51,9 +51,11 @@ abstract class Observable{
         listeners[prop.name]!!.add(listener)
     }
 
-    fun <T : Any?> addListener(listener: ChangeListener<T>){
+    fun <T : Any?> addListener(listener: ChangeListener<T>){ //TODO Use AbstractObservable
         classListeners.add(listener)
     }
+
+//    abstract open fun <T> key() : T
 
     private fun <T> hookToObservable(obj: T){
         if(obj is Observable){

@@ -1,5 +1,6 @@
 package example
 
+import com.beust.klaxon.Json
 import db.*
 import json.JsonBackend
 import json.userdir
@@ -17,7 +18,10 @@ class Person : Observable(){
 
     var traits: ObservableArrayList<Trait> by observableList()
 
-    var trait: Trait by observable(Trait())
+    @Json(ignored = true)
+    var trait: Trait by relation("trait")
+
+    //var trait: Trait by relation()
 
 }
 
@@ -54,25 +58,27 @@ fun main() {
         Person()
     }
 
-    DB.tx {
+    obj.trait = Trait()
 
-        ExamplePersonObserver(obj)
-
-        obj.description = "This is some random stuff"
-
-        obj.trait = Trait()
-
-        obj.trait.value = 10
-
-        obj.traits.add(Trait())
-
-        obj.traits[0].value = 1337
-
-        obj.name = "John Miller"
-
-        println("Finished")
-
-    }
+//    DB.tx {
+//
+//        ExamplePersonObserver(obj)
+//
+//        obj.description = "This is some random stuff"
+//
+//        obj.trait = Trait()
+//
+//        obj.trait.value = 10
+//
+//        obj.traits.add(Trait())
+//
+//        obj.traits[0].value = 1337
+//
+//        obj.name = "John Miller"
+//
+//        println("Finished")
+//
+//    }
 
 //    val mapped = obj.traits.map ({ "${it.value}Heyo" })
 //    {
