@@ -9,6 +9,7 @@ import observable.Observable
 import observable.ObservableArrayList
 import java.io.File
 import kotlin.reflect.KProperty
+import kotlin.reflect.jvm.isAccessible
 
 class Person : Observable(){
 
@@ -19,7 +20,7 @@ class Person : Observable(){
     var traits: ObservableArrayList<Trait> by observableList()
 
     @Json(ignored = true)
-    var trait: Trait by relation("trait")
+    var trait: Trait by detached("trait")
 
     //var trait: Trait by relation()
 
@@ -58,7 +59,13 @@ fun main() {
         Person()
     }
 
-    obj.trait = Trait()
+//    obj.trait = Trait()
+
+    val trait = obj::trait
+    trait.isAccessible = true
+    val delegate = trait.getDelegate()
+
+    println()
 
 //    DB.tx {
 //

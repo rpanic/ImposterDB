@@ -2,6 +2,7 @@ package observable
 
 import com.beust.klaxon.Json
 import db.*
+import java.util.*
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty
@@ -20,6 +21,8 @@ abstract class Observable{
     @Json(ignored = true)
     @Ignored
     val classListeners = mutableListOf<ChangeListener<*>>()
+
+    var uuid: UUID = UUID.randomUUID()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T, levels: LevelInformation){
 //        println("${prop.name}: $old -> $new")
@@ -55,7 +58,9 @@ abstract class Observable{
         classListeners.add(listener)
     }
 
-//    abstract open fun <T> key() : T
+    open fun <T> key() : T{
+        return uuid as T
+    }
 
     private fun <T> hookToObservable(obj: T){
         if(obj is Observable){

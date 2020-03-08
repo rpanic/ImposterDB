@@ -3,7 +3,7 @@ package observable
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-public abstract class LazyObservableProperty<T>(val initializer: () -> T?) : ReadWriteProperty<Any?, T> {
+abstract class LazyObservableProperty<T>(val initializer: () -> T?) : ReadWriteProperty<Any?, T> {
 
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
@@ -23,5 +23,13 @@ public abstract class LazyObservableProperty<T>(val initializer: () -> T?) : Rea
         val oldValue = this.value
         this.value = value
         afterChange(property, oldValue, value)
+    }
+
+    protected fun getValue() : T{
+        if(!initialized){
+            value = initializer()
+            println("Should not happen - LazyObservableProperty :: 31")
+        }
+        return value!!
     }
 }

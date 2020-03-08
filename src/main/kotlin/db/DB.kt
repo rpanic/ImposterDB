@@ -72,6 +72,9 @@ object DB{
         }
     }
 
+//    inline fun <reified T : Observable> get
+    
+
     inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T> {
 
         if(parsed.containsKey(key)){
@@ -96,10 +99,6 @@ object DB{
 
         return list
 
-    }
-
-    fun <T : Observable> registerObservable(obj: T){
-        
     }
 
     inline fun <reified T : Observable> getObject(key: String, init : () -> T) : T{
