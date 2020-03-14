@@ -7,7 +7,7 @@ object DB{
 
     val parsed = mutableMapOf<String, ObservableArrayList<*>>()
 
-    val parsedObjects = mutableMapOf<String, Observable>()
+    val parsedObjects = mutableMapOf<String, List<Observable>>()
 
     val backends = mutableListOf<Backend>()
 
@@ -72,7 +72,34 @@ object DB{
         }
     }
 
-//    inline fun <reified T : Observable> get
+    inline fun <reified T : Observable, reified K> getDetached(key: String, pk: K) : T{
+
+        if(parsedObjects.containsKey(key)){
+            val obj = parsedObjects[key]!!.find { it.key<K>() == pk }
+            if(obj != null){
+                return obj as T
+            }
+        }
+
+        val lread : T? = if(primaryBackend.keyExists(key)){
+            primaryBackend.loadByPK(key, pk, T::class)
+        }else{
+            throw IllegalAccessException("Couldn´t find key $key")
+        }
+
+        val list = observableListOf(*lread!!.toTypedArray())
+
+        list.addListener { _,  _ -> //TODO Add Level stuff to Backend interface for incremental saves
+            for (backend in listOf(primaryBackend) + backends){
+                backend.saveList(key, T::class, list.collection)
+            }
+        }
+
+        parsed.put(key, list)
+
+        return list
+
+    }
     
 
     inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T> {
@@ -96,11 +123,13 @@ object DB{
         }
 
         parsed.put(key, list)
+        parsedObjects.put(key, list.collection.toList())
 
         return list
 
     }
 
+    //TODO Rework to getSingleton
     inline fun <reified T : Observable> getObject(key: String, init : () -> T) : T{
 
         if(parsedObjects.containsKey(key)){
@@ -119,7 +148,7 @@ object DB{
             }
         }.all(LevelInformation::list /* unused, so doesn´t whats in there*/, null, null, LevelInformation(emptyList()))
 
-        parsedObjects.put(key, obj)
+        parsedObjects.put(key, listOf(obj))
 
         return obj
 

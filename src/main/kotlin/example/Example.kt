@@ -8,6 +8,7 @@ import observable.LevelInformation
 import observable.Observable
 import observable.ObservableArrayList
 import java.io.File
+import java.util.*
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.isAccessible
 
@@ -17,7 +18,7 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
-    var traits: ObservableArrayList<Trait> by observableList()
+//    var traits: ObservableArrayList<Trait> by observableList()
 
     @Json(ignored = true)
     var trait: Trait by detached("trait")
@@ -52,7 +53,7 @@ class ExamplePersonObserver(t: Person) : ChangeObserver<Person>(t){
 
 fun main() {
 
-    File(userdir().absolutePath + "/data/person.json").delete()
+//    File(userdir().absolutePath + "/data/person.json").delete()
     DB.primaryBackend = JsonBackend()
 
     val obj = DB.getObject("person") {
@@ -61,9 +62,13 @@ fun main() {
 
 //    obj.trait = Trait()
 
-    val trait = obj::trait
-    trait.isAccessible = true
-    val delegate = trait.getDelegate()
+    println(obj.key<UUID>())
+
+    obj.description = "asd"
+
+//    val trait = obj::trait
+//    trait.isAccessible = true
+//    val delegate = trait.getDelegate()
 
     println()
 

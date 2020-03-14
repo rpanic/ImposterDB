@@ -22,7 +22,7 @@ abstract class Observable{
     @Ignored
     val classListeners = mutableListOf<ChangeListener<*>>()
 
-    var uuid: UUID = UUID.randomUUID()
+    var uuid: String = UUID.randomUUID().toString()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T, levels: LevelInformation){
 //        println("${prop.name}: $old -> $new")
