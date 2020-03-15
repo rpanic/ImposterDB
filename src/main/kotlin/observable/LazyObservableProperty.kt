@@ -1,9 +1,14 @@
 package observable
 
+import db.DetachedReadWriteProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-abstract class LazyObservableProperty<T>(val initializer: () -> T?) : ReadWriteProperty<Any?, T> {
+abstract class LazyObservableProperty<T : Observable>(val initializer: (DetachedReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, T> {
+
+    init {
+        print(1)
+    }
 
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
@@ -14,7 +19,7 @@ abstract class LazyObservableProperty<T>(val initializer: () -> T?) : ReadWriteP
 
     public override fun getValue(thisRef: Any?, property: KProperty<*>): T {
         if(!initialized){
-            value = initializer()
+            value = initializer(a)
         }
         return value!!
     }
@@ -25,10 +30,16 @@ abstract class LazyObservableProperty<T>(val initializer: () -> T?) : ReadWriteP
         afterChange(property, oldValue, value)
     }
 
+    private lateinit var a: DetachedReadWriteProperty<T>
+
+    fun initArg(a: DetachedReadWriteProperty<T>){
+        this.a = a
+    }
+
     protected fun getValue() : T{
         if(!initialized){
-            value = initializer()
-            println("Should not happen - LazyObservableProperty :: 31")
+            value = initializer(a)
+            println("Should not happen - LazyObservableProperty :: 41")
         }
         return value!!
     }

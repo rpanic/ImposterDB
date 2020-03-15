@@ -62,10 +62,10 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
     fun addHook(element: T) {
 
         if (element is Observable) {
-            hooks.add(GenericChangeObserver(element) { levels ->
+            hooks.add(GenericChangeObserver(element) { prop, levels ->
                 //TODO Check, if element references and indizes are 1 to 1 in all ListChangeArgs, so element and indizes can be correlated. Like below
                 val indizes = getIndizesFromElements<T>(listOf(element), this)
-                signalChanged(ListChangeArgs(ElementChangeType.Update, indizes.indices.map { element }, indizes), levels) {}
+                signalChanged(UpdateListChangeArgs(ElementChangeType.Update, indizes.indices.map { element }, indizes, prop), levels) {}
             })
         }
     }

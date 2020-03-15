@@ -90,7 +90,7 @@ class ObservableArrayList<X> : ObservableList<X> {
 
     fun set(index: Int, element: X): X {
         val old = collection.set(index, element)
-        val args = ListChangeArgs(ElementChangeType.Set, element, index)
+        val args = SetListChangeArgs(ElementChangeType.Set, listOf(element), listOf(index), listOf(old))
         signalChanged(args){
             set(index, old)
         }
@@ -102,10 +102,10 @@ class ObservableArrayList<X> : ObservableList<X> {
     }
 }
 
-class GenericChangeObserver <X : Observable> (t : X, val f: (LevelInformation) -> Unit) : ChangeObserver<X>(t){
+class GenericChangeObserver <X : Observable> (t : X, val f: (KProperty<*>, LevelInformation) -> Unit) : ChangeObserver<X>(t){
 
     fun all(prop: KProperty<*>, new: Any?, old: Any?, levels: LevelInformation){
-        f(levels)
+        f(prop, levels)
     }
 }
 

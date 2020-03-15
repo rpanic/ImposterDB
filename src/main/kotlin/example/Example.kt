@@ -21,7 +21,7 @@ class Person : Observable(){
 //    var traits: ObservableArrayList<Trait> by observableList()
 
     @Json(ignored = true)
-    var trait: Trait by detached("trait")
+    var trait: Trait by detached<Trait>("trait")
 
     //var trait: Trait by relation()
 
@@ -56,15 +56,23 @@ fun main() {
 //    File(userdir().absolutePath + "/data/person.json").delete()
     DB.primaryBackend = JsonBackend()
 
-    val obj = DB.getObject("person") {
-        Person()
+    val obj = DB.getDetached("person", "asd", false) {
+        Person().apply { uuid = "asd" }
     }
 
 //    obj.trait = Trait()
 
+//    val trait = obj.trait
+
     println(obj.key<UUID>())
 
     obj.description = "asd"
+
+    obj.trait = Trait()
+
+    obj.name = "asdsadg"
+
+//    obj.trait.value = 13387
 
 //    val trait = obj::trait
 //    trait.isAccessible = true

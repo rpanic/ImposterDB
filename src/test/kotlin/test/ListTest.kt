@@ -30,7 +30,7 @@ class ListTest{
         file.delete()
         DB.primaryBackend = jsonBackend
 
-        val obj = DB.getObject("exampleTest") {
+        val obj = DB.getDetached("exampleTest", "pk") {
             Person()
         }
 
@@ -101,7 +101,7 @@ class ListTest{
         val jsonBackend = Mockito.mock(JsonBackend::class.java)
         DB.primaryBackend = jsonBackend
 
-        val list = DB.getList<TestObject>("test1")
+        val list = DB.getDetachedList<TestObject>("test1")
 
         val obj2 = TestObject()
 
@@ -109,7 +109,7 @@ class ListTest{
 
         verify(jsonBackend).keyExists("test1")
 
-        verify(jsonBackend).saveList("test1", TestObject::class, list.collection)
+        verify(jsonBackend).insert("test1", TestObject::class, obj2)
 
     }
 

@@ -13,9 +13,9 @@ class ImposterTest{
     fun wrongParameterTest(){
 
         DB.primaryBackend = mock()
-        whenever(DB.primaryBackend.load("test", TestObject::class)).thenReturn(TestObject())
+        whenever(DB.primaryBackend.loadByPK("test", "pk", TestObject::class)).thenReturn(TestObject())
 
-        val obj = DB.getObject("test"){
+        val obj = DB.getDetached("test", "pk"){
             TestObject()
         }
 
