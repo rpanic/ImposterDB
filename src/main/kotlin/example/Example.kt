@@ -66,9 +66,15 @@ fun main() {
 
     println(obj.key<UUID>())
 
+    println(obj.trait.uuid)
+
+    val trait = obj.trait
+
     obj.description = "asd"
 
-    obj.trait = Trait()
+//    obj.trait = Trait()
+
+    obj.trait.value = 1337
 
     obj.name = "asdsadg"
 

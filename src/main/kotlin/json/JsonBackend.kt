@@ -10,6 +10,7 @@ import observable.Observable
 import java.io.File
 import java.io.FileReader
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -20,11 +21,13 @@ open class JsonBackend : Backend {
     }
 
     override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T {
-        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>).find { it.key<K>() == pk }!!
+//        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>).find { it.key<K>() == pk }!!
+        return load(key, clazz).find { it.key<K>() == pk }!!
     }
 
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {
-        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>)
+//        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>)
+        return load(key, clazz)
     }
 
     fun <T : Observable> load(key: String, clazz: KClass<T>) : List<T> {
@@ -33,28 +36,16 @@ open class JsonBackend : Backend {
         val values = properties.map { arr.map { json -> json.string("uuid") to json.string(it.name).apply { json.remove(it.name) } } }
 
         val list = klaxon.parseFromJsonArray2(clazz, arr)
-        values.forEach {
-            
+        values.forEachIndexed { i, propValues ->
+            val property = properties[i]
+            propValues.forEach { pair ->
+                val observable = list.find { it.uuid == pair.first }!!
+                val delegate = property.getDelegate(observable) as DetachedReadWriteProperty<*>
+                delegate.setPk(pair.second)
+            }
+
         }
-//        val properties = clazz.memberProperties
-//                .map { it.apply { it.isAccessible = true } }
-//                .filter { it. }
-//        arr.string("uuid")
-////        val arr = klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse() as JsonArray<T>)
-//        arr.forEach {
-//            clazz.memberProperties.forEach { prop ->
-//                prop.isAccessible = true
-//                val delegate = prop.getDelegate(obj)
-//                if(delegate != null){
-//                    if(delegate is DetachedReadWriteProperty<*>){
-//                        if(delegate.isInitialized())
-//                            it.set(prop.name, (prop.get(obj) as Observable).uuid)
-//                        else
-//                            it.remove(prop.name)
-//                    }
-//                }
-//            }
-//        }
+        return list
     }
 
     override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>) {
@@ -84,7 +75,9 @@ open class JsonBackend : Backend {
                     if(delegate is DetachedReadWriteProperty<*>){
                         if(delegate.isInitialized())
                             it.set(prop.name, (prop.get(obj) as Observable).uuid)
-                        else
+                        else if(delegate.getPkOrNull<String>() != null){
+                            it.set(prop.name, delegate.getPkOrNull()) //TODO Unify Usage of PK, not necessarly uuid
+                        }else
                             it.remove(prop.name)
                     }
                 }

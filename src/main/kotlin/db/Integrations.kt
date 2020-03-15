@@ -6,13 +6,13 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.primaryConstructor
 
-inline fun <reified T : Observable> Observable.detached(key: String) : ReadWriteProperty<Any?, T>{
+inline fun <reified T : Observable> Observable.detached(key: String) : DetachedReadWriteProperty<T>{
     return detachedInternal(key, this, T::class)
 }
 
-fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClass<T>) : ReadWriteProperty<Any?, T> {
+fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClass<T>) : DetachedReadWriteProperty<T> {
     val property = DetachedReadWriteProperty<T>(obj, key, clazz){
-        DB.getDetached(key, ""/*it.getPk()*/, true, clazz){
+        DB.getDetached(key, it.getPk(), true, clazz){
             clazz.primaryConstructor!!.call()
         }
         //TODO First try primaryBackend and then all others
@@ -67,14 +67,18 @@ class DetachedReadWriteProperty<T : Observable>(val observable : Observable, val
 
     fun isInitialized() = initialized
 
-//    var pk: V? = null
-//
-//    fun setPk(v: V){
-//
-//    }
+    private var pkInternal: Any? = null
+
+    fun <V> setPk(v: V){
+        pkInternal = v
+    }
 
     fun <V> getPk() : V{
-        return getValue().key()
+        return pkInternal!! as V
+    }
+
+    fun <V> getPkOrNull() : V?{
+        return pkInternal as? V
     }
 }
 

@@ -1,9 +1,9 @@
 package db
 
-import example.DelegationExample
 import observable.Observable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.javaField
 
@@ -32,14 +32,18 @@ interface Backend {
 
 //    fun <T : Observable> saveList(key: String, clazz: KClass<T>, obj: List<T>)
 
-    fun <T : Observable, DELEGATE : Any> findDelegatingProperties(clazz: KClass<T>, delegatingTo: KClass<DELEGATE>): List<KProperty<DELEGATE>> {
+    fun <T : Observable, DELEGATE : Any> findDelegatingProperties(clazz: KClass<T>, delegatingTo: KClass<DELEGATE>): List<KProperty1<T, DELEGATE>> {
         return clazz.declaredMemberProperties.map { prop ->
             val javaField = prop.javaField
             if (javaField != null && delegatingTo.java.isAssignableFrom(javaField.type)) {
                 javaField.isAccessible = true // is private, have to open that up
                 @Suppress("UNCHECKED_CAST")
-                val delegateInstance = javaField.type == DelegationExample::class.java
-                prop as KProperty<DELEGATE>
+                val delegateInstance = javaField.type == delegatingTo.java
+                if(delegateInstance) {
+                    prop as KProperty1<T, DELEGATE>
+                }else{
+                    null
+                }
             } else {
                 null
             }
