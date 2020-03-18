@@ -10,8 +10,6 @@ import kotlin.reflect.KProperty
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
-//typealias GeneralChangeListener = (prop: KProperty<*>, old: Any?, new: Any?) -> Unit
-
 abstract class Observable{
 
     @Json(ignored = true)
@@ -25,8 +23,8 @@ abstract class Observable{
     var uuid: String = UUID.randomUUID().toString()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T, levels: LevelInformation){
-//        println("${prop.name}: $old -> $new")
-        hookToObservable(new)
+
+        hookToObservable(new, prop)
 
         val action = object : ObservableRevertableAction<T>(this, prop, old, new){
 
@@ -62,10 +60,10 @@ abstract class Observable{
         return uuid as T
     }
 
-    private fun <T> hookToObservable(obj: T){
+    internal fun <T> hookToObservable(obj: T, parentProperty: KProperty<*>?){
         if(obj is Observable){
-            obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
-                changed(prop, old, new, levels.append(this))
+            obj.addListener { childProp: KProperty<*>, old: T, new: T, levels: LevelInformation ->
+                changed(childProp, old, new, levels.append(this, parentProperty))
             }
         } else if(obj is ObservableArrayList<*>){
             obj.addListener { args, levels ->
@@ -76,11 +74,11 @@ abstract class Observable{
 
     fun <T : Any?> observable(initialValue: T) : ReadWriteProperty<Any?, T>{
 
-        hookToObservable(initialValue)
+        hookToObservable(initialValue, null) //Is null atm, because there is technically no real way of getting the correct Property. But this should only be a outside api issue
 
         return object : ObservableProperty<T>(initialValue) {
             override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T){
-                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable))))
+                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable, property))))
             }
         }
     }
@@ -88,20 +86,11 @@ abstract class Observable{
     fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ObservableArrayList<S>>{
 
         val list = observableListOf(*initialValues)
-        hookToObservable(list)
+        hookToObservable(list, null)
 
         return object : ObservableProperty<ObservableArrayList<S>>(list) {
             override fun afterChange(property: KProperty<*>, oldValue: ObservableArrayList<S>, newValue: ObservableArrayList<S>){
-
-                if(newValue !is ObservableArrayList<*>){
-                    if(property is KMutableProperty<*>){
-                        val tranformedlist = ObservableArrayList(newValue)
-                        property.setter.call(this@Observable, tranformedlist)
-                    }else{
-                        throw Exception("Property ${property.name} is not mutable but has by observable")
-                    }
-                } else
-                    changed(property, oldValue, newValue, LevelInformation(emptyList()))
+                changed(property, oldValue, newValue, LevelInformation(emptyList()))
             }
         }
 

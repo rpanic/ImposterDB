@@ -6,7 +6,7 @@ class LevelInformation(val list: List<Level>){
 
     fun append(level: Level) = LevelInformation(list.toMutableList().apply { add(0, level) })
 
-    fun append(obj: Observable) = append(ObservableLevel(obj))
+    fun append(obj: Observable, prop: KProperty<*>?) = append(ObservableLevel(obj, prop))
 
 }
 
@@ -18,7 +18,8 @@ interface Level{
 }
 
 class ObservableLevel(
-    val obj: Observable
+    val obj: Observable,
+    val prop: KProperty<*>?
 ) : Level{
     override fun isObservable() = true
 

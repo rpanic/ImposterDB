@@ -60,6 +60,15 @@ fun main() {
         Person().apply { uuid = "asd" }
     }
 
+    obj.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
+        println("")
+    }
+
+    val trait3 = obj.trait //TODO Stehengeblieben: Remove necessity of doing that
+    obj.trait = Trait()
+    val trait2 = obj.trait
+    trait2.value = 1299
+
 //    obj.trait = Trait()
 
 //    val trait = obj.trait

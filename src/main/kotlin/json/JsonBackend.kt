@@ -22,11 +22,13 @@ open class JsonBackend : Backend {
 
     override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T {
 //        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>).find { it.key<K>() == pk }!!
+        println("loadByPk $pk $key ${clazz.simpleName} ")
         return load(key, clazz).find { it.key<K>() == pk }!!
     }
 
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {
 //        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>)
+        println("loadAll $key ${clazz.simpleName} ")
         return load(key, clazz)
     }
 
@@ -49,14 +51,20 @@ open class JsonBackend : Backend {
     }
 
     override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>) {
+        println("update ${obj.key<Any>()} ${prop.name} $key ${clazz.simpleName} ")
+        if(prop.name == "uuid"){
+            println("")
+        }
         save(key, clazz)
     }
 
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
+        println("delete $pk $key ${clazz.simpleName} ")
         save(key, clazz)
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
+        println("insert ${obj.key<Any>()} $key ${clazz.simpleName} ")
         save(key, clazz)
     }
 

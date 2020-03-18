@@ -30,16 +30,25 @@ class DetachedReadWriteProperty<T : Observable>(val observable : Observable, val
 
     protected open fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
         if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
+            val backends = (listOf(DB.primaryBackend) + DB.backends) //TODO Check if that gets executed correctly
+            backends.forEach {
+                it.insert(key, clazz, newValue) //Be careful that this will not be used in combination with ObservableArrayList
+            }
             DB.addBackendListener(newValue, key, newValue::class as KClass<T>)
         }
-        newValue.classListeners.map { it as ChangeListener<Any?> }.forEach { it(newValue::uuid, null, newValue.uuid, LevelInformation(listOf(ObservableLevel(newValue)))) }
+        //TODO Safely delete the new and old detached objects
+        // + When will unused objects be deleted? When theres no reference any more or when it gets removed from the list?
+        // + I guess the first options would be more compliant with the "consistent state" paradigm
+        newValue.classListeners.map { it as ChangeListener<Any?> }.forEach { it(newValue::uuid, null, newValue.uuid, LevelInformation(listOf(ObservableLevel(newValue, property)))) }
 //        TODO notify this@Observable about changes in the object (hookToObservable)
-        observable.changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(observable))))
+        //TODO Edit: Done?
+        observable.changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(observable, property))))
     }
 
     public override fun getValue(thisRef: Any?, property: KProperty<*>): T {
         if(!initialized){
             value = initializer(a)
+            observable.hookToObservable(value, property)
         }
         return value!!
     }
@@ -81,20 +90,3 @@ class DetachedReadWriteProperty<T : Observable>(val observable : Observable, val
         return pkInternal as? V
     }
 }
-
-//open class DetachedReadWriteProperty<T : Observable>(initializer: (DetachedReadWriteProperty<T>) -> T) : LazyObservableProperty<T>(initializer){
-//
-////    fun init() {
-////        initArg(this)
-////    }
-//
-//    fun <V> getPk() : V{
-//        return getValue().key()
-//    }
-//
-//    override fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?) {
-//        //TODO notify this@Observable about changes in the object (hookToObservable)
-////        obj.changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(obj))))
-//    }
-//
-//}

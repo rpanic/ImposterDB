@@ -5,7 +5,6 @@ import observable.*
 import java.lang.Exception
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
 
 object DB{
 
@@ -90,10 +89,9 @@ object DB{
 
     fun <T : Observable, K: Any> getDetached(key: String, pk: K, ignoreInit: Boolean = false, clazz: KClass<T>, init : () -> T) : T{
 
-        println("hallo")
         if(parsedObjects.containsKey(key to pk)){
-            val obj = parsedObjects[key to pk]//.find { it.key<K>() == pk }
-            println(obj!!::class.java.simpleName)
+            val obj = parsedObjects[key to pk]
+
             if(obj != null){
                 return obj as T
             }
@@ -106,8 +104,12 @@ object DB{
         if(read == null){
             if(ignoreInit)
                 throw IllegalAccessException("Couldn´t find key $key")
-            else
+            else {
                 read = init.invoke()
+                (listOf(primaryBackend) + backends).forEach {
+                    it.insert(key, clazz, read) //Be careful that this will not be used in combination with ObservableArrayList
+                }
+            }
         }
 
         addBackendListener(read, key, clazz)
@@ -127,20 +129,27 @@ object DB{
         }
     }
 
+    //Is for detached objects
     fun <T : Observable> addBackendListener(observable: T, key: String, clazz: KClass<T>){
         observable.addListener (DetachedBackendListener(observable, key, clazz))
 
-        parsed[key] = observableListOf(observable) //TODO Add to list
+        if(parsed.containsKey(key)){
+            (parsed[key]!! as ObservableArrayList<T>).add(observable)
+        }else{
+            parsed[key] = observableListOf(observable) //TODO Add to list
+        }
         parsedObjects[key to observable.key()] = observable
     }
 
     class DetachedBackendListener<T : Observable>(val observable: T, val key: String, val clazz: KClass<T>) : ChangeListener<Any?> {
         override fun invoke(prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation) {
             for (backend in listOf(primaryBackend) + backends){
-                backend.update(key, clazz, observable, prop)
-//                levels.list.any {
-//                    true
+//                levels.list
+//                if(prop is KProperty1<*, *>){
+//                    (prop as KProperty1<Any?, Any?>).getDelegate(observable) is DetachedReadWriteProperty<*>
 //                }
+
+                backend.update(key, clazz, observable, prop)
             }
         }
     }
@@ -157,9 +166,21 @@ object DB{
 
         val list = observableListOf(*lread!!.toTypedArray())
 
-        list.addListener { args,  levels -> //TODO Add Level stuff to Backend interface for incremental saves
+        list.addListener { args, levels -> //TODO Add Level stuff to Backend interface for incremental saves
             for (backend in listOf(primaryBackend) + backends){
-                performOnBackend(backend, key, T::class, args)
+                performListEventOnBackend(backend, key, T::class, args)
+            }
+
+            //Object is self aware, therefore should be responsible for updates, since that is not relevant for the list
+            if(args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set){
+                args.elements.forEach { obj ->
+                    obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
+                        (listOf(primaryBackend) + backends).forEach { backend ->
+                            backend.update(key, T::class, obj, prop)
+                        }
+                    }
+                }
+
             }
         }
 
@@ -172,7 +193,7 @@ object DB{
 
     }
 
-    fun <T : Observable> performOnBackend(backend: Backend, key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+    fun <T : Observable> performListEventOnBackend(backend: Backend, key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Add -> {
@@ -182,11 +203,12 @@ object DB{
                     if(args is SetListChangeArgs<T>){
                         backend.delete(key, clazz, args.replacedElements[i])
                         backend.insert(key, clazz, obj)
+                    }else{
+                        throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
                     }
                 }
                 ElementChangeType.Update -> {
                     if(args is UpdateListChangeArgs<T>) {
-                        //TODO Check if a property of the object is detached, and then ignore the event
                         backend.update(key, clazz, obj, args.prop)
                     }
                 }
