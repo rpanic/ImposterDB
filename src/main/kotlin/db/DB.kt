@@ -1,9 +1,11 @@
 package db
 
+import com.beust.klaxon.internal.firstNotNullResult
 import observable.*
 import java.lang.Exception
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 
 object DB{
 
@@ -97,21 +99,32 @@ object DB{
             }
         }
 
-        var read : T? = if(primaryBackend.keyExists(key)){
+        var read : T? = retrieveObjectIfKeyExists(key, clazz) {
             primaryBackend.loadByPK(key, pk, clazz)
-        }else null
+        }
 
         if(read == null){
             if(ignoreInit)
                 throw IllegalAccessException("Couldn´t find key $key")
             else
-               read = init.invoke()
+                read = init.invoke()
         }
 
         addBackendListener(read, key, clazz)
 
         return read
 
+    }
+
+    fun <T : Any, V : Observable> retrieveObjectIfKeyExists(key: String, clazz: KClass<V>, f: () -> T) : T?{
+        return (listOf(primaryBackend) + backends).firstNotNullResult { backend ->
+            if(backend.keyExists(key)){
+                f()
+            }else {
+                backend.createSchema(clazz)
+                null
+            }
+        }
     }
 
     fun <T : Observable> addBackendListener(observable: T, key: String, clazz: KClass<T>){
@@ -138,11 +151,9 @@ object DB{
             return parsed[key]!! as ObservableArrayList<T>
         }
 
-        val lread : List<T>? = if(primaryBackend.keyExists(key)){
+        val lread : List<T>? = retrieveObjectIfKeyExists(key, T::class) {
             primaryBackend.loadAll(key, T::class)
-        }else{
-            listOf()
-        }
+        } ?: listOf()
 
         val list = observableListOf(*lread!!.toTypedArray())
 
