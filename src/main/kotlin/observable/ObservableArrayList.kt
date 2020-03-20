@@ -110,3 +110,4 @@ class GenericChangeObserver <X : Observable> (t : X, val f: (KProperty<*>, Level
 }
 
 fun <X> observableListOf(vararg initial: X) = ObservableArrayList(*initial)
+fun <X> observableListOf(initial: List<X>) = ObservableArrayList(initial)

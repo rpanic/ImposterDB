@@ -13,7 +13,7 @@ interface Backend {
 
     fun <T : Observable> createSchema(clazz: KClass<T>)
 
-    fun <T : Observable, K> loadByPK (key: String, pk: K, clazz: KClass<T>) : T
+    fun <T : Observable, K> loadByPK (key: String, pk: K, clazz: KClass<T>) : T //TODO Make nullable
 
     fun <T : Observable> loadAll (key: String, clazz: KClass<T>) : List<T>
 

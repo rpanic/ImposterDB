@@ -28,7 +28,7 @@ class ListTest{
         val jsonBackend = JsonBackend()
         val file = jsonBackend.baseFile.resolve("exampleTest.json")
         file.delete()
-        DB.primaryBackend = jsonBackend
+        DB.addBackend(jsonBackend)
 
         val obj = DB.getDetached("exampleTest", "pk") {
             Person()
@@ -99,7 +99,7 @@ class ListTest{
     fun additionTest(){
 
         val jsonBackend = Mockito.mock(JsonBackend::class.java)
-        DB.primaryBackend = jsonBackend
+        DB.addBackend(jsonBackend)
 
         val list = DB.getDetachedList<TestObject>("test1")
 

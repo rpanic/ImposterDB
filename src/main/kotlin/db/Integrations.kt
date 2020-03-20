@@ -26,12 +26,11 @@ class DetachedReadWriteProperty<T : Observable>(val observable : Observable, val
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
 
-    protected /*open*/ fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T): Boolean = true
+    /*open*/ fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T): Boolean = true
 
-    protected open fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
+    private fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
         if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
-            val backends = (listOf(DB.primaryBackend) + DB.backends) //TODO Check if that gets executed correctly
-            backends.forEach {
+            DB.backendConnector.forEachBackend { //TODO Check if that gets executed correctly
                 it.insert(key, clazz, newValue) //Be careful that this will not be used in combination with ObservableArrayList
             }
             DB.addBackendListener(newValue, key, newValue::class as KClass<T>)

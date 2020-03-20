@@ -2,6 +2,7 @@ package test
 
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
+import db.Backend
 import db.ChangeObserver
 import db.DB
 import org.assertj.core.api.Assertions
@@ -12,8 +13,9 @@ class ImposterTest{
     @Test
     fun wrongParameterTest(){
 
-        DB.primaryBackend = mock()
-        whenever(DB.primaryBackend.loadByPK("test", "pk", TestObject::class)).thenReturn(TestObject())
+        val mockedBackend: Backend = mock()
+        DB.addBackend(mockedBackend)
+        whenever(mockedBackend.loadByPK("test", "pk", TestObject::class)).thenReturn(TestObject())
 
         val obj = DB.getDetached("test", "pk"){
             TestObject()
