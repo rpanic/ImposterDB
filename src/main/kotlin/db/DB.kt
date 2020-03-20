@@ -7,6 +7,8 @@ import observable.*
 import java.lang.Exception
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
+import kotlin.reflect.jvm.isAccessible
 
 object DB{
 
@@ -100,12 +102,23 @@ object DB{
     class DetachedBackendListener<T : Observable>(val observable: T, val key: String, val clazz: KClass<T>) : ChangeListener<Any?> {
         override fun invoke(prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation) {
             backendConnector.forEachBackend { backend ->
-//                levels.list
-//                if(prop is KProperty1<*, *>){
-//                    (prop as KProperty1<Any?, Any?>).getDelegate(observable) is DetachedReadWriteProperty<*>
-//                }
 
-                backend.update(key, clazz, observable, prop)
+                //Prevent events from detached Objects from triggering updates on parent
+                val pathClear = levels.list.none {
+                    if(it is ObservableLevel){
+                        if(it.prop is KProperty1<*, *>){
+                            val v = (it.prop as KProperty1<Any?, Any?>).apply { isAccessible = true }.getDelegate(it.obj)
+                            v is DetachedReadWriteProperty<*>
+                        }else{
+                            false //Is only the case for observable() Properties
+                        }
+                    }else{
+                        false
+                    }
+                }
+                if(pathClear){
+                    backend.update(key, clazz, observable, prop)
+                }
             }
         }
     }

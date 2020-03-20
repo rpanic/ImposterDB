@@ -13,7 +13,8 @@ inline fun <reified T : Observable> Observable.detached(key: String) : DetachedR
 fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClass<T>) : DetachedReadWriteProperty<T> {
     val property = DetachedReadWriteProperty<T>(obj, key, clazz){
         DB.getDetached(key, it.getPk(), true, clazz){
-            clazz.primaryConstructor!!.call()
+            throw IllegalAccessException("The detached Property has to be initialized before being accessed")
+//            clazz.primaryConstructor!!.call()
         }
         //TODO First try primaryBackend and then all others
     }
