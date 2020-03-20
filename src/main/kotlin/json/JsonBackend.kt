@@ -7,6 +7,7 @@ import db.Backend
 import db.DB
 import db.DetachedReadWriteProperty
 import observable.Observable
+import observable.observableListOf
 import java.io.File
 import java.io.FileReader
 import kotlin.reflect.KClass
@@ -23,7 +24,10 @@ open class JsonBackend : Backend {
     override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T {
 //        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>).find { it.key<K>() == pk }!!
         println("loadByPk $pk $key ${clazz.simpleName} ")
-        return load(key, clazz).find { it.key<K>() == pk }!!
+        val list = load(key, clazz)
+        DB.cache.putComplete(key, observableListOf(list))
+        return list.find { it.key<K>() == pk }!!
+    }
     }
 
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {
@@ -60,16 +64,26 @@ open class JsonBackend : Backend {
 
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
         println("delete $pk $key ${clazz.simpleName} ")
+        loadIfNotLoaded(key, clazz)
+        DB.cache.getComplete<T>(key)!!.removeAt(DB.cache.getComplete<T>(key)!!.indexOfFirst { it.key<K>() == pk })
         save(key, clazz)
+    }
+
+    fun <T : Observable> loadIfNotLoaded(key: String, clazz: KClass<T>){
+        if(!DB.cache.containsComplete(key)){
+            DB.cache.putComplete(key, observableListOf(loadAll(key, clazz)))
+        }
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
         println("insert ${obj.key<Any>()} $key ${clazz.simpleName} ")
+        loadIfNotLoaded(key, clazz)
+        DB.cache.getComplete<T>(key)!!.add(obj)
         save(key, clazz)
     }
 
     fun <T : Observable> save(key: String, clazz : KClass<T>) {
-        val list = DB.getCachedList<T>(key)
+        val list = DB.cache.getComplete<T>(key)
         val jsonString = klaxon.toJsonString(list!!.list())
         val json = klaxon.parseJsonArray(jsonString.reader()) as JsonArray<JsonObject>
 
