@@ -19,14 +19,6 @@ class UpdateListChangeArgs<T>(
         val prop: KProperty<*>
 ) : ListChangeArgs<T>(elementChangeType, elements, indizes)
 
-fun <T> getIndizesFromElements(list: List<T>, arrayList: ObservableList<T>) : List<Int>{
-    val indizes = mutableListOf<Int>()
-    arrayList.collection.forEachIndexed { index, t ->
-        if(t in list)
-            indizes += index
-    }
-    return indizes
-}
 
 class SetListChangeArgs<T>(
         elementChangeType: ElementChangeType,

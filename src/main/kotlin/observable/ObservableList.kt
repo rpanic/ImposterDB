@@ -65,7 +65,7 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IO
         if (element is Observable) {
             hooks.add(GenericChangeObserver(element) { prop, levels ->
                 //TODO Check, if element references and indizes are 1 to 1 in all ListChangeArgs, so element and indizes can be correlated. Like below
-                val indizes = getIndizesFromElements<T>(listOf(element), this)
+                val indizes = getIndizesFromElements(listOf(element))
                 signalChanged(UpdateListChangeArgs(ElementChangeType.Update, indizes.indices.map { element }, indizes, prop), levels) {}
             })
         }
@@ -79,8 +79,7 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IO
 
     fun list() = collection.toList()
 
-    override operator fun get(i: Int) = collection.get(i)
-
+    override operator fun get(i: Int) = collection[i]
 
     override fun contains(element: T): Boolean {
         return collection.contains(element)
@@ -98,31 +97,14 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IO
 
     override fun listIterator(index: Int) = collection.listIterator(index)
 
-//    lateinit var transform: (ObservableList<T>) -> ObservableList<S>
-
-//    fun <S> map(f: (T) -> S){
-//
-//        val next = ObservableList<S>()
-//
-//        val criteria = {type: ElementChangeType, t: T ->
-//            true
-//        }
-//
-//        addListener{ type, t ->
-//            if(criteria(type, t)){
-//                next.listeners.forEach { it(type, t) }
-//            }
-//        }
-//
-//        next.transform = {
-//            ObservableArrayList(it.map(f))
-//        }
-//
-//    }
-//
-//    fun forEach(f: (T) -> Unit){
-//
-//    }
+    fun getIndizesFromElements(list: List<T>) : List<Int>{
+        val indizes = mutableListOf<Int>()
+        this.collection.forEachIndexed { index, t ->
+            if(t in list)
+                indizes += index
+        }
+        return indizes
+    }
 
 
 }
