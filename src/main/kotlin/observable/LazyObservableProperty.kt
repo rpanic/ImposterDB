@@ -1,10 +1,10 @@
 package observable
 
-import db.DetachedReadWriteProperty
+import db.DetachedObjectReadWriteProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-abstract class LazyObservableProperty<T : Observable>(val initializer: (DetachedReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, T> {
+abstract class LazyObservableProperty<T : Observable>(val initializer: (DetachedObjectReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, T> {
 
     init {
         print(1)
@@ -30,9 +30,9 @@ abstract class LazyObservableProperty<T : Observable>(val initializer: (Detached
         afterChange(property, oldValue, value)
     }
 
-    private lateinit var a: DetachedReadWriteProperty<T>
+    private lateinit var a: DetachedObjectReadWriteProperty<T>
 
-    fun initArg(a: DetachedReadWriteProperty<T>){
+    fun initArg(a: DetachedObjectReadWriteProperty<T>){
         this.a = a
     }
 

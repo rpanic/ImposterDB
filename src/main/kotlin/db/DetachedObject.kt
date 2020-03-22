@@ -4,14 +4,13 @@ import observable.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.primaryConstructor
 
-inline fun <reified T : Observable> Observable.detached(key: String) : DetachedReadWriteProperty<T>{
+inline fun <reified T : Observable> Observable.detached(key: String) : DetachedObjectReadWriteProperty<T>{
     return detachedInternal(key, this, T::class)
 }
 
-fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClass<T>) : DetachedReadWriteProperty<T> {
-    val property = DetachedReadWriteProperty<T>(obj, key, clazz){
+fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClass<T>) : DetachedObjectReadWriteProperty<T> {
+    val property = DetachedObjectReadWriteProperty<T>(obj, key, clazz){
         DB.getDetached(key, it.getPk(), true, clazz){
             throw IllegalAccessException("The detached Property has to be initialized before being accessed")
 //            clazz.primaryConstructor!!.call()
@@ -22,7 +21,7 @@ fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClas
     return property
 }
 
-class DetachedReadWriteProperty<T : Observable>(val observable : Observable, val key: String, val clazz: KClass<T>, val initializer: (DetachedReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, T> {
+class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observable, val key: String, val clazz: KClass<T>, val initializer: (DetachedObjectReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, T> {
 
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
@@ -60,9 +59,9 @@ class DetachedReadWriteProperty<T : Observable>(val observable : Observable, val
         initialized = true
     }
 
-    private lateinit var a: DetachedReadWriteProperty<T>
+    private lateinit var a: DetachedObjectReadWriteProperty<T>
 
-    fun initArg(a: DetachedReadWriteProperty<T>){
+    fun initArg(a: DetachedObjectReadWriteProperty<T>){
         this.a = a
     }
 

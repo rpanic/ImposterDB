@@ -1,6 +1,5 @@
 package db
 
-import com.beust.klaxon.internal.firstNotNullResult
 import main.kotlin.connection.BackendConnector
 import main.kotlin.connection.ObjectCache
 import observable.*
@@ -108,7 +107,7 @@ object DB{
                     if(it is ObservableLevel){
                         if(it.prop is KProperty1<*, *>){
                             val v = (it.prop as KProperty1<Any?, Any?>).apply { isAccessible = true }.getDelegate(it.obj)
-                            v is DetachedReadWriteProperty<*>
+                            v is DetachedObjectReadWriteProperty<*>
                         }else{
                             false //Is only the case for observable() Properties
                         }

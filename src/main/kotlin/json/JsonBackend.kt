@@ -5,13 +5,12 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
 import db.Backend
 import db.DB
-import db.DetachedReadWriteProperty
+import db.DetachedObjectReadWriteProperty
 import observable.Observable
 import observable.observableListOf
 import java.io.File
 import java.io.FileReader
 import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
@@ -38,7 +37,7 @@ open class JsonBackend : Backend {
 
     fun <T : Observable> load(key: String, clazz: KClass<T>) : List<T> {
         val arr = klaxon.parseJsonArray(FileReader(this.baseFile.child("$key.json"))) as JsonArray<JsonObject>
-        val properties = findDelegatingProperties(clazz, DetachedReadWriteProperty::class)
+        val properties = findDelegatingProperties(clazz, DetachedObjectReadWriteProperty::class)
         val values = properties.map { arr.map { json -> json.string("uuid") to json.string(it.name).apply { json.remove(it.name) } } }
 
         val list = klaxon.parseFromJsonArray2(clazz, arr)
@@ -46,7 +45,7 @@ open class JsonBackend : Backend {
             val property = properties[i]
             propValues.forEach { pair ->
                 val observable = list.find { it.uuid == pair.first }!!
-                val delegate = property.getDelegate(observable) as DetachedReadWriteProperty<*>
+                val delegate = property.getDelegate(observable) as DetachedObjectReadWriteProperty<*>
                 delegate.setPk(pair.second)
             }
 
@@ -94,7 +93,7 @@ open class JsonBackend : Backend {
                 prop.isAccessible = true
                 val delegate = prop.getDelegate(obj)
                 if(delegate != null){
-                    if(delegate is DetachedReadWriteProperty<*>){
+                    if(delegate is DetachedObjectReadWriteProperty<*>){
                         if(delegate.isInitialized())
                             it.set(prop.name, (prop.get(obj) as Observable).uuid)
                         else if(delegate.getPkOrNull<String>() != null){
