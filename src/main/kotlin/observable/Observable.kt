@@ -2,6 +2,7 @@ package observable
 
 import com.beust.klaxon.Json
 import db.*
+import lazyCollections.Indexable
 import java.util.*
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
@@ -10,7 +11,7 @@ import kotlin.reflect.KProperty
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
-abstract class Observable{
+abstract class Observable : Indexable{
 
     @Json(ignored = true)
     @Ignored
@@ -56,7 +57,7 @@ abstract class Observable{
         classListeners.add(listener)
     }
 
-    open fun <T> key() : T{
+    override fun <T> key() : T{
         return uuid as T
     }
 

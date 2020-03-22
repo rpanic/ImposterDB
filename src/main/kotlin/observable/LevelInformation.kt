@@ -1,5 +1,6 @@
 package observable
 
+import lazyCollections.IObservableList
 import kotlin.reflect.KProperty
 
 class LevelInformation(val list: List<Level>){
@@ -13,7 +14,7 @@ class LevelInformation(val list: List<Level>){
 interface Level{
     fun isObservable() : Boolean
     fun getObservable() : Observable
-    fun getArrayList() : ObservableList<*> //TODO Check if ArrayList would be possible
+    fun getArrayList() : IObservableList<*> //TODO Check if ArrayList would be possible
 //    fun property() : KProperty<*>
 }
 
@@ -29,7 +30,7 @@ class ObservableLevel(
 }
 
 class ObservableListLevel(
-        val list: ObservableList<*>,
+        val list: IObservableList<*>,
         changeArgs: ListChangeArgs<*>
 ) : Level{
     override fun isObservable() = false

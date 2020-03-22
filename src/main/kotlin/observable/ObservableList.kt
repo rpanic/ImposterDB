@@ -2,6 +2,7 @@ package observable
 
 import com.beust.klaxon.Json
 import db.*
+import lazyCollections.IObservableList
 
 typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
 
@@ -9,7 +10,7 @@ enum class ElementChangeType {
     Add, Update, Remove, Set
 }
 
-open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, List<T> {
+open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IObservableList<T> {
     override fun subList(fromIndex: Int, toIndex: Int): List<T> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
