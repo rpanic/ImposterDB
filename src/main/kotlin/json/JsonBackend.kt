@@ -27,6 +27,9 @@ open class JsonBackend : Backend {
         DB.cache.putComplete(key, observableListOf(list))
         return list.find { it.key<K>() == pk }!!
     }
+
+    override fun <T : Observable, K> loadAllKeys(key: String): K {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {

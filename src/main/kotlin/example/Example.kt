@@ -54,37 +54,43 @@ class ExamplePersonObserver(t: Person) : ChangeObserver<Person>(t){
 fun main() {
 
 //    File(userdir().absolutePath + "/data/person.json").delete()
-    DB.primaryBackend = JsonBackend()
+    DB.addBackend(JsonBackend())
 
     val obj = DB.getDetached("person", "asd", false) {
+        println("Person init")
         Person().apply { uuid = "asd" }
     }
 
     obj.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
-        println("")
+        println("person listener")
     }
 
-    obj.trait = Trait()
+//    obj.trait = Trait()
     val trait2 = obj.trait
-    trait2.value = 1299
+
+    trait2.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
+        println("trait listener")
+    }
+
+    trait2.value = 1999
 
 //    obj.trait = Trait()
 
 //    val trait = obj.trait
 
-    println(obj.key<UUID>())
+//    println(obj.key<UUID>())
+//
+//    println(obj.trait.uuid)
+//
+//    val trait = obj.trait
 
-    println(obj.trait.uuid)
-
-    val trait = obj.trait
-
-    obj.description = "asd"
+//    obj.description = "asd"
 
 //    obj.trait = Trait()
 
-    obj.trait.value = 1337
+//    obj.trait.value = 1337
 
-    obj.name = "asdsadg"
+//    obj.name = "asdsadg"
 
 //    obj.trait.value = 13387
 

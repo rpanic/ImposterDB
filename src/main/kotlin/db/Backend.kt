@@ -15,6 +15,8 @@ interface Backend {
 
     fun <T : Observable, K> loadByPK (key: String, pk: K, clazz: KClass<T>) : T //TODO Make nullable
 
+    fun <T : Observable, K> loadAllKeys (key: String) : K
+
     fun <T : Observable> loadAll (key: String, clazz: KClass<T>) : List<T>
 
     fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>)
