@@ -17,7 +17,7 @@ fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClas
         }
         //TODO First try primaryBackend and then all others
     }
-    property.initArg(property)
+    property.initArg(property) //TODO Remove this reference, this could be used
     return property
 }
 
@@ -68,7 +68,7 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
     protected fun getValue() : T{
         if(!initialized){
             value = initializer(a)
-            println("Should not happen - LazyObservableProperty :: 41")
+            println("Should not happen - DetachedObject :: 41")
         }
         return value!!
     }
