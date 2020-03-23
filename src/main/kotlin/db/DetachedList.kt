@@ -1,21 +1,53 @@
 package db
 
 import lazyCollections.LazyObservableArrayList
+import observable.LazyObservableProperty
 import observable.Observable
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
-inline fun <reified T : Observable> Observable.detachedList(key: String) : DetachedObjectReadWriteProperty<T> {
-    return detachedList(key, T::class)
+inline fun <reified T : Observable> Observable.detachedList(key: String) : ReadWriteProperty<Any?, T> {
+    return detachedList(this, key, T::class)
 }
 
-fun <T : Observable> detachedList(key: String, clazz: KClass<T>) : DetachedObjectReadWriteProperty<T> {
+fun <T : Observable> detachedList(key: String, clazz: KClass<T>) : ReadWriteProperty<Any?, T> {
+    val prop = object : LazyObservableProperty<LazyObservableArrayList<T>>({
+
+    })
+    lazy {  }
+//    val list = LazyObservableArrayList()
+}
+
+typealias UninitializedLazyInitializer<T> = () -> T
+
+class UninitializedLazyReadWriteProperty<T>() : ReadWriteProperty<Any?, T> {
+
+    private var initializer: UninitializedLazyInitializer<T>? = null
+
+    private var initialized = false
+    private var obj: T? = null
+
+    fun setInitializer(initializer: UninitializedLazyInitializer<T>){
+        this.initializer = initializer
+    }
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        if(!initialized){
+            obj = initializer!!()
+            initializer = null
+        }
+        return obj!!
+    }
+
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
 }
 
-class DetachedListReadWriteProperty<T : Observable>(val observable : Observable, val key: String, val clazz: KClass<T>, val initializer: (DetachedListReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, LazyObservableArrayList<T>> {
-
+//class DetachedListReadWriteProperty<T : Observable>(val observable : Observable, val key: String, val clazz: KClass<T>, val initializer: (DetachedListReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, LazyObservableArrayList<T>> {
+//
 //    private var initialized = false
 //    private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
 //
@@ -81,4 +113,4 @@ class DetachedListReadWriteProperty<T : Observable>(val observable : Observable,
 //    fun <V> getPkOrNull() : V?{
 //        return pkInternal as? V
 //    }
-}
+//}

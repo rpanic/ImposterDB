@@ -6,10 +6,6 @@ import kotlin.reflect.KProperty
 
 abstract class LazyObservableProperty<T : Observable>(val initializer: (DetachedObjectReadWriteProperty<T>) -> T) : ReadWriteProperty<Any?, T> {
 
-    init {
-        print(1)
-    }
-
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
 
