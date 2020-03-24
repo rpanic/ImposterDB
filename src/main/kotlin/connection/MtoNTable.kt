@@ -1,5 +1,13 @@
 package connection
 
-import java.util.*
+import observable.Observable
 
-class MtoNEntry<M : Observable, N : Observable>(val m: M, val n: N)
+class MtoNTable(private val m: Any, private val n: Any) : Observable(){
+    fun <T> getMKey() : T{
+        return m as T
+    }
+
+    fun <T> getNey() : T{
+        return n as T
+    }
+}

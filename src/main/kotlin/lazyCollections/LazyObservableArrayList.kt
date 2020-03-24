@@ -5,7 +5,7 @@ import observable.*
 import java.lang.Exception
 import kotlin.reflect.KProperty
 
-class LazyObservableArrayList<X : Observable> : LazyObservableList<X> {
+class LazyObservableArrayList<X : Observable> : LazyObservableList<X>, IMutableObservableList<X> {
 
     constructor(vararg arr: ObjectReference<X>) : super(*arr)
     constructor(arr: List<ObjectReference<X>>) : super(arr)
@@ -23,21 +23,21 @@ class LazyObservableArrayList<X : Observable> : LazyObservableList<X> {
         return element
     }
 
-    fun add(element: X): Boolean {
+    override fun add(element: X): Boolean {
         addAndReturn(element)
         return true
     }
 
-    fun add(index: Int, element: X) {
+    override fun add(index: Int, element: X) {
         collection.add(index, ObjectReference(element))
         addActions(index, element)
     }
 
-    fun addAll(elements: Collection<X>): Boolean {
+    override fun addAll(elements: Collection<X>): Boolean {
         return addAll(size, elements)
     }
 
-    fun addAll(index: Int, elements: Collection<X>): Boolean {
+    override fun addAll(index: Int, elements: Collection<X>): Boolean {
         val added = collection.addAll(elements.map { ObjectReference(it) })
         if (added){
             elements.forEachIndexed { index2, it ->
@@ -51,7 +51,7 @@ class LazyObservableArrayList<X : Observable> : LazyObservableList<X> {
         return added
     }
 
-    fun remove(element: X) : Boolean{
+    override fun remove(element: X) : Boolean{
 
 //        val b = collection.remove(element)
         val indizes = collection.indices.filter { x -> collection[x].getObject() == element }
@@ -59,12 +59,12 @@ class LazyObservableArrayList<X : Observable> : LazyObservableList<X> {
         return removeAt(indizes)
     }
 
-    fun removeAll(elements: Collection<X>): Boolean {
+    override fun removeAll(elements: Collection<X>): Boolean {
         val indizes = collection.indices.filter { x -> collection[x].getObject() in elements }
         return removeAt(indizes)
     }
 
-    fun removeAt(index: Int): X {
+    override fun removeAt(index: Int): X {
         val x = collection[index]
         if(removeAt(listOf(index)))
             return x.getObject()
@@ -89,7 +89,7 @@ class LazyObservableArrayList<X : Observable> : LazyObservableList<X> {
 
     }
 
-    fun set(index: Int, element: X): X {
+    override fun set(index: Int, element: X): X {
         val old = collection.set(index, ObjectReference(element)).getObject()
         val args = SetListChangeArgs(ElementChangeType.Set, listOf(element), listOf(index), listOf(old))
         signalChanged(args){
@@ -98,8 +98,28 @@ class LazyObservableArrayList<X : Observable> : LazyObservableList<X> {
         return old
     }
 
-    fun clear() {
+    override fun clear() {
         removeAt(collection.indices.toList())
+    }
+
+    override fun iterator(): MutableIterator<X> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun listIterator(): MutableListIterator<X> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun listIterator(index: Int): MutableListIterator<X> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun subList(fromIndex: Int, toIndex: Int): MutableList<X> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun retainAll(elements: Collection<X>): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }
 

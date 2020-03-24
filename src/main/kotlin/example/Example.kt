@@ -4,6 +4,7 @@ import com.beust.klaxon.Json
 import db.*
 import json.JsonBackend
 import json.userdir
+import lazyCollections.LazyObservableArrayList
 import observable.LevelInformation
 import observable.Observable
 import observable.ObservableArrayList
@@ -18,7 +19,7 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
-//    var traits: ObservableArrayList<Trait> by observableList()
+    val traits by detachedList<Trait>("traits")
 
     @Json(ignored = true)
     var trait: Trait by detached<Trait>("trait")
@@ -73,6 +74,8 @@ fun main() {
     }
 
     trait2.value = 1999
+
+
 
 //    obj.trait = Trait()
 

@@ -1,14 +1,22 @@
 package main.kotlin.connection
 
 import com.beust.klaxon.internal.firstNotNullResult
+import connection.MtoNTable
 import db.Backend
 import db.DB
+import db.DetachedListReadOnlyProperty
+import db.DetachedObjectReadWriteProperty
+import example.findDelegatingProperties
+import lazyCollections.LazyObservableArrayList
 import observable.Observable
 import observable.ObservableArrayList
 import observable.observableListOf
+import java.lang.IllegalStateException
 import java.util.NoSuchElementException
 import kotlin.reflect.KClass
+import kotlin.reflect.full.memberProperties
 
+//<|°_°|>
 class BackendConnector (private val cache: ObjectCache){
 
     private val backends = mutableListOf<Backend>()
@@ -43,6 +51,42 @@ class BackendConnector (private val cache: ObjectCache){
 ////            backends.forEach { it.createSchema(clazz) }
 //            null
 //        }
+
+    }
+
+    fun <T : Observable> resolveRelations(key: String, clazz: KClass<T>, obj: T) = resolveRelations(key, clazz, listOf(obj))
+
+    //Only for loading purposes
+    fun <T : Observable> resolveRelations(key: String, clazz: KClass<T>, list: List<T>) {
+        val oneToNProperties = findDelegatingProperties(clazz, DetachedObjectReadWriteProperty::class)
+        val mToNProperties = findDelegatingProperties(clazz, DetachedListReadOnlyProperty::class)
+
+        //1 to n
+
+
+        //m to n
+        mToNProperties.forEach { prop ->
+            val name = listOf(key, prop.name)
+            val flip = 
+//                    .map { it.toLowerCase() }.sorted() //TODO Implement a way to configure the naming, probably by providing a "owner table" of a Relation Table or by defining an Order
+            val tablename = "${name[0].capitalize()}${name[1].capitalize()}"
+
+            val tabledata = loadList(key, MtoNTable::class)
+            list.forEach {
+                val delegate = prop.getDelegate(it)
+
+                val references =
+
+                if(delegate is DetachedListReadOnlyProperty<*>){
+
+                    delegate.setArgs(tablename, tabledata.)
+
+                }else{
+                    throw IllegalStateException("Should definitely not happen")
+                }
+            }
+
+        }
 
     }
 
