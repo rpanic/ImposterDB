@@ -122,6 +122,7 @@ object DB{
         }
     }
 
+    //Only for retrieving of "actual" lists, so for Tuples of T
     inline fun <reified T : Observable> getDetachedList(key: String) : ObservableArrayList<T> {
 
         val list = backendConnector.loadList(key, T::class) ?: throw java.lang.IllegalStateException("Collection with key $key could not be found in backends")
@@ -156,7 +157,7 @@ object DB{
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Add -> {
-                    backend.insert(key, clazz, obj)
+                    backend.insert(key, clazz, obj) //Check for duplicates, bc used references could be added
                 }
                 ElementChangeType.Set -> {
                     if(args is SetListChangeArgs<T>){

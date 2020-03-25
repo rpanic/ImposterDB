@@ -2,19 +2,16 @@ package main.kotlin.connection
 
 import com.beust.klaxon.internal.firstNotNullResult
 import connection.MtoNTable
+import connection.MtoNTableEntry
 import db.Backend
-import db.DB
 import db.DetachedListReadOnlyProperty
 import db.DetachedObjectReadWriteProperty
 import example.findDelegatingProperties
-import lazyCollections.LazyObservableArrayList
 import observable.Observable
 import observable.ObservableArrayList
 import observable.observableListOf
 import java.lang.IllegalStateException
-import java.util.NoSuchElementException
 import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
 //<|°_°|>
 class BackendConnector (private val cache: ObjectCache){
@@ -38,7 +35,11 @@ class BackendConnector (private val cache: ObjectCache){
 
         val read = BackendObjectRetriever<T>(backends, cache)
             .tryCache { getCachedObject(key, pk) }
-            .orBackends { it.loadByPK(key, pk, clazz) }
+            .orBackends {
+                val loaded = it.loadByPK(key, pk, clazz)
+                resolveRelations(key, clazz, loaded)
+                loaded
+            }
             .thenCache { cache.putObject(key, it) }
 
         return read
@@ -66,24 +67,29 @@ class BackendConnector (private val cache: ObjectCache){
 
         //m to n
         mToNProperties.forEach { prop ->
-            val name = listOf(key, prop.name)
-            val flip = 
-//                    .map { it.toLowerCase() }.sorted() //TODO Implement a way to configure the naming, probably by providing a "owner table" of a Relation Table or by defining an Order
-            val tablename = "${name[0].capitalize()}${name[1].capitalize()}"
 
-            val tabledata = loadList(key, MtoNTable::class)
-            list.forEach {
-                val delegate = prop.getDelegate(it)
+            if(list.isNotEmpty()) {
 
-                val references =
+                val firstDelegate = prop.getDelegate(list[0]) as DetachedListReadOnlyProperty<*>
+                val table = MtoNTable(key, firstDelegate.key)
 
-                if(delegate is DetachedListReadOnlyProperty<*>){
+                val tabledata = loadList(table.tableName(), MtoNTableEntry::class)!!
+                list.forEach { obj ->
+                    val delegate = prop.getDelegate(obj)
 
-                    delegate.setArgs(tablename, tabledata.)
+                    val references = tabledata
+                            .filter { (if (table.namesFlipped()) it.getNKey<Any>() else it.getMKey()) == obj.key<Any>() }
+                            .map { if (table.namesFlipped()) it.getMKey<Any>() else it.getNKey() }
 
-                }else{
-                    throw IllegalStateException("Should definitely not happen")
+                    if (delegate is DetachedListReadOnlyProperty<*>) {
+
+                        delegate.setArgs(table, references)
+
+                    } else {
+                        throw IllegalStateException("Should definitely not happen")
+                    }
                 }
+
             }
 
         }
@@ -96,9 +102,13 @@ class BackendConnector (private val cache: ObjectCache){
             return null
         }
 
-        val list = BackendObjectRetriever<ObservableArrayList<T>>(backends, cache)
+        return BackendObjectRetriever<ObservableArrayList<T>>(backends, cache)
                 .tryCache { getComplete(key) }
-                .orBackends { observableListOf(it.loadAll(key, clazz)) }
+                .orBackends {
+                    val loaded = observableListOf(it.loadAll(key, clazz))
+                    resolveRelations(key, clazz, loaded)
+                    loaded
+                }
                 .thenCache {
 
                     if(!containsComplete(key)) {
@@ -111,8 +121,6 @@ class BackendConnector (private val cache: ObjectCache){
                         }
                     }
                 }
-
-        return list
 
     }
 
