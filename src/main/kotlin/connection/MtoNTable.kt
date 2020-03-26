@@ -3,7 +3,7 @@ package connection
 import observable.Observable
 import observable.ObservableArrayList
 
-class MtoNTableEntry(private val m: Any, private val n: Any) : Observable(){
+class MtoNTableEntry(val m: Any, val n: Any) : Observable(){
     fun <T> getMKey() : T{
         return m as T
     }

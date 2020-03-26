@@ -35,6 +35,7 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IO
 
     protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
+        println("signalChanged: ${args.elementChangeType.name}")
         println("New size: $size")
 
         val action = object : RevertableAction {

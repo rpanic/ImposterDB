@@ -8,6 +8,7 @@ import kotlin.reflect.jvm.javaField
 
 fun <T : Observable, R : Any?, DELEGATE : Any> isPropertyDelegating(clazz: KClass<T>, prop: KProperty1<T, R>, delegatingTo: KClass<DELEGATE>): Boolean {
     val javaField = prop.javaField
+    //TODO Unit test this + maybe simplify, since a type equals might be enough
     return if (javaField != null && delegatingTo.java.isAssignableFrom(javaField.type)) {
         javaField.isAccessible = true // is private, have to open that up
         @Suppress("UNCHECKED_CAST")

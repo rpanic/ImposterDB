@@ -103,7 +103,7 @@ class LazyObservableArrayList<X : Observable> : LazyObservableList<X>, IMutableO
     }
 
     override fun iterator(): MutableIterator<X> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return collection.map { it.getObject() }.toMutableList().iterator() //TODO Really expensive, but used for JsonBackend
     }
 
     override fun listIterator(): MutableListIterator<X> {

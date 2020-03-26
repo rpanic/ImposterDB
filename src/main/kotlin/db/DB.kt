@@ -111,7 +111,10 @@ object DB{
                         }else{
                             false //Is only the case for observable() Properties
                         }
-                    }else{
+                    }else if(it is ObservableListLevel) {
+                        //TODO Exclude Detached Lists
+                        false
+                    } else {
                         false
                     }
                 }
@@ -130,17 +133,13 @@ object DB{
         if(list.listeners.size == 0){
 
             list.addListener { args, levels -> //TODO Add Level stuff to Backend interface for incremental saves
-                backendConnector.forEachBackend { backend ->
-                    performListEventOnBackend(backend, key, T::class, args)
-                }
+                performListEventOnBackend(key, T::class, args)
 
                 //Object is self aware, therefore should be responsible for updates, since that is not relevant for the list
                 if(args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set){
                     args.elements.forEach { obj ->
                         obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
-                            backendConnector.forEachBackend { backend ->
-                                backend.update(key, T::class, obj, prop)
-                            }
+                            backendConnector.update(key, obj, T::class, prop)
                         }
                     }
 
@@ -153,31 +152,35 @@ object DB{
 
     }
 
-    fun <T : Observable> performListEventOnBackend(backend: Backend, key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Add -> {
-                    backend.insert(key, clazz, obj) //Check for duplicates, bc used references could be added
+                    backendConnector.insert(key, obj, clazz) //Check for duplicates, bc used references could be added
                 }
                 ElementChangeType.Set -> {
                     if(args is SetListChangeArgs<T>){
-                        backend.delete(key, clazz, args.replacedElements[i])
-                        backend.insert(key, clazz, obj)
+                        backendConnector.delete(key, args.replacedElements[i], clazz)
+                        backendConnector.insert(key, obj, clazz)
                     }else{
                         throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
                     }
                 }
                 ElementChangeType.Update -> {
                     if(args is UpdateListChangeArgs<T>) {
-                        backend.update(key, clazz, obj, args.prop)
+                        backendConnector.update(key, obj, clazz, args.prop)
                     }
                 }
                 ElementChangeType.Remove -> {
-                    backend.delete(key, clazz, obj.key<Any>())
+                    backendConnector.delete(key, obj.key<Any>(), clazz)
                 }
             }
         }
 
+    }
+
+    operator fun plusAssign(b: Backend) {
+        addBackend(b)
     }
 
 //    inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T> {

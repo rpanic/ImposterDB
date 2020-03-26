@@ -12,6 +12,10 @@ import observable.ObservableArrayList
 import observable.observableListOf
 import java.lang.IllegalStateException
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 //<|°_°|>
 class BackendConnector (private val cache: ObjectCache){
@@ -63,7 +67,7 @@ class BackendConnector (private val cache: ObjectCache){
         val mToNProperties = findDelegatingProperties(clazz, DetachedListReadOnlyProperty::class)
 
         //1 to n
-
+        //TODO
 
         //m to n
         mToNProperties.forEach { prop ->
@@ -97,9 +101,23 @@ class BackendConnector (private val cache: ObjectCache){
     }
 
     fun <T : Observable> loadList(key: String, clazz: KClass<T>) : ObservableArrayList<T>?{
+
+        val thenCache: ObjectCache.(ObservableArrayList<T>) -> Unit = {
+            if(!containsComplete(key)) {
+            putComplete(key, it)
+
+            it.collection.forEach { obj ->
+                if (!this.containsObject(key, obj.key())) {
+                    this.putObject(key, obj)
+                }
+            }
+        }}
+
         if(backends.none { it.keyExists(key) }){
             forEachBackend { it.createSchema(clazz) }
-            return null
+            val list = observableListOf<T>()
+            thenCache(cache, list)
+            return list
         }
 
         return BackendObjectRetriever<ObservableArrayList<T>>(backends, cache)
@@ -109,26 +127,38 @@ class BackendConnector (private val cache: ObjectCache){
                     resolveRelations(key, clazz, loaded)
                     loaded
                 }
-                .thenCache {
-
-                    if(!containsComplete(key)) {
-                        putComplete(key, it)
-
-                        it.collection.forEach { obj ->
-                            if (!this.containsObject(key, obj.key())) {
-                                this.putObject(key, obj)
-                            }
-                        }
-                    }
-                }
+                .thenCache (thenCache)
 
     }
 
     fun <T : Observable> insert(key: String, obj: T, clazz: KClass<T>) {
-        backends.forEach {
+        //Add Table definition for new Objects which got constructed like T()
+        obj::class.memberProperties.forEach {
+            it.isAccessible = true
+            val delegate = ((it as? KProperty1<Any?, Any?>)?.getDelegate(obj) as? DetachedListReadOnlyProperty<*>)
+            if(delegate != null){
+                delegate.table = MtoNTable(key, delegate.key)
+                delegate.pks = listOf()
+            }
+        }
+
+        forEachBackend {
             it.insert(key, clazz, obj)
         }
         cache.putObject(key, obj)
+    }
+
+    fun <T : Observable> update(key: String, obj: T, clazz: KClass<T>, prop: KProperty<*>){
+        forEachBackend {
+            it.update(key, clazz, obj, prop)
+        }
+    }
+
+    fun <T : Observable, K : Any> delete(key: String, pk: K, clazz: KClass<T>){
+        forEachBackend {
+            it.delete(key, clazz, pk)
+        }
+        cache.removeObject(key, pk)
     }
 
     class BackendObjectRetriever <T : Any> (val backends : List<Backend>, val cache: ObjectCache){

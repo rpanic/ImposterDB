@@ -5,6 +5,7 @@ import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
 import db.Backend
 import db.DB
+import db.DetachedListReadOnlyProperty
 import db.DetachedObjectReadWriteProperty
 import observable.Observable
 import observable.observableListOf
@@ -67,12 +68,15 @@ open class JsonBackend : Backend {
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
         println("delete $pk $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
-        DB.cache.getComplete<T>(key)!!.removeAt(DB.cache.getComplete<T>(key)!!.indexOfFirst { it.key<K>() == pk })
-        save(key, clazz)
+//        DB.cache.getComplete<T>(key)!!.removeAt(DB.cache.getComplete<T>(key)!!.indexOfFirst { it.key<K>() == pk })
+        save(key, clazz){
+            toMutableList().apply { removeIf { it.key<T>() == pk }; Unit }
+        }
     }
 
+    //is used for JsonBackend to not overwrite data, since it saves the collection which is loaded atm, and does not really insert
     fun <T : Observable> loadIfNotLoaded(key: String, clazz: KClass<T>){
-        if(!DB.cache.containsComplete(key)){
+        if(keyExists(key) && !DB.cache.containsComplete(key)){
             DB.cache.putComplete(key, observableListOf(loadAll(key, clazz)))
         }
     }
@@ -80,13 +84,17 @@ open class JsonBackend : Backend {
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
         println("insert ${obj.key<Any>()} $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
-        DB.cache.getComplete<T>(key)!!.add(obj)
-        save(key, clazz)
+//        DB.cache.getComplete<T>(key)!!.add(obj)
+        save(key, clazz){
+            toMutableList().apply { add(obj) }
+        }
     }
 
-    fun <T : Observable> save(key: String, clazz : KClass<T>) {
-        val list = DB.cache.getComplete<T>(key)
-        val jsonString = klaxon.toJsonString(list!!.list())
+    fun <T : Observable> save(key: String, clazz : KClass<T>, operation: List<T>.() -> List<T> = { this }) {
+        val list = operation(DB.cache.getComplete<T>(key)?.list() ?: listOf())
+
+        //Worst line of kotlin ever
+        val jsonString = klaxon.toJsonString(list)
         val json = klaxon.parseJsonArray(jsonString.reader()) as JsonArray<JsonObject>
 
         json.forEach {

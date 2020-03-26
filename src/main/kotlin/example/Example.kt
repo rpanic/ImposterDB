@@ -19,10 +19,11 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
+    @Json(ignored = true)
     val traits by detachedList<Trait>("traits")
 
-    @Json(ignored = true)
-    var trait: Trait by detached<Trait>("trait")
+//    @Json(ignored = true)
+//    var trait: Trait by detached<Trait>("trait")
 
     //var trait: Trait by relation()
 
@@ -54,26 +55,37 @@ class ExamplePersonObserver(t: Person) : ChangeObserver<Person>(t){
 
 fun main() {
 
-//    File(userdir().absolutePath + "/data/person.json").delete()
-    DB.addBackend(JsonBackend())
+    userdir().resolve("data").listFiles()?.forEach { it.delete() }
+//    File(userdir().absolutePath + "/data/persons.json").delete()
+    DB += JsonBackend()
 
-    val obj = DB.getDetached("person", "asd", false) {
-        println("Person init")
-        Person().apply { uuid = "asd" }
-    }
+    val list = DB.getDetachedList<Person>("persons")
+    list.add(Person().apply { name = "Boi" })
 
-    obj.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
-        println("person listener")
-    }
+    list[0].traits.add(Trait().apply { value = 13 })
+//    list.add(Person())
+
+    //TODO Collect all the i.e. Traits in Complete List, so that no double references are there and to remove that hideous JsonBackend stuff
+
+    //TODO Test what happens if you add an existing Reference, if that gets added again or not
+
+//    val obj = DB.getDetached("person", "asd", false) {
+//        println("Person init")
+//        Person().apply { uuid = "asd" }
+//    }
+
+//    obj.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
+//        println("person listener")
+//    }
 
 //    obj.trait = Trait()
-    val trait2 = obj.trait
+//    val trait2 = obj.traitc
 
-    trait2.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
-        println("trait listener")
-    }
-
-    trait2.value = 1999
+//    trait2.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
+//        println("trait listener")
+//    }
+//
+//    trait2.value = 1999
 
 
 

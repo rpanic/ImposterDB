@@ -2,6 +2,7 @@ package main.kotlin.connection
 
 import observable.Observable
 import observable.ObservableArrayList
+import observable.ObservableList
 import java.lang.IllegalStateException
 
 class ObjectCache (){
@@ -28,6 +29,10 @@ class ObjectCache (){
         }
 
         parsedObjects[key]?.set(obj.key(), obj)
+    }
+
+    fun <K : Any> removeObject(key: String, pk: K) : Boolean{
+        return containsObject(key, pk) && parsedObjects[key]?.remove(pk) != null
     }
 
     fun <T : Observable> getComplete(key: String) : ObservableArrayList<T>?{
