@@ -156,21 +156,3 @@ class ListTest{
     }
 
 }
-
-open class X : L{
-    override fun x(x: String){
-        println(x)
-    }
-}
-
-interface L{
-    fun x(x: String)
-}
-
-class TestObject() : Observable(){
-    var testProperty: String by observable("")
-
-    constructor(s: String) : this(){
-        testProperty = s
-    }
-}
