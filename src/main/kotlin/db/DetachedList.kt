@@ -5,10 +5,7 @@ import connection.MtoNTableEntry
 import lazyCollections.LazyObservableArrayList
 import lazyCollections.LazyReadWriteProperty
 import lazyCollections.ObjectReference
-import observable.ElementChangeType
-import observable.Observable
-import observable.SetListChangeArgs
-import observable.UpdateListChangeArgs
+import observable.*
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -19,7 +16,12 @@ inline fun <reified T : Observable> Observable.detachedList(key: String) : Detac
 }
 
 fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass<T>) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
+
     return DetachedListReadOnlyProperty(key) { table, list ->
+        if(!DB.cache.containsComplete(table.tableName())){
+            DB.cache.putComplete(table.tableName(), observableListOf())
+        }
+
         val list = if(list.isEmpty()) {
             LazyObservableArrayList<T>()
         } else {
@@ -31,6 +33,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
                     DB.getDetached(table.tableName(), pk, clazz = clazz) { //TODO Cant be right
                         throw IllegalAccessException("Cant initialize missing M:N Reference Object\nMissing Object wih pk $pk which is referenced in Table ${table.tableName()}")
                     }
+                    //TODO Add to Complete Cache
                 }
             })
         }
@@ -41,55 +44,57 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
             //TODO Maybe not necessarily load Object when calling list.removeAt(1), since this is not really necessary.
             // Do this by changing the ChangeListener to give Objectreference instead of The Object itself
 
-            DB.backendConnector.forEachBackend {  backend ->
+            args.elements.forEachIndexed { i, obj ->
 
-                args.elements.forEachIndexed { i, obj ->
-
-                    var mnkeys = listOf(parentRef.key<Any>(), obj.key())
-                    if(table.namesFlipped()){
-                        mnkeys = mnkeys.reversed()
-                    }
-
-                    //Convenience functions
-                    val findEntry = { m: Any, n: Any ->
-                        table.tableData!!.find { it.getMKey<Any>() == m && it.getNKey<Any>() == n }!!
-                    }
-                    val createEntry = {
-                        MtoNTableEntry(mnkeys[0], mnkeys[1])
-                    }
-
-                    when(args.elementChangeType){
-
-                        ElementChangeType.Add -> {
-                            val entry = createEntry()
-                            backend.insert(table.tableName(), MtoNTableEntry::class, entry)
-                            DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.add(entry)
-                            //TODO Stehengeblieben: Doppelte Person
-                        }
-                        ElementChangeType.Set -> {
-                            if(args is SetListChangeArgs<T>){
-                                var deleteKeys = listOf(parentRef.key<Any>(), args.replacedElements[i].key<Any>())
-                                if(table.namesFlipped()){
-                                    deleteKeys = deleteKeys.reversed()
-                                }
-                                backend.delete(table.tableName(), MtoNTableEntry::class, findEntry(deleteKeys[0], deleteKeys[1]))
-                                backend.insert(table.tableName(), MtoNTableEntry::class, createEntry())
-                            }else{
-                                throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
-                            }
-                        }
-                        //Updates are ignored since it has no effect on the relation table
-
-                        ElementChangeType.Remove -> {
-                            backend.delete(table.tableName(), MtoNTableEntry::class, findEntry(mnkeys[0], mnkeys[1]).key<Any>())
-                        }
-                    }
+                var mnkeys = listOf(parentRef.key<Any>(), obj.key())
+                if(table.namesFlipped()){
+                    mnkeys = mnkeys.reversed()
                 }
 
-                //After relation table remove operations because of constraints
-                //TODO Split up: Add before, remove after
-                DB.performListEventOnBackend(table.child(), clazz, args)
+                //Convenience functions
+                val findEntry = { m: Any, n: Any ->
+                    table.tableData!!.find { it.getMKey<Any>() == m && it.getNKey<Any>() == n }!!
+                }
+                val createEntry = {
+                    MtoNTableEntry(mnkeys[0], mnkeys[1])
+                }
+
+                when(args.elementChangeType){
+
+                    ElementChangeType.Add -> {
+                        val entry = createEntry()
+                        DB.backendConnector.insert(table.tableName(), entry, MtoNTableEntry::class)
+//                        DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.add(entry)
+                    }
+                    ElementChangeType.Set -> {
+                        if(args is SetListChangeArgs<T>){
+                            var deleteKeys = listOf(parentRef.key<Any>(), args.replacedElements[i].key<Any>())
+                            if(table.namesFlipped()){
+                                deleteKeys = deleteKeys.reversed()
+                            }
+                            DB.backendConnector.delete(table.tableName(), findEntry(deleteKeys[0], deleteKeys[1]), MtoNTableEntry::class)
+//                                DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.remove(it)
+
+                            DB.backendConnector.insert(table.tableName(), createEntry(), MtoNTableEntry::class)
+//                                DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.add(it)
+
+                        }else{
+                            throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
+                        }
+                    }
+                    //Updates are ignored since it has no effect on the relation table
+
+                    ElementChangeType.Remove -> {
+                        DB.backendConnector.delete(table.tableName(), findEntry(mnkeys[0], mnkeys[1]).key<Any>(), MtoNTableEntry::class)
+//                            DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.remove(it)
+
+                    }
+                }
             }
+
+            //After relation table remove operations because of constraints
+            //TODO Split up: Add before, remove after
+            DB.performListEventOnBackend(table.child(), clazz, args)
         }
 
         list

@@ -91,7 +91,7 @@ open class JsonBackend : Backend {
     }
 
     fun <T : Observable> save(key: String, clazz : KClass<T>, operation: List<T>.() -> List<T> = { this }) {
-        val list = operation(DB.cache.getComplete<T>(key)?.list() ?: listOf())
+        val list = operation(DB.cache.getComplete<T>(key)?.list() ?: listOf()).distinctBy { it.uuid }
 
         //Worst line of kotlin ever
         val jsonString = klaxon.toJsonString(list)

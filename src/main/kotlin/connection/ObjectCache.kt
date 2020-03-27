@@ -5,6 +5,9 @@ import observable.ObservableArrayList
 import observable.ObservableList
 import java.lang.IllegalStateException
 
+/**
+ * Objects generally get added to the cache after all Backend and Imposter Operations are successful, except when adding to a Complete List retrieved by DB.getDetached()
+ */
 class ObjectCache (){
 
     val completeCollections = mutableMapOf<String, ObservableArrayList<*>>()
