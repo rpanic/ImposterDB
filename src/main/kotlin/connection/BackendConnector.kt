@@ -142,10 +142,12 @@ class BackendConnector (private val cache: ObjectCache){
             }
         }
 
-        forEachBackend {
-            it.insert(key, clazz, obj)
+        if(!cache.containsObject(key, obj.key())) { //Since all Objects which can be inserted have to be loaded and therefore put into the cache, this Check is sufficient
+            forEachBackend {
+                it.insert(key, clazz, obj)
+            }
+            cache.putObject(key, obj)
         }
-        cache.putObject(key, obj)
     }
 
     fun <T : Observable> update(key: String, obj: T, clazz: KClass<T>, prop: KProperty<*>){
@@ -155,6 +157,7 @@ class BackendConnector (private val cache: ObjectCache){
     }
 
     fun <T : Observable, K : Any> delete(key: String, pk: K, clazz: KClass<T>){
+        //TODO Think about how to handle deletes
         forEachBackend {
             it.delete(key, clazz, pk)
         }
