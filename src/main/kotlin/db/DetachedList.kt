@@ -57,7 +57,8 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
 
                 //Convenience functions
                 val findEntry = { m: Any, n: Any ->
-                    table.tableData!!.find { it.getMKey<Any>() == m && it.getNKey<Any>() == n }!!
+                    println(list)
+                    DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.find { it.getMKey<Any>() == m && it.getNKey<Any>() == n }!!
                 }
                 val createEntry = {
                     MtoNTableEntry(mnkeys[0], mnkeys[1])

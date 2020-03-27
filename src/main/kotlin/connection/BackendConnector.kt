@@ -41,7 +41,9 @@ class BackendConnector (private val cache: ObjectCache){
             .tryCache { getCachedObject(key, pk) }
             .orBackends {
                 val loaded = it.loadByPK(key, pk, clazz)
-                resolveRelations(key, clazz, loaded)
+                if(loaded != null) {
+                    resolveRelations(key, clazz, loaded)
+                }
                 loaded
             }
             .thenCache { cache.putObject(key, it) }

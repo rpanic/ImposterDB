@@ -21,12 +21,10 @@ open class JsonBackend : Backend {
     override fun <T : Observable> createSchema(clazz: KClass<T>) {
     }
 
-    override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T {
-//        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>).find { it.key<K>() == pk }!!
+    override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
         println("loadByPk $pk $key ${clazz.simpleName} ")
         val list = load(key, clazz)
-        DB.cache.putComplete(key, observableListOf(list))
-        return list.find { it.key<K>() == pk }!!
+        return list.find { it.key<K>() == pk } //TODO For validation "!!"
     }
 
     override fun <T : Observable, K> loadAllKeys(key: String): K {
@@ -34,7 +32,6 @@ open class JsonBackend : Backend {
     }
 
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {
-//        return klaxon.parseFromJsonArray2(clazz, klaxon.parser(clazz).parse(FileReader(this.baseFile.child("$key.json"))) as JsonArray<*>)
         println("loadAll $key ${clazz.simpleName} ")
         return load(key, clazz)
     }
@@ -68,9 +65,8 @@ open class JsonBackend : Backend {
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
         println("delete $pk $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
-//        DB.cache.getComplete<T>(key)!!.removeAt(DB.cache.getComplete<T>(key)!!.indexOfFirst { it.key<K>() == pk })
         save(key, clazz){
-            toMutableList().apply { removeIf { it.key<T>() == pk }; Unit }
+            toMutableList().apply { removeIf { it.key<K>() == pk }; Unit }
         }
     }
 
@@ -93,7 +89,6 @@ open class JsonBackend : Backend {
     fun <T : Observable> save(key: String, clazz : KClass<T>, operation: List<T>.() -> List<T> = { this }) {
         val list = operation(DB.cache.getComplete<T>(key)?.list() ?: listOf()).distinctBy { it.uuid }
 
-        //Worst line of kotlin ever
         val jsonString = klaxon.toJsonString(list)
         val json = klaxon.parseJsonArray(jsonString.reader()) as JsonArray<JsonObject>
 

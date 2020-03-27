@@ -60,10 +60,8 @@ fun main() {
     DB += JsonBackend()
 
     val list = DB.getDetachedList<Person>("persons")
-    println(list[0].traits[0])
-    println(list[1].traits[0])
-    println()
 
+    //Test2: Remove Relation
     list[0].traits.removeAt(1)
 
 //    list[0].traits.add(Trait().apply { value = 100 })
