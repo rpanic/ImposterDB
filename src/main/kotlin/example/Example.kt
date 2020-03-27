@@ -22,8 +22,8 @@ class Person : Observable(){
     @Json(ignored = true)
     val traits by detachedList<Trait>("traits")
 
-//    @Json(ignored = true)
-//    var trait: Trait by detached<Trait>("trait")
+    @Json(ignored = true)
+    var trait: Trait by detached<Trait>("trait")
 
     //var trait: Trait by relation()
 
@@ -55,18 +55,28 @@ class ExamplePersonObserver(t: Person) : ChangeObserver<Person>(t){
 
 fun main() {
 
-    userdir().resolve("data").listFiles()?.forEach { it.delete() }
+//    userdir().resolve("data").listFiles()?.forEach { it.delete() }
 //    File(userdir().absolutePath + "/data/persons.json").delete()
     DB += JsonBackend()
 
     val list = DB.getDetachedList<Person>("persons")
-    list.add(Person().apply { name = "Boi" })
-    list.add(Person().apply { name = "Girl" })
+    println(list[0].traits[0])
+    println(list[1].traits[0])
+    println()
 
-    val trait = Trait().apply { value = 13 }
+    list[0].traits.removeAt(1)
 
-    list[0].traits.add(trait)
-    list[1].traits.add(trait)
+//    list[0].traits.add(Trait().apply { value = 100 })
+
+    //Test: 1 Trait and 2 Persons
+
+//    list.add(Person().apply { name = "Boi" })
+//    list.add(Person().apply { name = "Girl" })
+//
+//    val trait = Trait().apply { value = 13 }
+//
+//    list[0].traits.add(trait)
+//    list[1].traits.add(trait)
 //    list.add(Person())
 
     //TODO Collect all the i.e. Traits in Complete List, so that no double references are there and to remove that hideous JsonBackend stuff

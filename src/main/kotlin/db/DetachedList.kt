@@ -26,11 +26,15 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
             LazyObservableArrayList<T>()
         } else {
 
-            LazyObservableArrayList<T>(list.map { key ->
+            LazyObservableArrayList<T>(list.map { mappingPK ->
 
-                ObjectReference(key) { pk ->
+                ObjectReference(mappingPK) { pk ->
 
-                    DB.getDetached(table.tableName(), pk, clazz = clazz) { //TODO Cant be right
+//                    val mapping = DB.getDetached(table.tableName(), pk, clazz = MtoNTableEntry::class) { //TODO Cant be right
+//                        //This will actually never happen
+//                        throw IllegalAccessException("Cant initialize missing M:N Reference Object\nMissing Reference with uuid $pk which should be in Table ${table.tableName()}")
+//                    }
+                    DB.getDetached(key, pk, clazz = clazz) {
                         throw IllegalAccessException("Cant initialize missing M:N Reference Object\nMissing Object wih pk $pk which is referenced in Table ${table.tableName()}")
                     }
                     //TODO Add to Complete Cache
