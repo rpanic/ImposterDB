@@ -18,8 +18,9 @@ inline fun <reified T : Observable> Observable.detachedList(key: String) : Detac
 fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass<T>) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
 
     return DetachedListReadOnlyProperty(key) { table, list ->
-        if(!DB.cache.containsComplete(table.tableName())){
-            DB.cache.putComplete(table.tableName(), observableListOf())
+        val db = parent.getDB()
+        if(!db.cache.containsComplete(table.tableName())){
+            db.cache.putComplete(table.tableName(), observableListOf())
         }
 
         val list = if(list.isEmpty()) {
@@ -34,7 +35,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
 //                        //This will actually never happen
 //                        throw IllegalAccessException("Cant initialize missing M:N Reference Object\nMissing Reference with uuid $pk which should be in Table ${table.tableName()}")
 //                    }
-                    DB.getDetached(key, pk, clazz = clazz) {
+                    db.getDetached(key, pk, clazz = clazz) {
                         throw IllegalAccessException("Cant initialize missing M:N Reference Object\nMissing Object wih pk $pk which is referenced in Table ${table.tableName()}")
                     }
                     //TODO Add to Complete Cache
@@ -58,7 +59,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
                 //Convenience functions
                 val findEntry = { m: Any, n: Any ->
                     println(list)
-                    DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.find { it.getMKey<Any>() == m && it.getNKey<Any>() == n }!!
+                    db.cache.getComplete<MtoNTableEntry>(table.tableName())!!.find { it.getMKey<Any>() == m && it.getNKey<Any>() == n }!!
                 }
                 val createEntry = {
                     MtoNTableEntry(mnkeys[0], mnkeys[1])
@@ -68,8 +69,8 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
 
                     ElementChangeType.Add -> {
                         val entry = createEntry()
-                        DB.backendConnector.insert(table.tableName(), entry, MtoNTableEntry::class)
-                        DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.add(entry)
+                        db.backendConnector.insert(table.tableName(), entry, MtoNTableEntry::class)
+                        db.cache.getComplete<MtoNTableEntry>(table.tableName())!!.add(entry)
                     }
                     ElementChangeType.Set -> {
                         if(args is SetListChangeArgs<T>){
@@ -78,12 +79,12 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
                                 deleteKeys = deleteKeys.reversed()
                             }
                             val deleteEntry = findEntry(deleteKeys[0], deleteKeys[1])
-                            DB.backendConnector.delete(table.tableName(), deleteEntry.key(), MtoNTableEntry::class)
-                            DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.remove(deleteEntry)
+                            db.backendConnector.delete(table.tableName(), deleteEntry.key(), MtoNTableEntry::class)
+                            db.cache.getComplete<MtoNTableEntry>(table.tableName())!!.remove(deleteEntry)
 
                             val insertEntry = createEntry()
-                            DB.backendConnector.insert(table.tableName(), insertEntry, MtoNTableEntry::class)
-                            DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.add(insertEntry)
+                            db.backendConnector.insert(table.tableName(), insertEntry, MtoNTableEntry::class)
+                            db.cache.getComplete<MtoNTableEntry>(table.tableName())!!.add(insertEntry)
 
                         }else{
                             throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
@@ -93,8 +94,8 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
 
                     ElementChangeType.Remove -> {
                         val removeEntry = findEntry(mnkeys[0], mnkeys[1])
-                        DB.backendConnector.delete(table.tableName(), removeEntry.key<Any>(), MtoNTableEntry::class)
-                        DB.cache.getComplete<MtoNTableEntry>(table.tableName())!!.remove(removeEntry)
+                        db.backendConnector.delete(table.tableName(), removeEntry.key<Any>(), MtoNTableEntry::class)
+                        db.cache.getComplete<MtoNTableEntry>(table.tableName())!!.remove(removeEntry)
 
                     }
                 }
@@ -102,7 +103,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
 
             //After relation table remove operations because of constraints
             //TODO Split up: Add before, remove after
-            DB.performListEventOnBackend(table.child(), clazz, args)
+            db.performListEventOnBackend(table.child(), clazz, args)
         }
 
         list

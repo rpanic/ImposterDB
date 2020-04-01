@@ -4,6 +4,7 @@ import com.beust.klaxon.internal.firstNotNullResult
 import connection.MtoNTable
 import connection.MtoNTableEntry
 import db.Backend
+import db.DB
 import db.DetachedListReadOnlyProperty
 import db.DetachedObjectReadWriteProperty
 import example.findDelegatingProperties
@@ -18,7 +19,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
 //<|°_°|>
-class BackendConnector (private val cache: ObjectCache){
+class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
     private val backends = mutableListOf<Backend>()
 
@@ -126,6 +127,8 @@ class BackendConnector (private val cache: ObjectCache){
                 .tryCache { getComplete(key) }
                 .orBackends {
                     val loaded = observableListOf(it.loadAll(key, clazz))
+                    loaded.setDbReference(db)
+                    loaded.collection.forEach { item -> item.setDbReference(db) }
                     resolveRelations(key, clazz, loaded)
                     loaded
                 }

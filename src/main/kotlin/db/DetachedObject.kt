@@ -6,12 +6,12 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 inline fun <reified T : Observable> Observable.detached(key: String) : DetachedObjectReadWriteProperty<T>{
-    return detachedInternal(key, this, T::class)
+    return detachedInternal(this, key, T::class)
 }
 
-fun <T : Observable> detachedInternal(key: String, obj: Observable, clazz: KClass<T>) : DetachedObjectReadWriteProperty<T> {
+fun <T : Observable> detachedInternal(obj: Observable, key: String, clazz: KClass<T>) : DetachedObjectReadWriteProperty<T> {
     val property = DetachedObjectReadWriteProperty<T>(obj, key, clazz){
-        DB.getDetached(key, it.getPk(), true, clazz){
+        obj.getDB().getDetached(key, it.getPk(), true, clazz){
             throw IllegalAccessException("The detached Property has to be initialized before being accessed")
 //            clazz.primaryConstructor!!.call()
         }
@@ -30,10 +30,10 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
 
     private fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
         if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
-            DB.backendConnector.forEachBackend { //TODO Check if that gets executed correctly
+            observable.getDB().backendConnector.forEachBackend { //TODO Check if that gets executed correctly
                 it.insert(key, clazz, newValue) //Be careful that this will not be used in combination with ObservableArrayList
             }
-            DB.addBackendListener(newValue, key, newValue::class as KClass<T>)
+            observable.getDB().addBackendListener(newValue, key, newValue::class as KClass<T>)
         }
         //TODO Safely delete the new and old detached objects
         // + When will unused objects be deleted? When theres no reference any more or when it gets removed from the list?

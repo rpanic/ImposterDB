@@ -3,10 +3,7 @@ package json
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import db.Backend
-import db.DB
-import db.DetachedListReadOnlyProperty
-import db.DetachedObjectReadWriteProperty
+import db.*
 import observable.Observable
 import observable.observableListOf
 import java.io.File
@@ -16,7 +13,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
-open class JsonBackend : Backend {
+open class JsonBackend : DBBackend() {
 
     override fun <T : Observable> createSchema(clazz: KClass<T>) {
     }
@@ -72,8 +69,8 @@ open class JsonBackend : Backend {
 
     //is used for JsonBackend to not overwrite data, since it saves the collection which is loaded atm, and does not really insert
     fun <T : Observable> loadIfNotLoaded(key: String, clazz: KClass<T>){
-        if(keyExists(key) && !DB.cache.containsComplete(key)){
-            DB.cache.putComplete(key, observableListOf(loadAll(key, clazz)))
+        if(keyExists(key) && !getDB().cache.containsComplete(key)){
+            getDB().cache.putComplete(key, observableListOf(loadAll(key, clazz)))
         }
     }
 
@@ -87,7 +84,7 @@ open class JsonBackend : Backend {
     }
 
     fun <T : Observable> save(key: String, clazz : KClass<T>, operation: List<T>.() -> List<T> = { this }) {
-        val list = operation(DB.cache.getComplete<T>(key)?.list() ?: listOf()).distinctBy { it.uuid }
+        val list = operation(getDB().cache.getComplete<T>(key)?.list() ?: listOf()).distinctBy { it.uuid }
 
         val jsonString = klaxon.toJsonString(list)
         val json = klaxon.parseJsonArray(jsonString.reader()) as JsonArray<JsonObject>

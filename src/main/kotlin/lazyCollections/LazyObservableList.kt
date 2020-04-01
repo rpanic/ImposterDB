@@ -35,6 +35,11 @@ open class LazyObservableList<T : Observable> : AbstractObservable<ElementChange
 
         val action = object : RevertableAction {
             override fun action() {
+                if(db != null) {//Db is null when addAll() is called in the constructor
+                    if (args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set) {
+                        args.elements.forEach { it.setDbReference(getDB()) }
+                    }
+                }
                 listeners.forEach { it.invoke(args, levels) }
             }
 
@@ -44,8 +49,8 @@ open class LazyObservableList<T : Observable> : AbstractObservable<ElementChange
 
         }
 
-        if (DB.txActive) {
-            DB.txQueue.add(action)
+        if (db != null && getDB().txActive) {
+            getDB().txQueue.add(action)
         } else {
             action.action()
         }

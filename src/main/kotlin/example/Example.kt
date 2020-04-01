@@ -57,9 +57,10 @@ fun main() {
 
 //    userdir().resolve("data").listFiles()?.forEach { it.delete() }
 //    File(userdir().absolutePath + "/data/persons.json").delete()
-    DB += JsonBackend()
+    val db = DB()
+    db += JsonBackend()
 
-    val list = DB.getDetachedList<Person>("persons")
+    val list = db.getDetachedList<Person>("persons")
 
     //Test2: Remove Relation
     list[0].traits.removeAt(1)

@@ -11,7 +11,7 @@ import kotlin.reflect.KProperty
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
-abstract class Observable : Indexable{
+abstract class Observable : DBAwareObject(), Indexable{
 
     @Json(ignored = true)
     @Ignored
@@ -38,8 +38,8 @@ abstract class Observable : Indexable{
             }
         }
 
-        if(DB.txActive){
-            DB.txQueue.add(action)
+        if(db != null && getDB().txActive){
+            getDB().txQueue.add(action)
         }else{
             action.action()
         }
