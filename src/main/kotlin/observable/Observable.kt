@@ -38,7 +38,7 @@ abstract class Observable : DBAwareObject(), Indexable{
             }
         }
 
-        if(getDB().txActive){
+        if(db != null && getDB().txActive){
             getDB().txQueue.add(action)
         }else{
             action.action()

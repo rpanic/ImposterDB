@@ -13,7 +13,7 @@ class DB{
 
     val cache = ObjectCache()
 
-    val backendConnector = BackendConnector(cache)
+    val backendConnector = BackendConnector(cache, this)
 
     var txActive = false
 
@@ -152,8 +152,6 @@ class DB{
             }
 
         }
-
-        list.setDbReference(this)
 
         return list
 

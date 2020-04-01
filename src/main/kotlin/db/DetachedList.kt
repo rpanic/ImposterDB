@@ -17,9 +17,8 @@ inline fun <reified T : Observable> Observable.detachedList(key: String) : Detac
 
 fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass<T>) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
 
-    val db = parent.getDB()
-
     return DetachedListReadOnlyProperty(key) { table, list ->
+        val db = parent.getDB()
         if(!db.cache.containsComplete(table.tableName())){
             db.cache.putComplete(table.tableName(), observableListOf())
         }

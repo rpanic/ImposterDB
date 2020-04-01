@@ -49,7 +49,7 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IO
 
         }
 
-        if (getDB().txActive) {
+        if (db != null && getDB().txActive) {
             getDB().txQueue.add(action)
         } else {
             action.action()
