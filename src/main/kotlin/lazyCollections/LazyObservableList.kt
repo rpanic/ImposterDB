@@ -44,8 +44,8 @@ open class LazyObservableList<T : Observable> : AbstractObservable<ElementChange
 
         }
 
-        if (DB.txActive) {
-            DB.txQueue.add(action)
+        if (getDB().txActive) {
+            getDB().txQueue.add(action)
         } else {
             action.action()
         }

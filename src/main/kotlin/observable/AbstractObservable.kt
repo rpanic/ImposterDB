@@ -9,7 +9,7 @@ interface IAbstractObservable<T : Any?>{
     }
 }
 
-abstract class AbstractObservable<T : Any?> : IAbstractObservable<T>{
+abstract class AbstractObservable<T : Any?> : DBAwareObject(), IAbstractObservable<T>{
 
     @Json(ignored = true)
     @Ignored

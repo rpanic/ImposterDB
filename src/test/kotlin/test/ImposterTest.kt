@@ -14,10 +14,11 @@ class ImposterTest{
     fun wrongParameterTest(){
 
         val mockedBackend: Backend = mock()
-        DB.addBackend(mockedBackend)
+        val db = DB()
+        db.addBackend(mockedBackend)
         whenever(mockedBackend.loadByPK("test", "pk", TestObject::class)).thenReturn(TestObject())
 
-        val obj = DB.getDetached("test", "pk"){
+        val obj = db.getDetached("test", "pk"){
             TestObject()
         }
 

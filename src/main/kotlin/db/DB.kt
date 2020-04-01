@@ -9,7 +9,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.jvm.isAccessible
 
-object DB{
+class DB{
 
     val cache = ObjectCache()
 
@@ -20,6 +20,9 @@ object DB{
     val txQueue = mutableListOf<RevertableAction>()
 
     fun addBackend(backend: Backend){
+        if(backend is DBBackend){
+            backend.setDbReference(this)
+        }
         backendConnector.addBackend(backend)
     }
 
@@ -89,18 +92,20 @@ object DB{
 
         addBackendListener(read, key, clazz)
 
+        read.setDbReference(this)
+
         return read
 
     }
 
     //Is for detached objects
     fun <T : Observable> addBackendListener(observable: T, key: String, clazz: KClass<T>){
-        observable.addListener (DetachedBackendListener(observable, key, clazz))
+        observable.addListener (DetachedBackendListener(this, observable, key, clazz))
     }
 
-    class DetachedBackendListener<T : Observable>(val observable: T, val key: String, val clazz: KClass<T>) : ChangeListener<Any?> {
+    class DetachedBackendListener<T : Observable>(val db: DB, val observable: T, val key: String, val clazz: KClass<T>) : ChangeListener<Any?> {
         override fun invoke(prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation) {
-            backendConnector.forEachBackend { backend ->
+            db.backendConnector.forEachBackend { backend ->
 
                 //Prevent events from detached Objects from triggering updates on parent
                 val pathClear = levels.list.none {
@@ -147,6 +152,8 @@ object DB{
             }
 
         }
+
+        list.setDbReference(this)
 
         return list
 

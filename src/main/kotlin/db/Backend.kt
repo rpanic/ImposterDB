@@ -1,5 +1,6 @@
 package db
 
+import observable.DBAwareObject
 import observable.Observable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -47,6 +48,8 @@ interface Backend {
     }
 }
 
+abstract class DBBackend : DBAwareObject(), Backend {
+}
 
 annotation class Ignored {
 
