@@ -4,6 +4,7 @@ import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
 import db.*
+import example.findDelegatingProperties
 import observable.Observable
 import observable.observableListOf
 import java.io.File

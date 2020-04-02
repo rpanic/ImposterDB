@@ -40,6 +40,15 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IO
 
         val action = object : RevertableAction {
             override fun action() {
+                if(db != null) {//Db is null when addAll() is called in the constructor
+                    if (args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set) {
+                        args.elements.forEach {
+                            if(it is DBAwareObject) {
+                                it.setDbReference(getDB())
+                            }
+                        }
+                    }
+                }
                 listeners.forEach { it.invoke(args, levels) }
             }
 
