@@ -67,16 +67,7 @@ fun main() {
 
 //    list[0].traits.add(Trait().apply { value = 100 })
 
-    //Test: 1 Trait and 2 Persons
 
-//    list.add(Person().apply { name = "Boi" })
-//    list.add(Person().apply { name = "Girl" })
-//
-//    val trait = Trait().apply { value = 13 }
-//
-//    list[0].traits.add(trait)
-//    list[1].traits.add(trait)
-//    list.add(Person())
 
     //TODO Collect all the i.e. Traits in Complete List, so that no double references are there and to remove that hideous JsonBackend stuff
 

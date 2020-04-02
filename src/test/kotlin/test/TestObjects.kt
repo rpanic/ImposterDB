@@ -16,10 +16,8 @@ class Parent : Observable(){
 
     var name by observable("")
 
-    var description by observable<String?>(null)
-
     @Json(ignored = true)
-    val traits by detachedList<Child>("testChildren")
+    val children by detachedList<Child>("testChildren")
 
 //    @Json(ignored = true)
 //    var trait: Trait by detached<Trait>("trait")
