@@ -1,8 +1,7 @@
 package test
 
-import com.nhaarman.mockitokotlin2.argumentCaptor
-import com.nhaarman.mockitokotlin2.times
-import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.*
+import connection.MtoNTableEntry
 import db.DB
 import db.DBBackend
 import example.Person
@@ -10,7 +9,6 @@ import observable.LevelInformation
 import observable.Observable
 import org.assertj.core.api.Assertions.*
 import org.junit.Test
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -27,26 +25,31 @@ class RelationalTest{
         backend.setDbReference(db)
         db += backend
 
-        Mockito.`when`(backend.keyExists(any())).thenReturn(true)
+        whenever(backend.keyExists(any())).thenReturn(true)
 //        whenever(backend.getDB()).thenReturn(db)
 
         val list = db.getDetachedList<Parent>("test12")
 
-        list.add(Parent().apply { name = "One" })
-        list.add(Parent().apply { name = "Two" })
+        val parent1 = Parent().apply { name = "One" }
+        val parent2 = Parent().apply { name = "Two" }
+
+        list.add(parent1)
+        list.add(parent2)
 
         val child = Child().apply { value = "Child" }
 
         list[0].children.add(child)
         list[1].children.add(child)
 
-        verify(backend).setDbReference(db)
+        assertThat(backend.getDB()).isEqualTo(db)
 
         val key = argumentCaptor<String>()
         val clazz = argumentCaptor<KClass<Observable>>()
         val obj = argumentCaptor<Observable>()
-        //, times(3)
-        verify(backend).insert(key.capture(), clazz.capture(), obj.capture())
+
+        verify(backend, times(5)).insert(key.capture(), clazz.capture(), obj.capture())
+
+        validateMockitoUsage()
 
         val verifier = TripleVerifier(key.allValues, clazz.allValues, obj.allValues)
         verifier.apply {
@@ -54,6 +57,28 @@ class RelationalTest{
             verify("test12", Parent::class as KClass<Observable>){
                 assertThat (this).isInstanceOf(Parent::class.java)
                 assertThat ((this as Parent).name).isEqualTo("One")
+            }
+            verify("test12", Parent::class as KClass<Observable>){
+                assertThat (this).isInstanceOf(Parent::class.java)
+                assertThat ((this as Parent).name).isEqualTo("Two")
+            }
+            verify("children", Child::class as KClass<Observable>){
+                assertThat (this).isInstanceOf(Child::class.java)
+                assertThat ((this as Child).value).isEqualTo("Child")
+            }
+            verify("ChildrenTest12", MtoNTableEntry::class as KClass<Observable>){
+                assertThat (this).isInstanceOf(MtoNTableEntry::class.java)
+                if(this is MtoNTableEntry){
+                    assertThat (this.n).isEqualTo(parent1.key())
+                    assertThat (this.m).isEqualTo(child.key())
+                }
+            }
+            verify("ChildrenTest12", MtoNTableEntry::class as KClass<Observable>){
+                assertThat (this).isInstanceOf(MtoNTableEntry::class.java)
+                if(this is MtoNTableEntry){
+                    assertThat (this.n).isEqualTo(parent2.key())
+                    assertThat (this.m).isEqualTo(child.key())
+                }
             }
 
         }
