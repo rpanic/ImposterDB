@@ -16,18 +16,41 @@ import kotlin.reflect.KProperty
 class RelationalTest{
 
     @Test
+    fun testRemoveRelation(){
+
+        val (db, backend) = createDBWithMockedBackend()
+
+        val list = db.getDetachedList<Parent>("test11")
+
+        val parent = Parent().apply { name = "One" }
+        list.add(parent)
+        val child = Child().apply { value = "Child" }
+        list[0].children.add(child)
+
+        assertThat(list[0].children[0]).isEqualTo(child)
+
+        list[0].children.removeAt(0)
+
+        val mToN = argumentCaptor<MtoNTableEntry>()
+        verify(backend).insert(argThat { this == "ChildrenTest11" }, argThat<KClass<Observable>> { this == MtoNTableEntry::class }, mToN.capture())
+
+        verify(backend).delete(argThat { this == "ChildrenTest11" }, argThat<KClass<Observable>> { this == MtoNTableEntry::class }, check <Any> {
+            val record = mToN.firstValue
+            assertThat(record.key<Any>()).isEqualTo(it)
+            assertThat(record.m).isEqualTo(child.key())
+            assertThat(record.n).isEqualTo(parent.key())
+        })
+
+        //TODO What about the Child?
+
+    }
+
+    @Test
     fun testAddOneToTwo(){
         //Test: 1 Trait and 2 Persons
 
-        val db = DB()
-
-        val backend = Mockito.mock(DBBackend::class.java)
-        backend.setDbReference(db)
-        db += backend
-
-        whenever(backend.keyExists(any())).thenReturn(true)
-//        whenever(backend.getDB()).thenReturn(db)
-
+        val (db, backend) = createDBWithMockedBackend()
+//TODO
         val list = db.getDetachedList<Parent>("test12")
 
         val parent1 = Parent().apply { name = "One" }
@@ -80,9 +103,17 @@ class RelationalTest{
                     assertThat (this.m).isEqualTo(child.key())
                 }
             }
-
         }
+    }
 
+    private fun createDBWithMockedBackend() : Pair<DB, DBBackend> {
+        val db = DB()
+
+        val backend = Mockito.mock(DBBackend::class.java)
+        db += backend
+
+        whenever(backend.keyExists(any())).thenReturn(true)
+        return db to backend
     }
 
     class TripleVerifier<A, B, C>(val aa: List<A>, val bs: List<B>, val cs: List<C>){
@@ -102,11 +133,5 @@ class RelationalTest{
     fun testDbReferenceSetOnce(){
 
     }
-
-    @Test
-    fun testRemoveRelation(){
-
-    }
-
 
 }
