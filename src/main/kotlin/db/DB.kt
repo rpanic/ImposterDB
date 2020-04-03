@@ -159,7 +159,7 @@ class DB{
 
     }
 
-    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+    fun <T : Observable> performListAddEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Add -> {
@@ -167,15 +167,21 @@ class DB{
                 }
                 ElementChangeType.Set -> {
                     if(args is SetListChangeArgs<T>){
-                        backendConnector.delete(key, args.replacedElements[i], clazz)
                         backendConnector.insert(key, obj, clazz)
                     }else{
                         throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
                     }
                 }
-                ElementChangeType.Update -> {
-                    if(args is UpdateListChangeArgs<T>) {
-                        backendConnector.update(key, obj, clazz, args.prop)
+            }
+        }
+    }
+
+    fun <T : Observable> performListDeleteEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+        args.elements.forEachIndexed { i, obj ->
+            when(args.elementChangeType){
+                ElementChangeType.Set -> {
+                    if(args is SetListChangeArgs<T>){
+                        backendConnector.delete(key, args.replacedElements[i], clazz)
                     }
                 }
                 ElementChangeType.Remove -> {
@@ -183,7 +189,24 @@ class DB{
                 }
             }
         }
+    }
 
+    fun <T : Observable> performListUpdateEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+        args.elements.forEachIndexed { i, obj ->
+            when(args.elementChangeType){
+                ElementChangeType.Update -> {
+                    if(args is UpdateListChangeArgs<T>) {
+                        backendConnector.update(key, obj, clazz, args.prop)
+                    }
+                }
+            }
+        }
+    }
+
+    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+        performListAddEventsOnBackend(key, clazz, args)
+        performListDeleteEventsOnBackend(key, clazz, args)
+        performListUpdateEventsOnBackend(key, clazz, args)
     }
 
     operator fun plusAssign(b: Backend) {

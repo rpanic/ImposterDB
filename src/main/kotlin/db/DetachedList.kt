@@ -49,6 +49,9 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
             //TODO Maybe not necessarily load Object when calling list.removeAt(1), since this is not really necessary.
             // Do this by changing the ChangeListener to give Objectreference instead of The Object itself
 
+            db.performListAddEventsOnBackend(table.child(), clazz, args)
+            db.performListUpdateEventsOnBackend(table.child(), clazz, args) //TODO Is this actually necessary or does this actually cause a second update call?
+
             args.elements.forEachIndexed { i, obj ->
 
                 var mnkeys = listOf(parentRef.key<Any>(), obj.key())
@@ -102,8 +105,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
             }
 
             //After relation table remove operations because of constraints
-            //TODO Split up: Add before, remove after
-            db.performListEventOnBackend(table.child(), clazz, args)
+            db.performListDeleteEventsOnBackend(table.child(), clazz, args)
         }
 
         list
