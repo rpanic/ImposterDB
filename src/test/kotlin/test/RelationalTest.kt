@@ -4,14 +4,13 @@ import com.nhaarman.mockitokotlin2.*
 import connection.MtoNTableEntry
 import db.DB
 import db.DBBackend
-import example.Person
 import observable.LevelInformation
 import observable.Observable
 import org.assertj.core.api.Assertions.*
 import org.junit.Test
 import org.mockito.Mockito
+import org.mockito.verification.VerificationMode
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 
 class RelationalTest{
 
@@ -50,7 +49,7 @@ class RelationalTest{
         //Test: 1 Trait and 2 Persons
 
         val (db, backend) = createDBWithMockedBackend()
-//TODO
+
         val list = db.getDetachedList<Parent>("test12")
 
         val parent1 = Parent().apply { name = "One" }
@@ -106,6 +105,23 @@ class RelationalTest{
         }
     }
 
+    @Test
+    fun testDbReferenceSetOnce(){
+
+        val (db, backend) = createDBWithMockedBackend()
+
+        val list = db.getDetachedList<Parent>("test12")
+
+        val parent = spy(Parent().apply { name = "name" })
+        list.add(parent)
+        val child = spy(Child().apply { value = "test" })
+        parent.children.add(child)
+
+        verify(parent, times(1)).setDbReference(db)
+        verify(child, times(1)).setDbReference(db)
+
+    }
+
     private fun createDBWithMockedBackend() : Pair<DB, DBBackend> {
         val db = DB()
 
@@ -127,11 +143,6 @@ class RelationalTest{
 
             index++
         }
-    }
-
-    @Test
-    fun testDbReferenceSetOnce(){
-
     }
 
 }

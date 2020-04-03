@@ -12,7 +12,7 @@ class TestObject() : Observable(){
     }
 }
 
-class Parent : Observable(){
+open class Parent : Observable(){
 
     var name by observable("")
 
@@ -24,7 +24,7 @@ class Parent : Observable(){
 
 }
 
-class Child : Observable(){
+open class Child : Observable(){
 
     var value by observable("")
 
