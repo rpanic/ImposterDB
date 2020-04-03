@@ -23,7 +23,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
             db.cache.putComplete(table.tableName(), observableListOf())
         }
 
-        val list = if(list.isEmpty()) {
+        val obslist = if(list.isEmpty()) {
             LazyObservableArrayList<T>()
         } else {
 
@@ -44,7 +44,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
         }
         val parentRef = parent //TODO Does this affect the bytecode? Is it necessary?
         //Add Listeners for Changes in List
-        list.addListener { args, levelinfo ->
+        obslist.addListener { args, levelinfo ->
 
             //TODO Maybe not necessarily load Object when calling list.removeAt(1), since this is not really necessary.
             // Do this by changing the ChangeListener to give Objectreference instead of The Object itself
@@ -108,7 +108,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
             db.performListDeleteEventsOnBackend(table.child(), clazz, args)
         }
 
-        list
+        obslist
     }
 }
 
@@ -138,6 +138,7 @@ abstract class MutableLazyReadOnlyProperty<T>(protected var initFunction: (MtoNT
 //        }
         if(!initialized){
             value = initFunction(table!!, pks)
+            initialized = true
         }
         return value!!
     }
@@ -145,6 +146,7 @@ abstract class MutableLazyReadOnlyProperty<T>(protected var initFunction: (MtoNT
     protected fun getValue() : T{
         if(!initialized){
             value = initFunction(table!!, pks)
+            initialized = true
             println("Should not happen - LazyReadWriteProperty :: 41")
         }
         return value!!

@@ -5,7 +5,7 @@ typealias OnLoadListener<T> = (T) -> Unit
 class ObjectReference <T : Indexable> {
 
     val pk : Any
-    val load : ((Any) -> T)?
+    private val load : ((Any) -> T)?
 
     constructor(pk: Any, load: (Any) -> T){
         this.pk = pk
@@ -14,6 +14,8 @@ class ObjectReference <T : Indexable> {
 
     constructor (obj: T) {
         this.pk = obj.key()
+        this.loaded = true
+        this.obj = obj
         this.load = null
     }
 
