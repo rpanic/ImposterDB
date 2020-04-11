@@ -3,6 +3,7 @@ package main.kotlin.connection
 import com.beust.klaxon.internal.firstNotNullResult
 import connection.MtoNTable
 import connection.MtoNTableEntry
+import connection.ObjectCache
 import db.Backend
 import db.DB
 import db.DetachedListReadOnlyProperty
@@ -27,12 +28,12 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         backends += backend
     }
 
-    val initialized = mutableListOf<KClass<*>>()
+    val initialized = mutableListOf<String>()
 
-    fun <T : Observable> initIfNotYet(clazz: KClass<T>){
-        if(clazz !in initialized) {
-            backends.forEach { it.createSchema(clazz) }
-            initialized += clazz
+    fun <T : Observable> initIfNotYet(key: String, clazz: KClass<T>){
+        if(key !in initialized) {
+            backends.forEach { it.createSchema(key, clazz) }
+            initialized += key
         }
     }
 
@@ -117,7 +118,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         }}
 
         if(backends.none { it.keyExists(key) }){
-            forEachBackend { it.createSchema(clazz) }
+            forEachBackend { it.createSchema(key, clazz) }
             val list = observableListOf<T>()
             thenCache(cache, list)
             return list
@@ -212,7 +213,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
             if(backend.keyExists(key)){
                 f()
             }else {
-                backend.createSchema(clazz)
+                backend.createSchema(key, clazz)
                 null
             }
         }

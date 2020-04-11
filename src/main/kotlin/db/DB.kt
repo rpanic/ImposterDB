@@ -1,7 +1,7 @@
 package db
 
 import main.kotlin.connection.BackendConnector
-import main.kotlin.connection.ObjectCache
+import connection.ObjectCache
 import observable.*
 import java.lang.Exception
 import kotlin.reflect.KClass
@@ -75,7 +75,7 @@ class DB{
 
     fun <T : Observable, K: Any> getDetached(key: String, pk: K, ignoreInit: Boolean = false, clazz: KClass<T>, init : () -> T) : T{
 
-        backendConnector.initIfNotYet(clazz)
+        backendConnector.initIfNotYet(key, clazz)
 
         var read = backendConnector.loadByPK(key, pk, clazz)
 

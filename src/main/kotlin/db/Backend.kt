@@ -12,7 +12,7 @@ interface Backend {
 
     fun keyExists(key: String) : Boolean
 
-    fun <T : Observable> createSchema(clazz: KClass<T>)
+    fun <T : Observable> createSchema(key: String, clazz: KClass<T>)
 
     fun <T : Observable, K> loadByPK (key: String, pk: K, clazz: KClass<T>) : T? //TODO Make nullable
 

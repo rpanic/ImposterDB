@@ -16,7 +16,10 @@ import kotlin.reflect.jvm.isAccessible
 
 open class JsonBackend : DBBackend() {
 
-    override fun <T : Observable> createSchema(clazz: KClass<T>) {
+    override fun <T : Observable> createSchema(key: String, clazz: KClass<T>) {
+        if(this.baseFile.child("$key.json").exists())
+            throw UnsupportedOperationException()
+        this.baseFile.child("$key.json").writeText("[]")
     }
 
     override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
@@ -85,7 +88,11 @@ open class JsonBackend : DBBackend() {
     }
 
     fun <T : Observable> save(key: String, clazz : KClass<T>, operation: List<T>.() -> List<T> = { this }) {
-        val list = operation(getDB().cache.getComplete<T>(key)?.list() ?: listOf()).distinctBy { it.uuid }
+        val intermediateList = operation(getDB().cache.getComplete<T>(key)?.list() ?: listOf())
+        val list = intermediateList.distinctBy { it.uuid }
+        if(intermediateList.size !== list.size){
+            println("Something is wrong with the caching")
+        }
 
         val jsonString = klaxon.toJsonString(list)
         val json = klaxon.parseJsonArray(jsonString.reader()) as JsonArray<JsonObject>
