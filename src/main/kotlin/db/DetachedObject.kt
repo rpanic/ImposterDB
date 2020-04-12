@@ -30,7 +30,7 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
 
     private fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
         if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
-            observable.getDB().backendConnector.forEachBackend { //TODO Check if that gets executed correctly
+            observable.getDB().backendConnector.forEachBackend {
                 it.insert(key, clazz, newValue) //Be careful that this will not be used in combination with ObservableArrayList
             }
             observable.getDB().addBackendListener(newValue, key, newValue::class as KClass<T>)
@@ -38,7 +38,7 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
         //TODO Safely delete the new and old detached objects
         // + When will unused objects be deleted? When theres no reference any more or when it gets removed from the list?
         // + I guess the first options would be more compliant with the "consistent state" paradigm
-        newValue.classListeners.map { it as ChangeListener<Any?> }.forEach { it(newValue::uuid, null, newValue.uuid, LevelInformation(listOf(ObservableLevel(newValue, property)))) }
+        newValue.classListeners.map { it as ChangeListener<Any?> }.forEach { it(newValue::uuid, null, newValue.uuid, LevelInformation(listOf(ObservableLevel(newValue, newValue::uuid)))) }
 //        TODO notify this@Observable about changes in the object (hookToObservable)
         //TODO Edit: Done?
         observable.changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(observable, property))))

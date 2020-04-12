@@ -32,23 +32,25 @@ class ListTest{
         db.addBackend(jsonBackend)
 
         val obj = db.getDetached("exampleTest", "pk") {
-            Person()
+            OneToManyParent()
         }
 
-        val imposter = PersonObserver(obj)
+        val imposter = OneToManyParentObserver(obj)
 
-        val mock = Mockito.spy(imposter as IPersonObserver)
+        val mock = Mockito.spy(imposter as IOneToManyObserver)
 
         imposter.target(mock)
 
-        val originalTrait = obj.trait
-        val trait = Trait()
+//        val originalTrait = obj.trait
+        val child = Child()
 
         db.tx {
 
             obj.description = "This is some random stuff"
 
-            obj.trait = trait
+            obj.child = child
+
+            child.value = "asd"
 //
 //            obj.trait.value = 10
 //
@@ -66,17 +68,17 @@ class ListTest{
         val new = argumentCaptor<Any>()
         val levelInfo = argumentCaptor<LevelInformation>()
 
-        verify(mock, times(3)).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
+        verify(mock, times(4)).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
 
         val verifier = QuadrupleVerifier(property.allValues, old.allValues, new.allValues, levelInfo.allValues)
         verifier.apply {
 
-            verify(Person::description, null, "This is some random stuff"){
+            verify(OneToManyParent::description, null, "This is some random stuff"){
                 assertThat(list.size).isEqualTo(1)
                 assertThat(list[0].getObservable()).isEqualTo(obj)
             }
 
-            verify(Person::trait, originalTrait, trait){
+            verify(OneToManyParent::child, null, child){
                 assertThat(list.size).isEqualTo(1)
                 assertThat(list[0].getObservable()).isEqualTo(obj)
             }
@@ -124,7 +126,7 @@ class ListTest{
         fun target(mock: M) = init(mock)
     }
 
-    open class PersonObserver(t: Person) : MockableImposter<Person, IPersonObserver>(t), IPersonObserver{
+    open class OneToManyParentObserver(t: OneToManyParent) : MockableImposter<OneToManyParent, IOneToManyObserver>(t), IOneToManyObserver{
 
         override fun name(new: String){
             println("New name: $new!!!!")
@@ -152,7 +154,7 @@ class ListTest{
         }
     }
 
-    interface IPersonObserver{
+    interface IOneToManyObserver{
         fun name(new: String)
         fun all(prop: KProperty<Any?>, new: Any?, old: Any?, levelInformation: LevelInformation)
     }

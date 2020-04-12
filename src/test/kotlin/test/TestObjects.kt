@@ -1,6 +1,7 @@
 package test
 
 import com.beust.klaxon.Json
+import db.detached
 import db.detachedList
 import observable.Observable
 
@@ -10,6 +11,17 @@ class TestObject() : Observable(){
     constructor(s: String) : this(){
         testProperty = s
     }
+}
+
+open class OneToManyParent : Observable(){
+
+    var name by observable("")
+
+    var description: String? by observable(null)
+
+    @Json(ignored = true)
+    var child by detached<Child>("children_1toM")
+
 }
 
 open class Parent : Observable(){
