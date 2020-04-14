@@ -138,7 +138,7 @@ class DB{
         }, { obj ->
             backendConnector.insert(key, obj, T::class)
             addBackendListener(obj, key, T::class)
-        }, listOf())
+        }, listOf(), T::class)
     }
 
     //Only for retrieving of "actual" lists, so for Tuples of T
