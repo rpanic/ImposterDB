@@ -53,6 +53,6 @@ open class VirtualSet<T : Observable>(
 
         return VirtualSet({
             get(it)
-        }, { add(it) }, steps + FilterStep(), clazz)
+        }, { add(it) }, steps + FilterStep(listOf()), clazz)
     }
 }

@@ -1,11 +1,15 @@
 package aNewCollections
 
+import com.sun.org.apache.xpath.internal.operations.Bool
 import io.mockk.*
 import observable.Observable
 import java.lang.Exception
 import java.lang.IllegalStateException
 import java.lang.UnsupportedOperationException
 import java.util.*
+import kotlin.Comparator
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
@@ -35,13 +39,9 @@ fun <T : Any> getMock(clazz: KClass<T>, f: (FilterCondition) -> Unit) : T{
 
             if(prop == null){
 
-//                println("Equals")
-//                if (this.method.name == "equals" && method.paramTypes.size == 1 && this.method.paramTypes[0] == Any::class) {
-//                }
-//                true
                 throw IllegalStateException("Shouldnt be, there is something wrong")
 
-            }else {
+            } else {
 
                 val type = method.returnType
                 val ret = getMock(type as KClass<Any>) {
@@ -49,37 +49,6 @@ fun <T : Any> getMock(clazz: KClass<T>, f: (FilterCondition) -> Unit) : T{
                 }
 
                 ret
-
-               /* val retFunction = {
-                    if (0.toDouble().javaClass.isAssignableFrom(type)) {
-                        Math.random()
-                    } else if ("".javaClass.isAssignableFrom(type)) {
-                        UUID.randomUUID().toString()
-                    } else if (0.javaClass.isAssignableFrom(type)) {
-                        (Math.random() * Int.MAX_VALUE).toInt()
-                    } else if (0.toLong().javaClass.isAssignableFrom(type)) {
-                        (Math.random() * Long.MAX_VALUE).toLong()
-                    } else if (0.toByte().javaClass.isAssignableFrom(type)) {
-                        (Math.random() * Byte.MAX_VALUE).toByte()
-                    } else if (0.toShort().javaClass.isAssignableFrom(type)) {
-                        (Math.random() * Short.MAX_VALUE).toShort()
-                    } else if (' '.javaClass.isAssignableFrom(type)) {
-                        (Math.random() * Char.MAX_VALUE.toInt()).toChar()
-                    } else if (Observable::class.java.isAssignableFrom(type)) {
-                        getMock(type.kotlin as KClass<Observable>)
-                    } else {
-                        throw UnsupportedOperationException("Objects with fields of unsupported Types cannot be used with Virutalized Operations")
-                    }
-                }
-                var ret = retFunction()
-
-                while (referenceMap.containsKey(ret)) {
-                    ret = retFunction()
-                }
-
-                referenceMap.put(ret, prop)
-
-                ret*/
             }
         }catch (e: Exception){
             e.printStackTrace()
@@ -95,20 +64,25 @@ fun <T : Any> getMock(clazz: KClass<T>, f: (FilterCondition) -> Unit) : T{
         true
     }
 
+    if(mock is Comparable<*>){
+        var count = 0
+        every { (mock as Comparable<Any>).compareTo(any()) } answers {
+
+            f(CompareFilterCondition(mock, arg(0)))
+
+            if(count == 0) {
+                count++
+                1
+            } else {
+                0
+            }
+        }
+    }
+
     mockList.add(mock)
 
     return mock
 }
-
-//fun <T : Observable> performFilter(clazz: KClass<T>, obj: T, f: (T) -> Boolean) {
-//    val mock = getMock(clazz)
-//    val filters = mutableListOf<FilterCondition>()
-//    whenever(mock == any()).then {
-//        filters.add(EqualsFilterCondition<Any>(it.arguments[0], it.arguments[1]))
-//        true
-//    }
-//    (filters[0] as EqualsFilterCondition<Any>).eq = f(mock)
-//}
 
 open class Test : Observable(){
     open var s: String by observable("")
@@ -122,7 +96,8 @@ open class Test2 : Observable(){
     open var s: String by observable("")
 }
 
-interface FilterCondition
+interface FilterCondition {
+}
 
 open class NestedFilterCondition(
         val prop: KProperty1<Any, Any>,
@@ -133,8 +108,16 @@ open class EqualsFilterCondition<T>(
         val obj: T,
         val obj2: T,
         var eq: Boolean = true
-) : FilterCondition{
+) : FilterCondition
 
+open class CompareFilterCondition<T>(
+    val obj: T,
+    val obj2 : T,
+    var type: CompareType? = null
+) : FilterCondition
+
+enum class CompareType{
+    LESS, GREATER, LESS_EQUALS, GREATER_EQUALS, EQUALS, NOT_EQUALS
 }
 
 fun main() {
