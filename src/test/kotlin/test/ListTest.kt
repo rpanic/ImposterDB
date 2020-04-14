@@ -105,11 +105,11 @@ class ListTest{
         val db = DB()
         db.addBackend(jsonBackend)
 
-        val list = db.getDetachedList<TestObject>("test1")
+//        val list = db.getDetachedList<TestObject>("test1")
 
         val obj2 = TestObject()
 
-        list.add(obj2)
+//        list.add(obj2)
 
         verify(jsonBackend).keyExists("test1")
 

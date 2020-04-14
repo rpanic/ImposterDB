@@ -19,16 +19,16 @@ class RelationalTest{
 
         val (db, backend) = createDBWithMockedBackend()
 
-        val list = db.getDetachedList<Parent>("test11")
+//        val list = db.getDetachedList<Parent>("test11")
 
         val parent = Parent().apply { name = "One" }
-        list.add(parent)
+//        list.add(parent)
         val child = Child().apply { value = "Child" }
-        list[0].children.add(child)
+//        list[0].children.add(child)
 
-        assertThat(list[0].children[0]).isEqualTo(child)
+//        assertThat(list[0].children[0]).isEqualTo(child)
 
-        list[0].children.removeAt(0)
+//        list[0].children.removeAt(0)
 
         val mToN = argumentCaptor<MtoNTableEntry>()
         verify(backend).insert(argThat { this == "ChildrenTest11" }, argThat<KClass<Observable>> { this == MtoNTableEntry::class }, mToN.capture())
@@ -50,18 +50,18 @@ class RelationalTest{
 
         val (db, backend) = createDBWithMockedBackend()
 
-        val list = db.getDetachedList<Parent>("test12")
+//        val list = db.getDetachedList<Parent>("test12")
 
         val parent1 = Parent().apply { name = "One" }
         val parent2 = Parent().apply { name = "Two" }
 
-        list.add(parent1)
-        list.add(parent2)
+//        list.add(parent1)
+//        list.add(parent2)
 
         val child = Child().apply { value = "Child" }
 
-        list[0].children.add(child)
-        list[1].children.add(child)
+//        list[0].children.add(child)
+//        list[1].children.add(child)
 
         assertThat(backend.getDB()).isEqualTo(db)
 
@@ -110,10 +110,10 @@ class RelationalTest{
 
         val (db, backend) = createDBWithMockedBackend()
 
-        val list = db.getDetachedList<Parent>("test12")
+//        val list = db.getDetachedList<Parent>("test12")
 
         val parent = spy(Parent().apply { name = "name" })
-        list.add(parent)
+//        list.add(parent)
         val child = spy(Child().apply { value = "test" })
         parent.children.add(child)
 
