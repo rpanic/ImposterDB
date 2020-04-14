@@ -2,6 +2,17 @@ package lazyCollections
 
 import observable.IAbstractObservable
 
+interface IVirtualSet <T> : IReadonlyVirtualSet<T>{
+    fun add(t: T)
+}
+
+interface IReadonlyVirtualSet <T>{
+    operator fun get(v: Any): T?
+    fun view() : IObservableSet<T>
+}
+
+interface IObservableSet <T> : IAbstractObservable<ElementChangedListener<T>>, Set<T>
+
 interface IObservableList <T> : IAbstractObservable<ElementChangedListener<T>>, List<T>
 
 interface IMutableObservableList <T> : IObservableList<T>, MutableList<T>{

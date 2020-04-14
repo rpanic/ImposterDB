@@ -119,3 +119,7 @@ DB.tx {
 When a exception occures in one of the Imposters, all previously done changes get rolled back and the state of the object is the same as before the transaction.
 
 To keep this consistent state also in your connected system, it is important to base your imposter´s functionality only on the parameters given in the observing method. Using outside or old states can distort the outcome of a rollback-call and therefore break the ACID state.
+
+// This class only holds variables and thus can be compared to a data class. You can pass the default value of the variable in the parentheses of `observable`.
+
+Any observable events gets outsourced to another class, in this case called `PersonObserver`. The constructor takes Person as a parameter and passes this on to the extended class `ChangeObserver`. The function names need to either match any member name of the class passed in the constructor or be named "all" to be affected by any change happening to a Person.

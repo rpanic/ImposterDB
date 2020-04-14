@@ -81,22 +81,23 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
                 val firstDelegate = prop.getDelegate(list[0]) as DetachedListReadOnlyProperty<*>
                 val table = MtoNTable(key, firstDelegate.key)
 
-                val tabledata = loadList(table.tableName(), MtoNTableEntry::class)!!
-                list.forEach { obj ->
-                    val delegate = prop.getDelegate(obj)
-
-                    val references = tabledata
-                            .filter { (if (table.namesFlipped()) it.getNKey<Any>() else it.getMKey()) == obj.key<Any>() }
-                            .map { if (table.namesFlipped()) it.getMKey<Any>() else it.getNKey() }
-
-                    if (delegate is DetachedListReadOnlyProperty<*>) {
-
-                        delegate.setArgs(table, references)
-
-                    } else {
-                        throw IllegalStateException("Should definitely not happen")
-                    }
-                }
+                //TODO Make Virutalized
+//                val tabledata = loadList(table.tableName(), MtoNTableEntry::class)!!
+//                list.forEach { obj ->
+//                    val delegate = prop.getDelegate(obj)
+//
+//                    val references = tabledata
+//                            .filter { (if (table.namesFlipped()) it.getNKey<Any>() else it.getMKey()) == obj.key<Any>() }
+//                            .map { if (table.namesFlipped()) it.getMKey<Any>() else it.getNKey() }
+//
+//                    if (delegate is DetachedListReadOnlyProperty<*>) {
+//
+//                        delegate.setArgs(table, references)
+//
+//                    } else {
+//                        throw IllegalStateException("Should definitely not happen")
+//                    }
+//                }
 
             }
 
@@ -104,38 +105,38 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
     }
 
-    fun <T : Observable> loadList(key: String, clazz: KClass<T>) : ObservableArrayList<T>?{
-
-        val thenCache: ObjectCache.(ObservableArrayList<T>) -> Unit = {
-            if(!containsComplete(key)) {
-            putComplete(key, it)
-
-            it.collection.forEach { obj ->
-                if (!this.containsObject(key, obj.key())) {
-                    this.putObject(key, obj)
-                }
-            }
-        }}
-
-        if(backends.none { it.keyExists(key) }){
-            forEachBackend { it.createSchema(key, clazz) }
-            val list = observableListOf<T>()
-            thenCache(cache, list)
-            return list
-        }
-
-        return BackendObjectRetriever<ObservableArrayList<T>>(backends, cache)
-                .tryCache { getComplete(key) }
-                .orBackends {
-                    val loaded = observableListOf(it.loadAll(key, clazz))
-                    loaded.setDbReference(db)
-                    loaded.collection.forEach { item -> item.setDbReference(db) }
-                    resolveRelations(key, clazz, loaded)
-                    loaded
-                }
-                .thenCache (thenCache)
-
-    }
+//    fun <T : Observable> loadList(key: String, clazz: KClass<T>) : ObservableArrayList<T>?{
+//
+//        val thenCache: ObjectCache.(ObservableArrayList<T>) -> Unit = {
+//            if(!containsComplete(key)) {
+//            putComplete(key, it)
+//
+//            it.collection.forEach { obj ->
+//                if (!this.containsObject(key, obj.key())) {
+//                    this.putObject(key, obj)
+//                }
+//            }
+//        }}
+//
+//        if(backends.none { it.keyExists(key) }){
+//            forEachBackend { it.createSchema(key, clazz) }
+//            val list = observableListOf<T>()
+//            thenCache(cache, list)
+//            return list
+//        }
+//
+//        return BackendObjectRetriever<ObservableArrayList<T>>(backends, cache)
+//                .tryCache { getComplete(key) }
+//                .orBackends {
+//                    val loaded = observableListOf(it.loadAll(key, clazz))
+//                    loaded.setDbReference(db)
+//                    loaded.collection.forEach { item -> item.setDbReference(db) }
+//                    resolveRelations(key, clazz, loaded)
+//                    loaded
+//                }
+//                .thenCache (thenCache)
+//
+//    }
 
     fun <T : Observable> insert(key: String, obj: T, clazz: KClass<T>) {
         //Add Table definition for new Objects which got constructed like T()

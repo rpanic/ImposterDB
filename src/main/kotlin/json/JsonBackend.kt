@@ -6,6 +6,7 @@ import com.beust.klaxon.Klaxon
 import db.*
 import example.findDelegatingProperties
 import observable.Observable
+import observable.ObservableArrayList
 import observable.observableListOf
 import java.io.File
 import java.io.FileReader
@@ -15,6 +16,8 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
 open class JsonBackend : DBBackend() {
+
+    val loaded = mutableMapOf<String, List<*>>()
 
     override fun <T : Observable> createSchema(key: String, clazz: KClass<T>) {
         if(this.baseFile.child("$key.json").exists())
@@ -52,6 +55,7 @@ open class JsonBackend : DBBackend() {
             }
 
         }
+        loaded[key] = list
         return list
     }
 
@@ -73,8 +77,8 @@ open class JsonBackend : DBBackend() {
 
     //is used for JsonBackend to not overwrite data, since it saves the collection which is loaded atm, and does not really insert
     fun <T : Observable> loadIfNotLoaded(key: String, clazz: KClass<T>){
-        if(keyExists(key) && !getDB().cache.containsComplete(key)){
-            getDB().cache.putComplete(key, observableListOf(loadAll(key, clazz)))
+        if(keyExists(key) && !loaded.containsKey(key)){
+            loadAll(key, clazz)
         }
     }
 
@@ -88,9 +92,9 @@ open class JsonBackend : DBBackend() {
     }
 
     fun <T : Observable> save(key: String, clazz : KClass<T>, operation: List<T>.() -> List<T> = { this }) {
-        val intermediateList = operation(getDB().cache.getComplete<T>(key)?.list() ?: listOf())
+        val intermediateList = operation(if(loaded.containsKey(key)) (loaded[key] as List<T>) else listOf())
         val list = intermediateList.distinctBy { it.uuid }
-        if(intermediateList.size !== list.size){
+        if(intermediateList.size != list.size){
             println("Something is wrong with the caching")
         }
 

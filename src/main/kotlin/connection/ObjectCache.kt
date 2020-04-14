@@ -1,8 +1,6 @@
-package main.kotlin.connection
+package connection
 
 import observable.Observable
-import observable.ObservableArrayList
-import observable.ObservableList
 import java.lang.IllegalStateException
 
 /**
@@ -10,12 +8,14 @@ import java.lang.IllegalStateException
  */
 class ObjectCache (){
 
-    val completeCollections = mutableMapOf<String, ObservableArrayList<*>>()
-
     val parsedObjects = mutableMapOf<String, MutableMap<Any, Observable>>() //<Key, PK> -> Observable
 
     fun <T : Observable, K : Any> getCachedObject(key: String, pk: K) : T?{
         return (parsedObjects[key]?.get(pk)) as? T
+    }
+
+    fun <T : Observable> findCachedObject(key: String, f: (T) -> Boolean) : T?{
+        return (parsedObjects[key]?.values?.find{ f(it as T) } ) as? T
     }
 
     fun <K : Any> containsObject(key: String, pk: K) : Boolean{
@@ -37,19 +37,6 @@ class ObjectCache (){
     fun <K : Any> removeObject(key: String, pk: K) : Boolean{
         return containsObject(key, pk) && parsedObjects[key]?.remove(pk) != null
     }
-
-    fun <T : Observable> getComplete(key: String) : ObservableArrayList<T>?{
-        return completeCollections[key] as? ObservableArrayList<T>
-    }
-
-    fun <T : Observable> putComplete(key: String, list: ObservableArrayList<T>){
-        if(containsComplete(key)){
-            throw IllegalStateException("Please investigate if something is wrong here")
-        }
-        completeCollections[key] = list
-    }
-
-    fun containsComplete(key: String) = completeCollections.containsKey(key)
 
     //evtl operator fun get
 

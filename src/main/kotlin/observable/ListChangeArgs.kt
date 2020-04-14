@@ -2,11 +2,16 @@ package observable
 
 import kotlin.reflect.KProperty
 
-open class ListChangeArgs<T>(
+open class ChangeArgs<T>(
         val elementChangeType: ElementChangeType,
-        val elements: List<T>,
+        val elements: List<T>
+)
+
+open class ListChangeArgs<T>(
+        elementChangeType: ElementChangeType,
+        elements: List<T>,
         val indizes: List<Int>
-){
+) : ChangeArgs<T>(elementChangeType, elements){
     constructor(elementChangeType: ElementChangeType,
                 element: T,
                 index: Int) : this(elementChangeType, listOf(element), listOf(index))

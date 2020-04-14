@@ -60,10 +60,10 @@ fun main() {
     val db = DB()
     db += JsonBackend()
 
-    val list = db.getDetachedList<Person>("persons")
+//    val list = db.getDetachedList<Person>("persons")
 
     //Test2: Remove Relation
-    list[0].traits.removeAt(1)
+//    list[0].traits.removeAt(1)
 
 //    list[0].traits.add(Trait().apply { value = 100 })
 

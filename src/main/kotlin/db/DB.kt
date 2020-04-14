@@ -1,5 +1,6 @@
 package db
 
+import aNewCollections.VirtualSet
 import main.kotlin.connection.BackendConnector
 import connection.ObjectCache
 import observable.*
@@ -130,34 +131,45 @@ class DB{
         }
     }
 
-    //Only for retrieving of "actual" lists, so for Tuples of T
-    inline fun <reified T : Observable> getDetachedList(key: String) : ObservableArrayList<T> {
-
-        val list = backendConnector.loadList(key, T::class) ?: throw java.lang.IllegalStateException("Collection with key $key could not be found in backends")
-
-        if(list.listeners.size == 0){
-
-            list.addListener { args, levels -> //TODO Add Level stuff to Backend interface for incremental saves
-                performListEventOnBackend(key, T::class, args)
-
-                //Object is self aware, therefore should be responsible for updates, since that is not relevant for the list
-                if(args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set){
-                    args.elements.forEach { obj ->
-                        obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
-                            backendConnector.update(key, obj, T::class, prop)
-                        }
-                    }
-
-                }
-            }
-
-        }
-
-        list.setDbReference(this)
-
-        return list
-
+    inline fun <reified T : Observable> getSet(key: String) : VirtualSet<T> {
+        return VirtualSet({
+            getDetached(key, it,true, T::class){
+                throw IllegalAccessException("Object with key $it not existent in Table $key")}
+        }, { obj ->
+            backendConnector.insert(key, obj, T::class)
+            addBackendListener(obj, key, T::class)
+        }, listOf())
     }
+
+    //Only for retrieving of "actual" lists, so for Tuples of T
+    //TODO Integrate this into view() Process
+//    inline fun <reified T : Observable> getDetachedList(key: String) : ObservableArrayList<T> {
+//
+//        val list = backendConnector.loadList(key, T::class) ?: throw java.lang.IllegalStateException("Collection with key $key could not be found in backends")
+//
+//        if(list.listeners.size == 0){
+//
+//            list.addListener { args, levels -> //TODO Add Level stuff to Backend interface for incremental saves
+//                performListEventOnBackend(key, T::class, args)
+//
+//                //Object is self aware, therefore should be responsible for updates, since that is not relevant for the list
+//                if(args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set){
+//                    args.elements.forEach { obj ->
+//                        obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
+//                            backendConnector.update(key, obj, T::class, prop)
+//                        }
+//                    }
+//
+//                }
+//            }
+//
+//        }
+//
+//        list.setDbReference(this)
+//
+//        return list
+//
+//    }
 
     fun <T : Observable> performListAddEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
