@@ -41,3 +41,15 @@ open class Child : Observable(){
     var value by observable("")
 
 }
+
+open class SimpleObservableChildParent : Observable(){
+    var s: String by observable("")
+
+    var test: SimpleObservableChild? by observable(null)
+
+}
+
+open class SimpleObservableChild : Observable(){
+
+    var s: String by observable("")
+}

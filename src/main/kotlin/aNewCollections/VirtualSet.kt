@@ -4,7 +4,9 @@ import lazyCollections.IObservableSet
 import lazyCollections.IReadonlyVirtualSet
 import lazyCollections.IVirtualSet
 import observable.*
+import java.lang.IllegalStateException
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
 
 
 open class ReadOnlyVirtualSet<T : Observable>(
@@ -44,15 +46,12 @@ open class VirtualSet<T : Observable>(
 
     fun filter(f: (T) -> Boolean) : VirtualSet<T>{
 
-        val conditions = mutableListOf<FilterCondition>()
-        val mock = getMock(clazz){
-            conditions += it
-        }
-        val ret = f(mock)
-        (conditions[0] as EqualsFilterCondition<Any>).eq = ret
+        val extractor = RuleExtractionFramework.rulesExtractor(clazz)
+
+        val normalizedConditions = extractor.extractFilterRules(f)
 
         return VirtualSet({
             get(it)
-        }, { add(it) }, steps + FilterStep(listOf()), clazz)
+        }, { add(it) }, steps + FilterStep(normalizedConditions), clazz)
     }
 }
