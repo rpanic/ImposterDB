@@ -21,8 +21,9 @@ object RuleExtractionFramework {
 
     fun <T : Any> createMock(clazz: KClass<T>, f: (ComparisonRule) -> Unit): T {
 
-        if(clazz == String::class){
-            return UUID.randomUUID().toString().apply { mockList += this; answerer[this] = CompareAnswer(this, f) } as T
+        val primitive = getPrimitivesValue(clazz, f)
+        if(primitive != null){
+            return primitive
         }
 
         val mock = mockkClass(clazz)
@@ -73,6 +74,23 @@ object RuleExtractionFramework {
         mockList.add(mock)
 
         return mock
+    }
+
+    fun <T : Any> getPrimitivesValue(clazz: KClass<T>, f: (ComparisonRule) -> Unit) : T?{
+        val randomValue: () -> Any? = { when(clazz){
+            String::class -> UUID.randomUUID().toString()
+            Int::class -> (Math.random() * Int.MAX_VALUE).toInt()
+            Byte::class -> (Math.random() * Byte.MAX_VALUE).toByte()
+            Long::class -> (Math.random() * Long.MAX_VALUE).toLong()
+            Short::class -> (Math.random() * Short.MAX_VALUE).toShort()
+            Char::class -> (Math.random() * Char.MAX_VALUE.toInt()).toChar()
+            else -> null
+        } }
+        var value = randomValue()
+        while(value in mockList){
+            value = randomValue()
+        }
+        return value?.apply { mockList += this; answerer[this] = CompareAnswer(this, f) } as? T
     }
 
     class CompareAnswer(val mock: Any, val f: (ComparisonRule) -> Unit){
