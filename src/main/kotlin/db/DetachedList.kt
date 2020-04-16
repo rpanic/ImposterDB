@@ -11,11 +11,11 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 //TODO Think about making detachedList Observable -> Basically a proxy for removeAll() addAll()
-inline fun <reified T : Observable> Observable.detachedList(key: String) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
+inline fun <P : Observable, reified T : Observable> P.detachedList(key: String) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
     return detachedList(this, key, T::class)
 }
 
-fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass<T>) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
+fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz: KClass<T>) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
 
     return DetachedListReadOnlyProperty(key) { table, list ->
         val db = parent.getDB()
@@ -50,8 +50,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
             db.performListUpdateEventsOnBackend(table.child(), clazz, args) //TODO Is this actually necessary or does this actually cause a second update call?
 
             args.elements.forEachIndexed { i, obj ->
-
-                var mnkeys = listOf(parentRef.key<Any>(), obj.key())
+                var mnkeys = listOf(parentRef.keyValue<P, Any>(), obj!!.keyValue<T, Any>())
                 if(table.namesFlipped()){
                     mnkeys = mnkeys.reversed()
                 }
@@ -76,12 +75,12 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
                     }
                     ElementChangeType.Set -> {
                         if(args is SetListChangeArgs<T>){
-                            var deleteKeys = listOf(parentRef.key<Any>(), args.replacedElements[i].key<Any>())
+                            var deleteKeys = listOf(parentRef.keyValue<P, Any>(), args.replacedElements[i].keyValue<T, Any>())
                             if(table.namesFlipped()){
                                 deleteKeys = deleteKeys.reversed()
                             }
                             val deleteEntry = findEntry(deleteKeys[0], deleteKeys[1])
-                            db.backendConnector.delete(table.tableName(), deleteEntry.key(), MtoNTableEntry::class)
+                            db.backendConnector.delete(table.tableName(), deleteEntry.keyValue<MtoNTableEntry, Any>(), MtoNTableEntry::class)
                             db.cache.removeObject(table.tableName(), deleteEntry)
 
                             val insertEntry = createEntry()
@@ -96,7 +95,7 @@ fun <T : Observable> detachedList(parent: Observable, key: String, clazz: KClass
 
                     ElementChangeType.Remove -> {
                         val removeEntry = findEntry(mnkeys[0], mnkeys[1])
-                        db.backendConnector.delete(table.tableName(), removeEntry.key<Any>(), MtoNTableEntry::class)
+                        db.backendConnector.delete(table.tableName(), removeEntry.keyValue<MtoNTableEntry, Any>(), MtoNTableEntry::class)
                         db.cache.removeObject(table.tableName(), removeEntry)
 
                     }

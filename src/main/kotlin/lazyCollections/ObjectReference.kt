@@ -1,8 +1,10 @@
 package lazyCollections
 
+import observable.Observable
+
 typealias OnLoadListener<T> = (T) -> Unit
 
-class ObjectReference <T : Indexable> {
+class ObjectReference <T : Observable> { //TODO Figure out how to make this Indexable
 
     val pk : Any
     private val load : ((Any) -> T)?
@@ -13,7 +15,7 @@ class ObjectReference <T : Indexable> {
     }
 
     constructor (obj: T) {
-        this.pk = obj.key()
+        this.pk = obj.keyValue<T, Any>()
         this.loaded = true
         this.obj = obj
         this.load = null

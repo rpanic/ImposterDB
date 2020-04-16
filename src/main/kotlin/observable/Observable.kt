@@ -8,6 +8,7 @@ import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
+import kotlin.reflect.KProperty1
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
@@ -57,8 +58,12 @@ abstract class Observable : DBAwareObject(), Indexable{
         classListeners.add(listener)
     }
 
-    override fun <T> key() : T{
-        return uuid as T
+    override fun <O : Observable, T> key() : KProperty1<O, T>{
+        return Observable::uuid as KProperty1<O, T>
+    }
+
+    override fun <O : Observable, T> keyValue() : T{
+        return key<O, T>().get(this as O)
     }
 
     internal fun <T> hookToObservable(obj: T, parentProperty: KProperty<*>?){

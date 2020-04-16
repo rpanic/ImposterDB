@@ -27,11 +27,11 @@ class ObjectCache (){
             parsedObjects[key] = mutableMapOf()
         }
 
-        if(containsObject(key, obj.key())){
+        if(containsObject(key, obj.keyValue<T, Any>())){
             throw IllegalStateException()
         }
 
-        parsedObjects[key]?.set(obj.key(), obj)
+        parsedObjects[key]?.set(obj.keyValue<T, Any>(), obj)
     }
 
     fun <K : Any> removeObject(key: String, pk: K) : Boolean{

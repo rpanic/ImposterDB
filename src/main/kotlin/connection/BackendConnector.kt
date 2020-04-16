@@ -149,7 +149,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
             }
         }
 
-        if(!cache.containsObject(key, obj.key())) { //Since all Objects which can be inserted have to be loaded and therefore put into the cache, this Check is sufficient
+        if(!cache.containsObject(key, obj.keyValue<T, Any>())) { //Since all Objects which can be inserted have to be loaded and therefore put into the cache, this Check is sufficient
             forEachBackend {
                 it.insert(key, clazz, obj)
             }

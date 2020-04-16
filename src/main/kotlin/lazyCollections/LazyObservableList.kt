@@ -82,16 +82,16 @@ open class LazyObservableList<T : Observable> : AbstractObservable<ElementChange
 
 
     override fun contains(element: T): Boolean {
-        return collection.any { it.pk == element.key() }
+        return collection.any { it.pk == element.keyValue<T, Any>() }
     }
 
-    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.pk == element.key() } }
+    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.pk == element.keyValue<T, Any>() } }
 
-    override fun indexOf(element: T) = collection.indexOfFirst { it.pk == element.key() }
+    override fun indexOf(element: T) = collection.indexOfFirst { it.pk == element.keyValue<T, Any>() }
 
     override fun isEmpty() = collection.isEmpty()
 
-    override fun lastIndexOf(element: T) = collection.indexOfLast { it.pk == element.key() }
+    override fun lastIndexOf(element: T) = collection.indexOfLast { it.pk == element.keyValue<T, Any>() }
 
     override fun listIterator() = getAndResolveObjects().listIterator()
 

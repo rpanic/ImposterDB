@@ -28,7 +28,7 @@ open class JsonBackend : DBBackend() {
     override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
         println("loadByPk $pk $key ${clazz.simpleName} ")
         val list = load(key, clazz)
-        return list.find { it.key<K>() == pk } //TODO For validation "!!"
+        return list.find { it.keyValue<T, K>() == pk } //TODO For validation "!!"
     }
 
     override fun <T : Observable, K> loadAllKeys(key: String): K {
@@ -60,7 +60,7 @@ open class JsonBackend : DBBackend() {
     }
 
     override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>) {
-        println("update ${obj.key<Any>()} ${prop.name} $key ${clazz.simpleName} ")
+        println("update ${obj.keyValue<T, Any>()} ${prop.name} $key ${clazz.simpleName} ")
         if(prop.name == "uuid"){
             println("")
         }
@@ -71,7 +71,7 @@ open class JsonBackend : DBBackend() {
         println("delete $pk $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
         save(key, clazz){
-            toMutableList().apply { removeIf { it.key<K>() == pk }; Unit }
+            toMutableList().apply { removeIf { it.keyValue<T, K>() == pk }; Unit }
         }
     }
 
@@ -83,7 +83,7 @@ open class JsonBackend : DBBackend() {
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
-        println("insert ${obj.key<Any>()} $key ${clazz.simpleName} ")
+        println("insert ${obj.keyValue<T, Any>()} $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
 //        DB.cache.getComplete<T>(key)!!.add(obj)
         save(key, clazz){

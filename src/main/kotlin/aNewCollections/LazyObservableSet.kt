@@ -74,7 +74,7 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<ElementChanged
         get() = collection.size
 
     operator fun get(key: Any?) : T?{
-        return collection.find { it.getObject().key() }?.getObject()
+        return collection.find { it.getObject().keyValue<T, Any>() == key }?.getObject()
     }
 
     override fun iterator() = getAndResolveObjects().iterator()
@@ -84,10 +84,10 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<ElementChanged
 //    override operator fun get(i: Int) = collection[i].getObject()
 
     override fun contains(element: T): Boolean {
-        return collection.any { it.pk == element.key() }
+        return collection.any { it.pk == element.keyValue<T, Any>() }
     }
 
-    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.pk == element.key() } }
+    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.pk == element.keyValue<T, Any>() } }
 
     override fun isEmpty() = collection.isEmpty()
 
