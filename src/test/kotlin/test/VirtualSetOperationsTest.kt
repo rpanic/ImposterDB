@@ -27,6 +27,7 @@ class VirtualSetOperationsTest {
         performExtractionCheck(CompareType.LESS, SimpleObservableChildParent::s, "Hello2"){ it.s() < "Hello2"}
         performExtractionCheck(CompareType.GREATER_EQUALS, SimpleObservableChildParent::s, "Hello3"){ it.s() >= "Hello3"}
         performExtractionCheck(CompareType.GREATER, SimpleObservableChildParent::s, "Hello4"){ it.s() > "Hello4"}
+        performExtractionCheck(CompareType.EQUALS, SimpleObservableChildParent::s, "Hello5"){ it.s eq "Hello5"}
 
     }
 

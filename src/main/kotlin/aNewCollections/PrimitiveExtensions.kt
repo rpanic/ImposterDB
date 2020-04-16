@@ -9,11 +9,24 @@ private inline fun <reified V : Any, reified T : Comparable<V>> createMock(t: V)
     every { mock.compareTo(any()) } answers {
         answerer.answer(this)
     }
+    every { mock == any() } answers {
+        answerer.f(CompareComparisonRule<Any>(mock, arg(0), CompareType.EQUALS))
+        true
+    }
     return mock
 }
 
 infix fun <T : Any> T.eq(b2: T) : Boolean{
-    return true //TODO
+    if(this is Comparable<*> && b2 is Comparable<*>){
+        var (mock, nonMock) = this to b2
+        if(b2 in RuleExtractionFramework.answerer.keys){
+            mock = b2
+            nonMock = this
+        }
+        return createMock(mock) == nonMock
+    }else{
+        throw IllegalAccessException("Eq can only be called by Permitted Types")
+    }
 }
 
 operator fun String.invoke() : StringClone {
