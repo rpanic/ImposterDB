@@ -132,21 +132,55 @@ class DB{
     }
 
     inline fun <reified T : Observable> getSet(key: String) : VirtualSet<T> {
-        return VirtualSet({
-            getDetached(key, it,true, T::class){
-                throw IllegalAccessException("Object with key $it not existent in Table $key")}
-        }, { obj ->
-            backendConnector.insert(key, obj, T::class)
-            addBackendListener(obj, key, T::class)
-        }, listOf(), T::class)
+        return getSet(key, T::class)
+    }
+
+    fun <T : Observable> getSet(key: String, clazz: KClass<T>) : VirtualSet<T>{
+        val initObservable = { obj : T ->
+            obj.setDbReference(this)
+            addBackendListener(obj, key, clazz)
+        }
+        val set = VirtualSet({
+            val set = backendConnector.loadWithRules(key, it, clazz)
+            set.forEach(initObservable)
+            set
+        }, listOf(), clazz)
+
+        set.addListener { listChangeArgs, levelInformation ->
+            println("Parent set got called")
+
+            when(listChangeArgs.elementChangeType){
+
+                ElementChangeType.Add -> {
+                    listChangeArgs.elements.forEach {
+                        backendConnector.insert(key, it, clazz)
+                        initObservable(it)
+                        set.tellChildren(listChangeArgs, levelInformation)
+                    }
+                }
+
+            }
+        }
+//        return VirtualSet({
+//            backendConnector.loadWithRules(key, it, T::class)
+//            getDetached(key, it,true, T::class){
+//                throw IllegalAccessException("Object with key $it not existent in Table $key")}
+//        }, { obj ->
+//            backendConnector.insert(key, obj, T::class)
+//            obj.setDbReference(this)
+//            addBackendListener(obj, key, T::class)
+//            //TODO Hook Set to Observable?
+//        }, listOf(), T::class)
     }
 
     //Only for retrieving of "actual" lists, so for Tuples of T
     //TODO Integrate this into view() Process
+    //Udpate: This logic should be already included in the 3 lines above, so this can be thrown away
 //    inline fun <reified T : Observable> getDetachedList(key: String) : ObservableArrayList<T> {
-//
+
 //        val list = backendConnector.loadList(key, T::class) ?: throw java.lang.IllegalStateException("Collection with key $key could not be found in backends")
-//
+
+
 //        if(list.listeners.size == 0){
 //
 //            list.addListener { args, levels -> //TODO Add Level stuff to Backend interface for incremental saves
@@ -168,7 +202,7 @@ class DB{
 //        list.setDbReference(this)
 //
 //        return list
-//
+
 //    }
 
     fun <T : Observable> performListAddEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){

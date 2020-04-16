@@ -59,11 +59,15 @@ abstract class Observable : DBAwareObject(), Indexable{
     }
 
     override fun <O : Observable, T> key() : KProperty1<O, T>{
-        return Observable::uuid as KProperty1<O, T>
+        return key as KProperty1<O, T>
     }
 
     override fun <O : Observable, T> keyValue() : T{
         return key<O, T>().get(this as O)
+    }
+
+    companion object{
+        val key = Observable::uuid
     }
 
     internal fun <T> hookToObservable(obj: T, parentProperty: KProperty<*>?){

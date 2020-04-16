@@ -1,5 +1,6 @@
 package db
 
+import aNewCollections.Step
 import observable.DBAwareObject
 import observable.Observable
 import kotlin.reflect.KClass
@@ -15,6 +16,8 @@ interface Backend {
     fun <T : Observable> createSchema(key: String, clazz: KClass<T>)
 
     fun <T : Observable, K> loadByPK (key: String, pk: K, clazz: KClass<T>) : T? //TODO Make nullable
+
+    fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>) : Set<T>
 
     fun <T : Observable, K> loadAllKeys (key: String) : K
 

@@ -1,5 +1,6 @@
 package main.kotlin.connection
 
+import aNewCollections.Step
 import com.beust.klaxon.internal.firstNotNullResult
 import connection.MtoNTable
 import connection.MtoNTableEntry
@@ -35,6 +36,14 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
             backends.forEach { it.createSchema(key, clazz) }
             initialized += key
         }
+    }
+
+    fun <T : Observable> loadWithRules(key: String, steps: List<Step<T, *>>, clazz: KClass<T>): Set<T> {
+
+        val read = backends.firstOrNull()?.load(key, clazz, steps)
+
+        return read ?: setOf()
+
     }
 
     fun <T : Observable, K : Any> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
