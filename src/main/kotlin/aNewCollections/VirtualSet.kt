@@ -16,7 +16,8 @@ import kotlin.reflect.full.createInstance
 open class ReadOnlyVirtualSet<T : Observable>(
     val loader: (List<Step<T, *>>) -> Set<T>,
     val steps: List<Step<T, *>>,
-    val clazz: KClass<T>
+    val clazz: KClass<T>,
+    val parent: VirtualSet<T>? = null
 ): AbstractObservable<ElementChangedListener<T>>(), IReadonlyVirtualSet<T>{
 
     internal var loadedState: MutableSet<T>? = null
@@ -58,12 +59,6 @@ open class ReadOnlyVirtualSet<T : Observable>(
 //        }, steps + MapStep<T, V>(), clazz)
 //    }
 
-    fun addToState(t: T){
-        if(loadedState != null){
-            loadedState!!.add(t)
-        }
-        listeners.forEach { it.invoke(ListChangeArgs(ElementChangeType.Add, t, -1), LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))) }
-    }
 
     fun tellChildren(args: ListChangeArgs<T>, levels: LevelInformation){
         listeners.forEach { it(args, levels) }
@@ -72,13 +67,17 @@ open class ReadOnlyVirtualSet<T : Observable>(
 
 open class VirtualSet<T : Observable>(
     loader: (List<Step<T, *>>) -> Set<T>,
-    val setter: (T) -> Unit,
+    val performEvent: (VirtualSet<T>, ListChangeArgs<T>, LevelInformation) -> Unit,
     steps: List<Step<T, *>>,
-    clazz: KClass<T>
-) : ReadOnlyVirtualSet<T>(loader, steps, clazz), IVirtualSet<T> {
+    clazz: KClass<T>,
+    parent: VirtualSet<T>? = null
+) : ReadOnlyVirtualSet<T>(loader, steps, clazz, parent), IVirtualSet<T> {
 
     override fun add(t: T) {
-        //TODO Stehengeblieben: back and forward propagartion of Change Events
+        val args = ListChangeArgs(ElementChangeType.Add, t, -1)
+        val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
+        performEvent(getOrParent(), args, level)
+        getOrParent().tellChildren(args, level)
     }
 
     fun filter(f: (T) -> Boolean) : VirtualSet<T>{
@@ -87,28 +86,33 @@ open class VirtualSet<T : Observable>(
 
         val normalizedConditions = extractor.extractFilterRules(f)
 
-        val newSet = VirtualSet(loader, steps + FilterStep(normalizedConditions), clazz)
-
-        newSet.addListener { listChangeArgs, levelInformation -> newSet.tellChildren(listChangeArgs, levelInformation) }
+        val newSet = VirtualSet(loader, { _, a, b -> performEvent(this, a, b) }, steps + FilterStep(normalizedConditions), clazz, this)
 
         this.addListener { listChangeArgs, levelInformation ->
+            println("Children got called")
+            val relay = { v: VirtualSet<T> -> v.tellChildren(listChangeArgs, levelInformation) }
             when(listChangeArgs.elementChangeType){
                 ElementChangeType.Add -> {
                     listChangeArgs.elements.forEach {
-                        if(StepInterpreter.interpretFilter(steps.last() as FilterStep<T>, it)){
-                            newSet.addToState(it)
+                        if(StepInterpreter.interpretFilter(newSet.steps.last() as FilterStep<T>, it)){
+                            newSet.loadedState?.add(it)
+                            relay(newSet)
                         }
                     }
                 }
                 ElementChangeType.Remove -> listChangeArgs.elements.forEach {
-                    if(StepInterpreter.interpretFilter(steps.last() as FilterStep<T>, it)){
-                        //TODO
-//                        addToState(it)
+                    if(StepInterpreter.interpretFilter(newSet.steps.last() as FilterStep<T>, it)){
+                        newSet.loadedState?.remove(it)
+                        relay(newSet)
                     }
                 }
             }
         }
 
         return newSet
+    }
+
+    fun getOrParent() : VirtualSet<T>{
+        return parent?.getOrParent() ?: this
     }
 }

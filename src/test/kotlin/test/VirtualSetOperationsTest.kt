@@ -1,6 +1,14 @@
 package test
 
 import aNewCollections.*
+import com.nhaarman.mockitokotlin2.times
+import db.Backend
+import db.DB
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkClass
+import io.mockk.verify
+import observable.ElementChangeType
 import org.junit.Test
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
@@ -19,6 +27,38 @@ fun compareTo(set: VirtualSet<Parent>) : Int {
 class VirtualSetOperationsTest {
 
     @Test
+    fun testChainWithFilter(){
+
+        val backend = mockkClass(Backend::class)
+        val testObj = TestObject().apply { testProperty = "Hello" }
+        every { backend.load<TestObject>(any(), any(), any()) } returns setOf(testObj)
+        every { backend.insert<TestObject>(any(), any(), any()) } returns Unit
+
+        val db = DB()
+        db += backend
+
+        val set = db.getSet<TestObject>("test")
+        val set2 = set.filter { it.testProperty eq "Hello" }
+
+        val view = set2.view()
+        assertThat(view.first()).isEqualTo(testObj)
+
+        val testObject2 = TestObject().apply { testProperty = "Hello" }
+
+        val listener = mockk<ElementChangedListener<TestObject>>(relaxed = true)
+        set.addListener(listener)
+        set2.addListener(listener)
+
+        set2.add(testObject2)
+
+        verify { backend.insert("test", TestObject::class, testObject2) }
+        verify (exactly = 2) { listener.invoke(match { it.elementChangeType == ElementChangeType.Add }, any()) }
+
+        //TODO Write test with insert where filter condition is not true
+
+    }
+
+    @Test
     fun filterTestEquals(){
 
         performExtractionCheck(CompareType.EQUALS, SimpleObservableChildParent::test){ it.test == SimpleObservableChild() }
@@ -33,7 +73,7 @@ class VirtualSetOperationsTest {
 
     private fun performExtractionCheck(type: CompareType, prop: KMutableProperty1<*, *>, obj: Any? = null, filter: (SimpleObservableChildParent) -> Boolean){
 
-        val set = VirtualSet({ SimpleObservableChildParent() }, {}, listOf(), SimpleObservableChildParent::class)
+        val set = VirtualSet({ setOf(SimpleObservableChildParent()) }, {_, _, _ -> }, listOf(), SimpleObservableChildParent::class)
 
         val set2 = set.filter (filter)
 

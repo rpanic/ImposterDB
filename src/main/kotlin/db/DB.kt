@@ -144,9 +144,8 @@ class DB{
             val set = backendConnector.loadWithRules(key, it, clazz)
             set.forEach(initObservable)
             set
-        }, listOf(), clazz)
-
-        set.addListener { listChangeArgs, levelInformation ->
+        },
+        { instance, listChangeArgs, levelInformation ->
             println("Parent set got called")
 
             when(listChangeArgs.elementChangeType){
@@ -155,22 +154,16 @@ class DB{
                     listChangeArgs.elements.forEach {
                         backendConnector.insert(key, it, clazz)
                         initObservable(it)
-                        set.tellChildren(listChangeArgs, levelInformation)
+                        instance.loadedState?.remove(it)
                     }
                 }
 
             }
-        }
-//        return VirtualSet({
-//            backendConnector.loadWithRules(key, it, T::class)
-//            getDetached(key, it,true, T::class){
-//                throw IllegalAccessException("Object with key $it not existent in Table $key")}
-//        }, { obj ->
-//            backendConnector.insert(key, obj, T::class)
-//            obj.setDbReference(this)
-//            addBackendListener(obj, key, T::class)
-//            //TODO Hook Set to Observable?
-//        }, listOf(), T::class)
+        },
+        listOf(), clazz)
+
+        return set
+        //TODO Hook Set to observable elements and relay Update events?
     }
 
     //Only for retrieving of "actual" lists, so for Tuples of T

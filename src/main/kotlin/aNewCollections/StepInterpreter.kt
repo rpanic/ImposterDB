@@ -21,7 +21,7 @@ object StepInterpreter {
                 else -> null
             }
 
-            if(obj is Comparable<*>){
+            if(res == null && obj is Comparable<*>){
                 (obj as Comparable<Any>).apply {
                     when(rule.type) {
                         CompareType.GREATER -> obj > rule.obj2
