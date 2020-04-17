@@ -30,8 +30,8 @@ class VirtualSetOperationsTest {
     fun testChainWithFilter(){
 
         val backend = mockkClass(Backend::class)
-        val testObj = TestObject().apply { testProperty = "Hello" }
-        every { backend.load<TestObject>(any(), any(), any()) } returns setOf(testObj)
+        val testObj = setOf("Hallo").map { s -> TestObject().apply { testProperty = s } }
+        every { backend.load<TestObject>(any(), any(), match { it.size == 1 } ) } returns testObj.toSet()
         every { backend.insert<TestObject>(any(), any(), any()) } returns Unit
 
         val db = DB()
@@ -41,7 +41,10 @@ class VirtualSetOperationsTest {
         val set2 = set.filter { it.testProperty eq "Hello" }
 
         val view = set2.view()
-        assertThat(view.first()).isEqualTo(testObj)
+        assertThat(view.size).isEqualTo(1)
+        assertThat(view.first()).isEqualTo(testObj.first())
+
+        assertThat(set.loadedState).isNull()
 
         val testObject2 = TestObject().apply { testProperty = "Hello" }
 

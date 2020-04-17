@@ -25,7 +25,6 @@ open class ReadOnlyVirtualSet<T : Observable>(
     //View is a 1:1 display of the state of a VirtualView, but concret
     override fun view(): IObservableSet<T> {
         //Make a ObservableSet here
-
         if(loadedState == null){
             loadedState = loader(steps).toMutableSet()
         }
