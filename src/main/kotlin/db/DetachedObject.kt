@@ -1,5 +1,6 @@
 package db
 
+import example.debug
 import observable.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
@@ -68,7 +69,7 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
     protected fun getValue() : T{
         if(!initialized){
             value = initializer(a)
-            println("Should not happen - DetachedObject :: 41")
+            debug("Should not happen - DetachedObject :: 41")
         }
         return value!!
     }

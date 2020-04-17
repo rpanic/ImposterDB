@@ -1,5 +1,7 @@
 package example
 
+import mu.KLogging
+import mu.KotlinLogging
 import observable.Observable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -27,3 +29,25 @@ fun <T : Observable, DELEGATE : Any> findDelegatingProperties(clazz: KClass<T>, 
             null
     }.filterNotNull()
 }
+
+val logger = KotlinLogging.logger("ImposterDB")
+
+fun debug(f: () -> String) =
+    logger.debug(f)
+
+fun info(f: () -> String) =
+        logger.info(f)
+
+fun error(f: () -> String) =
+        logger.error(f)
+
+fun debug(s: String) =
+        logger.debug(s)
+
+fun info(s: String) =
+        logger.info(s)
+
+fun error(s: String) =
+        logger.error(s)
+
+fun logger() = logger

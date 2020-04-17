@@ -2,6 +2,7 @@ package lazyCollections
 
 import com.beust.klaxon.Json
 import db.*
+import example.debug
 import observable.*
 
 typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
@@ -31,7 +32,7 @@ open class LazyObservableList<T : Observable> : AbstractObservable<ElementChange
 
     protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
-        println("New size: $size")
+        debug("New size: $size")
 
         val action = object : RevertableAction {
             override fun action() {

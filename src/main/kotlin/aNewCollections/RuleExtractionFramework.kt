@@ -1,5 +1,6 @@
 package aNewCollections
 
+import example.debug
 import io.mockk.*
 import observable.Observable
 import java.lang.Exception
@@ -32,7 +33,7 @@ object RuleExtractionFramework {
             try {
                 val prop = clazz.memberProperties.find { it.javaGetter?.name == method.name } as? KProperty1<Any, Any>
 
-                println("Prop")
+                debug { "Prop" }
 
                 if (prop == null) {
 
