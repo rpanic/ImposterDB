@@ -10,7 +10,7 @@ private inline fun <reified V : Any, reified T : Comparable<V>> createMock(t: V)
         answerer.answer(this)
     }
     every { mock == any() } answers {
-        answerer.f(CompareComparisonRule<Any>(mock, arg(0), CompareType.EQUALS))
+        answerer.f(NestedRule(mutableListOf(), CompareComparisonRule<Any>(mock, arg(0), CompareType.EQUALS)))
         true
     }
     return mock

@@ -19,7 +19,7 @@ object RuleExtractionFramework {
         return RuleExtractor(clazz)
     }
 
-    fun <T : Any> createMock(clazz: KClass<T>, f: (ComparisonRule) -> Unit): T {
+    fun <T : Any> createMock(clazz: KClass<T>, f: (NestedRule) -> Unit): T {
 
         val primitive = getPrimitivesValue(clazz, f)
         if(primitive != null){
@@ -42,7 +42,7 @@ object RuleExtractionFramework {
 
                     val type = method.returnType
                     val ret = createMock(type as KClass<Any>) {
-                        f(NestedComparisonRule(prop, it))
+                        f(it.apply { props.add(prop) } )
                     }
 
                     ret
@@ -60,7 +60,7 @@ object RuleExtractionFramework {
         }
 
         every { mock == any() } answers {
-            f(CompareComparisonRule<Any>(mock, arg(0), CompareType.EQUALS))
+            f(NestedRule(mutableListOf(), CompareComparisonRule<Any>(mock, arg(0), CompareType.EQUALS)))
             true
         }
 
@@ -76,7 +76,7 @@ object RuleExtractionFramework {
         return mock
     }
 
-    fun <T : Any> getPrimitivesValue(clazz: KClass<T>, f: (ComparisonRule) -> Unit) : T?{
+    fun <T : Any> getPrimitivesValue(clazz: KClass<T>, f: (NestedRule) -> Unit) : T?{
         val randomValue: () -> Any? = { when(clazz){
             String::class -> UUID.randomUUID().toString()
             Int::class -> (Math.random() * Int.MAX_VALUE).toInt()
@@ -93,12 +93,12 @@ object RuleExtractionFramework {
         return value?.apply { mockList += this; answerer[this] = CompareAnswer(this, f) } as? T
     }
 
-    class CompareAnswer(val mock: Any, val f: (ComparisonRule) -> Unit){
+    class CompareAnswer(val mock: Any, val f: (NestedRule) -> Unit){
 
         var count = 0
 
         fun answer(scope: MockKAnswerScope<Int, Int>) : Int{
-            f(CompareComparisonRule(mock, scope.arg(0)))
+            f(NestedRule(mutableListOf(), CompareComparisonRule(mock, scope.arg(0))))
 
             val returns = listOf(1, 0, -1)
             count++
@@ -129,9 +129,9 @@ operator fun String.compareTo(s : String) : Int{
 interface ComparisonRule {
 }
 
-open class NestedComparisonRule(
-        val prop: KProperty1<Any, Any>,
-        val condition: ComparisonRule
+open class NestedRule(
+        val props: MutableList<KProperty1<Any, Any>>,
+        val rule: ComparisonRule
 ) : ComparisonRule
 
 open class MappingComparisonRule<T : Any, V : Any>(

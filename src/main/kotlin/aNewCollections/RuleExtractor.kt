@@ -22,15 +22,19 @@ class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
         val ret = f(mock)
 
         return conditions.toList().map {
-            val resolved = resolveNestedCondition(it)
 
-            val actualCondition = resolved.second
+            val rule = it as NestedRule
+            rule.props.reverse()
+
+            //TODO Remove NormalizedRule, since it is basically the same object
+
+            val actualCondition = rule.rule
 
             if(actualCondition is CompareComparisonRule<*>) {
 
                 if(actualCondition.type == CompareType.EQUALS){
 
-                    NormalizedCompareRule(resolved.first, actualCondition.obj2, if(ret) CompareType.EQUALS else CompareType.NOT_EQUALS)
+                    NormalizedCompareRule(rule.props, actualCondition.obj2, if(ret) CompareType.EQUALS else CompareType.NOT_EQUALS)
 
                 }else {
 
@@ -44,35 +48,12 @@ class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
 
                     actualCondition.type = types[results]
 
-                    NormalizedCompareRule(resolved.first, actualCondition.obj2, actualCondition.type)
+                    NormalizedCompareRule(rule.props, actualCondition.obj2, actualCondition.type)
                 }
             } else {
                 throw IllegalStateException("Can't happen")
             }
         }
-    }
-
-
-    private fun resolveNestedCondition(condition : ComparisonRule) : Pair<List<KProperty1<*, *>>, ComparisonRule>{
-
-        if(condition is NestedComparisonRule) {
-
-            val props = mutableListOf<KProperty1<*, *>>()
-
-            var last = condition as NestedComparisonRule
-            while(true){
-                props += last.prop
-                if(last.condition is NestedComparisonRule){
-                    last = last.condition as NestedComparisonRule
-                }else{
-                    return props to last.condition
-                }
-            }
-
-        }else{
-            return listOf<KProperty1<*, *>>() to condition
-        }
-
     }
 
 }
