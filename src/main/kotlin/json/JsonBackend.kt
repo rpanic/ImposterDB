@@ -1,5 +1,7 @@
 package json
 
+import aNewCollections.Step
+import aNewCollections.StepInterpreter
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
@@ -29,6 +31,11 @@ open class JsonBackend : DBBackend() {
         println("loadByPk $pk $key ${clazz.simpleName} ")
         val list = load(key, clazz)
         return list.find { it.keyValue<T, K>() == pk } //TODO For validation "!!"
+    }
+
+    override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
+        val loaded = load(key, clazz)
+        return StepInterpreter.interpretSteps(steps, loaded.toSet(), clazz)
     }
 
     override fun <T : Observable, K> loadAllKeys(key: String): K {
