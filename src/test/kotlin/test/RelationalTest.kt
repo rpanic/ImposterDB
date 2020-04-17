@@ -35,9 +35,9 @@ class RelationalTest{
 
         verify(backend).delete(argThat { this == "ChildrenTest11" }, argThat<KClass<Observable>> { this == MtoNTableEntry::class }, check <Any> {
             val record = mToN.firstValue
-            assertThat(record.key<Any>()).isEqualTo(it)
-            assertThat(record.m).isEqualTo(child.key())
-            assertThat(record.n).isEqualTo(parent.key())
+            assertThat(record.keyValue<MtoNTableEntry, Any>()).isEqualTo(it)
+            assertThat(record.m).isEqualTo(child.keyValue<MtoNTableEntry, Any>())
+            assertThat(record.n).isEqualTo(parent.keyValue<MtoNTableEntry, Any>())
         })
 
         //TODO What about the Child?
@@ -91,15 +91,15 @@ class RelationalTest{
             verify("ChildrenTest12", MtoNTableEntry::class as KClass<Observable>){
                 assertThat (this).isInstanceOf(MtoNTableEntry::class.java)
                 if(this is MtoNTableEntry){
-                    assertThat (this.n).isEqualTo(parent1.key())
-                    assertThat (this.m).isEqualTo(child.key())
+                    assertThat (this.n).isEqualTo(parent1.keyValue<MtoNTableEntry, Any>())
+                    assertThat (this.m).isEqualTo(child.keyValue<MtoNTableEntry, Any>())
                 }
             }
             verify("ChildrenTest12", MtoNTableEntry::class as KClass<Observable>){
                 assertThat (this).isInstanceOf(MtoNTableEntry::class.java)
                 if(this is MtoNTableEntry){
-                    assertThat (this.n).isEqualTo(parent2.key())
-                    assertThat (this.m).isEqualTo(child.key())
+                    assertThat (this.n).isEqualTo(parent2.keyValue<MtoNTableEntry, Any>())
+                    assertThat (this.m).isEqualTo(child.keyValue<MtoNTableEntry, Any>())
                 }
             }
         }

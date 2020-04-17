@@ -11,11 +11,11 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 //TODO Think about making detachedList Observable -> Basically a proxy for removeAll() addAll()
-inline fun <P : Observable, reified T : Observable> P.detachedList(key: String) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
+inline fun <reified T : Observable> Observable.detachedList(key: String) : DetachedListReadOnlyProperty<Observable, LazyObservableArrayList<T>> {
     return detachedList(this, key, T::class)
 }
 
-fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz: KClass<T>) : DetachedListReadOnlyProperty<LazyObservableArrayList<T>> {
+fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz: KClass<T>) : DetachedListReadOnlyProperty<P, LazyObservableArrayList<T>> {
 
     return DetachedListReadOnlyProperty(key) { table, list ->
         val db = parent.getDB()
@@ -50,7 +50,7 @@ fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz:
             db.performListUpdateEventsOnBackend(table.child(), clazz, args) //TODO Is this actually necessary or does this actually cause a second update call?
 
             args.elements.forEachIndexed { i, obj ->
-                var mnkeys = listOf(parentRef.keyValue<P, Any>(), obj!!.keyValue<T, Any>())
+                var mnkeys = listOf(parentRef.keyValue<P, Any>(), obj.keyValue<T, Any>())
                 if(table.namesFlipped()){
                     mnkeys = mnkeys.reversed()
                 }
@@ -110,10 +110,10 @@ fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz:
     }
 }
 
-class DetachedListReadOnlyProperty<L : Any>(val key: String, f: (MtoNTable, List<Any>) -> L) : MutableLazyReadOnlyProperty<L>(f){
+class DetachedListReadOnlyProperty<P : Observable, L : Any>(val key: String, f: (MtoNTable, List<Any>) -> L) : MutableLazyReadOnlyProperty<P, L>(f){
 }
 
-abstract class MutableLazyReadOnlyProperty<T>(protected var initFunction: (MtoNTable, List<Any>) -> T) : ReadOnlyProperty<Any?, T> {
+abstract class MutableLazyReadOnlyProperty<P : Observable, T>(protected var initFunction: (MtoNTable, List<Any>) -> T) : ReadOnlyProperty<P?, T> {
 
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
@@ -130,7 +130,7 @@ abstract class MutableLazyReadOnlyProperty<T>(protected var initFunction: (MtoNT
         this.initFunction = f
     }
 
-    public override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    public override fun getValue(thisRef: P?, property: KProperty<*>): T {
 //        if(table == null){ //Is only the case, if the parent object did not get loaded, but initialized
 //            table = MtoNTable(key, )
 //        }
