@@ -42,12 +42,19 @@ open class ReadOnlyVirtualSet<T : Observable>(
 
     }
 
+    fun forEach(f: (T) -> Unit){
+        view().forEach(f)
+    }
+
     override operator fun get(key: Any) : T?{
+        if(loadedState != null) {
+            return loadedState!!.find { it.keyValue<T, Any>() == key }
+        }
         return loader(listOf(
                 FilterStep(listOf(
-                NormalizedCompareRule(listOf(
-                        clazz.createInstance().key<T, Any>()),
-                        key)
+                        NormalizedCompareRule(listOf(
+                                clazz.createInstance().key<T, Any>()),
+                                key)
                 ))
         )).firstOrNull()
     }
@@ -73,7 +80,14 @@ open class VirtualSet<T : Observable>(
 ) : ReadOnlyVirtualSet<T>(loader, steps, clazz, parent), IVirtualSet<T> {
 
     override fun add(t: T) {
-        val args = ListChangeArgs(ElementChangeType.Add, t, -1)
+        val args = ListChangeArgs(ElementChangeType.Add, t, -1) //TODO Replace ListChangeArgs by SetChangeArgs
+        val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
+        performEvent(getOrParent(), args, level)
+        getOrParent().tellChildren(args, level)
+    }
+
+    override fun remove(t: T) {
+        val args = ListChangeArgs(ElementChangeType.Remove, t, -1)
         val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
         performEvent(getOrParent(), args, level)
         getOrParent().tellChildren(args, level)

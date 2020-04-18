@@ -4,6 +4,7 @@ import observable.IAbstractObservable
 
 interface IVirtualSet <T> : IReadonlyVirtualSet<T>{
     fun add(t: T)
+    fun remove(t: T)
 }
 
 interface IReadonlyVirtualSet <T>{
