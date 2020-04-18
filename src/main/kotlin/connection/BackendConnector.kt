@@ -5,10 +5,7 @@ import com.beust.klaxon.internal.firstNotNullResult
 import connection.MtoNTable
 import connection.MtoNTableEntry
 import connection.ObjectCache
-import db.Backend
-import db.DB
-import db.DetachedListReadOnlyProperty
-import db.DetachedObjectReadWriteProperty
+import db.*
 import example.findDelegatingProperties
 import observable.Observable
 import observable.ObservableArrayList
@@ -41,6 +38,11 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
     fun <T : Observable> loadWithRules(key: String, steps: List<Step<T, *>>, clazz: KClass<T>): Set<T> {
 
         val read = backends.firstOrNull()?.load(key, clazz, steps)
+
+        read?.forEach {
+            resolveRelations(key, clazz, it)
+//            it.setDbReference(db)
+        }
 
         return read ?: setOf()
 
@@ -77,7 +79,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
     //Only for loading purposes
     fun <T : Observable> resolveRelations(key: String, clazz: KClass<T>, list: List<T>) {
         val oneToNProperties = findDelegatingProperties(clazz, DetachedObjectReadWriteProperty::class)
-        val mToNProperties = findDelegatingProperties(clazz, DetachedListReadOnlyProperty::class)
+        val mToNProperties = findDelegatingProperties(clazz, VirtualSetReadOnlyProperty::class)
 
         //1 to n
         //TODO
@@ -87,10 +89,21 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
             if(list.isNotEmpty()) {
 
-                val firstDelegate = prop.getDelegate(list[0]) as DetachedListReadOnlyProperty<Observable, *>
-                val table = MtoNTable(key, firstDelegate.key)
+                list.forEach {
+                    val delegate = prop.getDelegate(it)
+                    if (delegate is VirtualSetReadOnlyProperty<*, *>) {
 
-                //TODO Make Virutalized
+                        delegate.setParentKey(key)
+
+                    } else {
+                        throw IllegalStateException("Should definitely not happen")
+                    }
+                }
+
+                //Old code
+//                val firstDelegate = prop.getDelegate(list[0]) as DetachedListReadOnlyProperty<Observable, *>
+//                val table = MtoNTable(key, firstDelegate.key)
+
 //                val tabledata = loadList(table.tableName(), MtoNTableEntry::class)!!
 //                list.forEach { obj ->
 //                    val delegate = prop.getDelegate(obj)
@@ -156,7 +169,11 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
                 delegate.table = MtoNTable(key, delegate.key)
                 delegate.pks = listOf()
             }
+            val virtualSetDelegate = ((it as? KProperty1<Any?, Any?>)?.getDelegate(obj) as? VirtualSetReadOnlyProperty<Observable, *>)
+            virtualSetDelegate?.setParentKey(key)
         }
+
+        obj.setDbReference(db)
 
         if(!cache.containsObject(key, obj.keyValue<T, Any>())) { //Since all Objects which can be inserted have to be loaded and therefore put into the cache, this Check is sufficient
             forEachBackend {

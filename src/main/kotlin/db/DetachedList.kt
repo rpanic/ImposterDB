@@ -1,14 +1,188 @@
 package db
 
+import aNewCollections.*
 import connection.MtoNTable
 import connection.MtoNTableEntry
 import lazyCollections.LazyObservableArrayList
-import lazyCollections.LazyReadWriteProperty
 import lazyCollections.ObjectReference
 import observable.*
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.full.memberProperties
+
+inline fun <reified T : Observable> Observable.detachedSet(key: String) : VirtualSetReadOnlyProperty<Observable, VirtualSet<T>> {
+    return detachedSet(this, key, T::class)
+}
+
+fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: KClass<T>) : VirtualSetReadOnlyProperty<P, VirtualSet<T>> {
+
+    return VirtualSetReadOnlyProperty(key) { table ->
+        val db = parent.getDB()
+
+        //Add Listeners for Changes in List
+        val performEvent = { args : ListChangeArgs<T>, levelinfo: List<Level> ->
+
+            //TODO Maybe not necessarily load Object when calling list.removeAt(1), since this is not really necessary.
+            // Do this by changing the ChangeListener to give Objectreference instead of The Object itself
+
+            db.performListAddEventsOnBackend(table.child(), clazz, args)
+            db.performListUpdateEventsOnBackend(table.child(), clazz, args) //TODO Is this actually necessary or does this actually cause a second update call?
+
+            args.elements.forEachIndexed { i, obj ->
+                var mnkeys = listOf(parent.keyValue<P, Any>(), obj.keyValue<T, Any>())
+                if (table.namesFlipped()) {
+                    mnkeys = mnkeys.reversed()
+                }
+
+                //Convenience functions
+                val findEntry = { m: Any, n: Any ->
+                    db.cache.findCachedObject<MtoNTableEntry>(table.tableName()) {
+                        it.getMKey<Any>() == m && it.getNKey<Any>() == n
+                    }!!
+                }
+                val createEntry = {
+                    MtoNTableEntry(mnkeys[0], mnkeys[1])
+                }
+
+                when (args.elementChangeType) {
+
+                    ElementChangeType.Add -> {
+                        val entry = createEntry()
+                        db.backendConnector.insert(table.tableName(), entry, MtoNTableEntry::class)
+                        db.cache.putObject(table.tableName(), entry)
+                    }
+                    ElementChangeType.Set -> {
+                        if (args is SetListChangeArgs<T>) {
+                            var deleteKeys = listOf(parent.keyValue<P, Any>(), args.replacedElements[i].keyValue<T, Any>())
+                            if (table.namesFlipped()) {
+                                deleteKeys = deleteKeys.reversed()
+                            }
+                            val deleteEntry = findEntry(deleteKeys[0], deleteKeys[1])
+                            db.backendConnector.delete(table.tableName(), deleteEntry.keyValue<MtoNTableEntry, Any>(), MtoNTableEntry::class)
+                            db.cache.removeObject(table.tableName(), deleteEntry)
+
+                            val insertEntry = createEntry()
+                            db.backendConnector.insert(table.tableName(), insertEntry, MtoNTableEntry::class)
+                            db.cache.putObject(table.tableName(), insertEntry)
+
+                        } else {
+                            throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
+                        }
+                    }
+                    //Updates are ignored since it has no effect on the relation table
+
+                    ElementChangeType.Remove -> {
+                        val removeEntry = findEntry(mnkeys[0], mnkeys[1])
+                        db.backendConnector.delete(table.tableName(), removeEntry.keyValue<MtoNTableEntry, Any>(), MtoNTableEntry::class)
+                        db.cache.removeObject(table.tableName(), removeEntry)
+
+                    }
+                }
+            }
+
+            //After relation table remove operations because of constraints
+            db.performListDeleteEventsOnBackend(table.child(), clazz, args)
+        }
+
+        val initObservable = { obj : T ->
+            obj.setDbReference(db)
+            db.addBackendListener(obj, key, clazz)
+        }
+        val virtualSet = VirtualSet({
+
+            val mToN = it.find { it is MtoNRule<*> }?.let { s ->
+
+                db.backendConnector.loadWithRules(table.tableName(), listOf(
+                    FilterStep(listOf(
+                            NormalizedCompareRule<String>(listOf(
+                                    if(!table.namesFlipped()) MtoNTableEntry::m else MtoNTableEntry::n),
+                                    parent.uuid,
+                                    CompareType.EQUALS)
+                    ))
+                ), MtoNTableEntry::class)
+            }
+
+            checkNotNull(mToN){
+                "MtoN Data could not be fetched for table ${table.tableName()}"
+            }
+
+            val set = db.backendConnector.loadWithRules(key, it.filter { it !is MtoNRule<*> }, clazz)
+            set.forEach(initObservable)
+            set
+
+            },
+            { instance, listChangeArgs, levelInformation ->
+                println("Parent set got called")
+
+                performEvent(listChangeArgs, levelInformation.list)
+
+                when(listChangeArgs.elementChangeType){
+
+                    ElementChangeType.Add -> {
+                        listChangeArgs.elements.forEach {
+                            instance.loadedState?.add(it)
+                        }
+                    }
+                    ElementChangeType.Remove -> {
+                        listChangeArgs.elements.forEach {
+                            instance.loadedState?.remove(it)
+                        }
+                    }
+
+                }
+            },
+            listOf(MtoNRule(),
+                FilterStep(listOf(
+                    NormalizedCompareRule<String>(listOf(
+                        clazz.memberProperties.find { it.name == "uuid" }!!),
+                        parent.uuid,
+                        CompareType.EQUALS)
+                ))
+            ), clazz)
+
+        virtualSet
+    }
+}
+
+class VirtualSetReadOnlyProperty<P : Observable, T>(val key: String, protected var initFunction: (MtoNTable) -> T) : ReadOnlyProperty<P?, T> {
+
+    private var initialized = false
+    private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
+
+    var parentkey: String? = null
+
+    fun setParentKey(parentkey: String){
+        this.parentkey = parentkey
+    }
+
+    override fun getValue(thisRef: P?, property: KProperty<*>): T {
+        checkNotNull(key) { //Is only the case, if the parent object did not get loaded, but initialized
+            "For Detached Properties to load, the Parent object must be initialized"
+        }
+        checkNotNull(parentkey){
+            "Key of parent should be set..."
+        }
+        if(!initialized){
+            init()
+        }
+        return value!!
+    }
+
+    fun init(){
+        val table = MtoNTable(parentkey!!, key)
+        value = initFunction(table)
+        initialized = true
+    }
+
+    protected fun getValue() : T{
+        if(!initialized){
+            init()
+            error("Should not happen - LazyReadWriteProperty :: 53")
+        }
+        return value!!
+    }
+}
 
 //TODO Think about making detachedList Observable -> Basically a proxy for removeAll() addAll()
 inline fun <reified T : Observable> Observable.detachedList(key: String) : DetachedListReadOnlyProperty<Observable, LazyObservableArrayList<T>> {
@@ -130,7 +304,7 @@ abstract class MutableLazyReadOnlyProperty<P : Observable, T>(protected var init
         this.initFunction = f
     }
 
-    public override fun getValue(thisRef: P?, property: KProperty<*>): T {
+    override fun getValue(thisRef: P?, property: KProperty<*>): T {
 //        if(table == null){ //Is only the case, if the parent object did not get loaded, but initialized
 //            table = MtoNTable(key, )
 //        }

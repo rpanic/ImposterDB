@@ -150,6 +150,7 @@ class DB{
 
             when(listChangeArgs.elementChangeType){
 
+                //TODO Maybe performAddEventsOnBackend?
                 ElementChangeType.Add -> {
                     listChangeArgs.elements.forEach {
                         backendConnector.insert(key, it, clazz)
