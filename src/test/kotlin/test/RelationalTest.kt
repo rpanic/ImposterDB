@@ -1,15 +1,16 @@
 package test
 
-import com.nhaarman.mockitokotlin2.*
+import aNewCollections.eq
 import connection.MtoNTableEntry
+import connection.ObjectCache
 import db.DB
 import db.DBBackend
+import io.mockk.*
+import observable.DBAwareObject
 import observable.LevelInformation
 import observable.Observable
 import org.assertj.core.api.Assertions.*
 import org.junit.Test
-import org.mockito.Mockito
-import org.mockito.verification.VerificationMode
 import kotlin.reflect.KClass
 
 class RelationalTest{
@@ -17,63 +18,72 @@ class RelationalTest{
     @Test
     fun testRemoveRelation(){
 
-        val (db, backend) = createDBWithMockedBackend()
+        val (db, backend) = createDBWithMockedBackend(Parent::class)
 
-//        val list = db.getDetachedList<Parent>("test11")
+        val set = db.getSet<Parent>("test11")
 
         val parent = Parent().apply { name = "One" }
-//        list.add(parent)
+        set.add(parent)
         val child = Child().apply { value = "Child" }
-//        list[0].children.add(child)
 
-//        assertThat(list[0].children[0]).isEqualTo(child)
+        every { backend.load("children", Child::class, any()) } returns setOf()
 
-//        list[0].children.removeAt(0)
+        set.view().first().children.add(child)
 
-        val mToN = argumentCaptor<MtoNTableEntry>()
-        verify(backend).insert(argThat { this == "ChildrenTest11" }, argThat<KClass<Observable>> { this == MtoNTableEntry::class }, mToN.capture())
+        verify { backend.insert("children", Child::class, child) }
+        every { backend.load("children", Child::class, match { it.size == 1 }) } returns setOf(child)
 
-        verify(backend).delete(argThat { this == "ChildrenTest11" }, argThat<KClass<Observable>> { this == MtoNTableEntry::class }, check <Any> {
-            val record = mToN.firstValue
+        assertThat(set.view().first().children.view().first()).isEqualTo(child)
+
+        set.view().first().children.remove(child)
+
+        assertThat(parent.children.view().size).isEqualTo(0)
+
+        val mToN = slot<MtoNTableEntry>()
+        verify { backend.insert(match { it == "ChildrenTest11" }, match<KClass<Observable>> { it == MtoNTableEntry::class }, capture(mToN)) }
+
+        verify { backend.delete(match { it == "ChildrenTest11" }, match<KClass<Observable>> { it == MtoNTableEntry::class }, match <Any> {
+            val record = mToN.captured
             assertThat(record.keyValue<MtoNTableEntry, Any>()).isEqualTo(it)
             assertThat(record.m).isEqualTo(child.keyValue<MtoNTableEntry, Any>())
             assertThat(record.n).isEqualTo(parent.keyValue<MtoNTableEntry, Any>())
-        })
+            true
+        } ) }
 
-        //TODO What about the Child?
-
+        verify { backend.delete("children", Child::class, match <Any> {
+            it == child.keyValue<Child, String>()
+        }) }
     }
 
     @Test
     fun testAddOneToTwo(){
         //Test: 1 Trait and 2 Persons
 
-        val (db, backend) = createDBWithMockedBackend()
+        val (db, backend) = createDBWithMockedBackend(Parent::class)
 
-//        val list = db.getDetachedList<Parent>("test12")
+        val set = db.getSet<Parent>("test12")
 
         val parent1 = Parent().apply { name = "One" }
         val parent2 = Parent().apply { name = "Two" }
 
-//        list.add(parent1)
-//        list.add(parent2)
+        set.add(parent1)
+        set.add(parent2)
 
         val child = Child().apply { value = "Child" }
 
-//        list[0].children.add(child)
-//        list[1].children.add(child)
+        set.view().first().children.add(child)
+        assertThat(set[parent2.uuid]).isEqualTo(parent2)
+        set[parent2.uuid]!!.children.add(child)
 
         assertThat(backend.getDB()).isEqualTo(db)
 
-        val key = argumentCaptor<String>()
-        val clazz = argumentCaptor<KClass<Observable>>()
-        val obj = argumentCaptor<Observable>()
+        val key = mutableListOf<String>()
+        val clazz = mutableListOf<KClass<Observable>>()
+        val obj = mutableListOf<Observable>()
 
-        verify(backend, times(5)).insert(key.capture(), clazz.capture(), obj.capture())
+        verify(exactly = 5) { backend.insert(capture(key), capture(clazz), capture(obj)) }
 
-        validateMockitoUsage()
-
-        val verifier = TripleVerifier(key.allValues, clazz.allValues, obj.allValues)
+        val verifier = TripleVerifier(key, clazz, obj)
         verifier.apply {
 
             verify("test12", Parent::class as KClass<Observable>){
@@ -108,27 +118,44 @@ class RelationalTest{
     @Test
     fun testDbReferenceSetOnce(){
 
-        val (db, backend) = createDBWithMockedBackend()
+        val (db, backend) = createDBWithMockedBackend(Parent::class)
 
-//        val list = db.getDetachedList<Parent>("test12")
+        val set = db.getSet<Parent>("test12")
 
-        val parent = spy(Parent().apply { name = "name" })
-//        list.add(parent)
-        val child = spy(Child().apply { value = "test" })
-        parent.children.add(child)
+        val parent = spyk(Parent().apply { name = "name" })
+        set.add(parent)
+        val parent2 = Parent().apply { name = "name2" }
+        set.add(parent2)
+        val child = spyk(Child().apply { value = "test" })
+        parent2.children.add(child)
 
-        verify(parent, times(1)).setDbReference(db)
-        verify(child, times(1)).setDbReference(db)
+        verify { parent.setDbReference(db) }
+        verify { child.setDbReference(db) }
 
     }
 
-    private fun createDBWithMockedBackend() : Pair<DB, DBBackend> {
+    private fun <T : Observable> createDBWithMockedBackend(clazz: KClass<T>) : Pair<DB, DBBackend> {
         val db = DB()
 
-        val backend = Mockito.mock(DBBackend::class.java)
+        val backend = mockkClass(DBBackend::class, relaxed = true)
+
+        val dbAwareObject = object : DBAwareObject(){}
+        every { backend.setDbReference(any()) } answers { dbAwareObject.setDbReference(it.invocation.args[0] as DB) }
+        every { backend.getDB() } answers { dbAwareObject.getDB() }
+
         db += backend
 
-        whenever(backend.keyExists(any())).thenReturn(true)
+        every { backend.keyExists(any()) } returns true
+
+        val set = mutableSetOf<T>()
+        val slot = CapturingSlot<Observable>()
+        every { backend.insert(any(), any(), capture(slot)) } answers {
+            set.add(slot.captured as T)
+            println("Inserted ${set.last()}")
+        }
+
+        every { backend.load<T>(any(), any(), any()) } answers { set.map { it as T }.toSet() }
+
         return db to backend
     }
 

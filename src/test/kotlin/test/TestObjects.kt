@@ -3,6 +3,7 @@ package test
 import com.beust.klaxon.Json
 import db.detached
 import db.detachedList
+import db.detachedSet
 import observable.Observable
 
 class TestObject() : Observable(){
@@ -29,7 +30,7 @@ open class Parent : Observable(){
     var name by observable("")
 
     @Json(ignored = true)
-    val children by detachedList<Child>("children")
+    val children by detachedSet<Child>("children")
 
 //    @Json(ignored = true)
 //    var trait: Trait by detached<Trait>("trait")

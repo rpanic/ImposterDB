@@ -14,6 +14,9 @@ abstract class DBAwareObject {
         if(this.db != null && this.db != db){
             throw IllegalStateException("This object is already used in another DB Context. Clone it or use multiple Backends to use with another DB Instance")
         }
+        if(this.db != null) {
+            println("DbReference called twice!!")
+        }
         this.db = db
     }
 
