@@ -38,10 +38,6 @@ open class JsonBackend : DBBackend() {
         return StepInterpreter.interpretSteps(steps, loaded.toSet(), clazz)
     }
 
-    override fun <T : Observable, K> loadAllKeys(key: String): K {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {
         println("loadAll $key ${clazz.simpleName} ")
         return load(key, clazz)

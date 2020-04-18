@@ -30,6 +30,8 @@ fun <T : Observable, DELEGATE : Any> findDelegatingProperties(clazz: KClass<T>, 
     }.filterNotNull()
 }
 
+fun Any.print() = println(this)
+
 val logger = KotlinLogging.logger("ImposterDB")
 
 fun debug(f: () -> String) =

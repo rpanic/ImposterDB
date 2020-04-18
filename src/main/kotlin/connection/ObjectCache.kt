@@ -28,7 +28,8 @@ class ObjectCache (){
         }
 
         if(containsObject(key, obj.keyValue<T, Any>())){
-            throw IllegalStateException()
+            println("Object ${obj.keyValue<T, Any>()} already exists")
+//            throw IllegalStateException()
         }
 
         parsedObjects[key]?.set(obj.keyValue<T, Any>(), obj)
