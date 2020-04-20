@@ -19,7 +19,7 @@ import kotlin.reflect.jvm.isAccessible
 
 open class JsonBackend : DBBackend() {
 
-    val loaded = mutableMapOf<String, List<*>>()
+    val loaded = mutableMapOf<String, MutableList<*>>()
 
     override fun <T : Observable> createSchema(key: String, clazz: KClass<T>) {
         if(this.baseFile.child("$key.json").exists())
@@ -58,7 +58,7 @@ open class JsonBackend : DBBackend() {
             }
 
         }
-        loaded[key] = list
+        loaded[key] = list.toMutableList()
         return list
     }
 
@@ -73,9 +73,8 @@ open class JsonBackend : DBBackend() {
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
         println("delete $pk $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
-        save(key, clazz){
-            toMutableList().apply { removeIf { it.keyValue<T, K>() == pk }; Unit }
-        }
+        (loaded[key] as? MutableList<T>)!!.removeIf { it.keyValue<T, K>() == pk }
+        save(key, clazz)
     }
 
     //is used for JsonBackend to not overwrite data, since it saves the collection which is loaded atm, and does not really insert
@@ -88,14 +87,12 @@ open class JsonBackend : DBBackend() {
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
         println("insert ${obj.keyValue<T, Any>()} $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
-//        DB.cache.getComplete<T>(key)!!.add(obj)
-        save(key, clazz){
-            toMutableList().apply { add(obj) }
-        }
+        (loaded[key] as? MutableList<T>)!!.add(obj)
+        save(key, clazz)
     }
 
-    fun <T : Observable> save(key: String, clazz : KClass<T>, operation: List<T>.() -> List<T> = { this }) {
-        val intermediateList = operation(if(loaded.containsKey(key)) (loaded[key] as List<T>) else listOf())
+    fun <T : Observable> save(key: String, clazz : KClass<T>) {
+        val intermediateList = if(loaded.containsKey(key)) (loaded[key] as List<T>) else listOf()
         val list = intermediateList.distinctBy { it.uuid }
         if(intermediateList.size != list.size){
             println("Something is wrong with the caching")

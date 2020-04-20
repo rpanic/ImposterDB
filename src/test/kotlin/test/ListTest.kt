@@ -93,8 +93,10 @@ class ListTest{
         val content = file.readText()
         assertThat(content).isNotEmpty() //Remove?
 
-        val controlContent = Klaxon().toJsonString(obj)
-        assertThat(content).isEqualTo(controlContent)
+        val klaxon = Klaxon()
+        val jsonObject = klaxon.parseJsonObject(klaxon.toJsonString(obj).reader())
+        jsonObject["child"] = child.keyValue<Child, String>()
+        assertThat(content).isEqualTo("[${jsonObject.toJsonString()}]")
 
     }
 
@@ -105,11 +107,11 @@ class ListTest{
         val db = DB()
         db.addBackend(jsonBackend)
 
-//        val list = db.getDetachedList<TestObject>("test1")
+        val set = db.getSet<TestObject>("test1")
 
         val obj2 = TestObject()
 
-//        list.add(obj2)
+        set.add(obj2)
 
         verify(jsonBackend).keyExists("test1")
 

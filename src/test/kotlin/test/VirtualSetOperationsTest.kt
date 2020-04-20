@@ -33,6 +33,7 @@ class VirtualSetOperationsTest {
         val testObj = setOf("Hallo").map { s -> TestObject().apply { testProperty = s } }
         every { backend.load<TestObject>(any(), any(), match { it.size == 1 } ) } returns testObj.toSet()
         every { backend.insert<TestObject>(any(), any(), any()) } returns Unit
+        every { backend.keyExists(any()) } returns true
 
         val db = DB()
         db += backend

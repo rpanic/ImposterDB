@@ -177,6 +177,9 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
         if(!cache.containsObject(key, obj.keyValue<T, Any>())) { //Since all Objects which can be inserted have to be loaded and therefore put into the cache, this Check is sufficient
             forEachBackend {
+                if(!it.keyExists(key)){
+                    it.createSchema(key, clazz)
+                }
                 it.insert(key, clazz, obj)
             }
             cache.putObject(key, obj)
