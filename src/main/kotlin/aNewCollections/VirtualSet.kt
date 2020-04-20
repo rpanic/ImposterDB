@@ -5,11 +5,7 @@ import lazyCollections.IReadonlyVirtualSet
 import lazyCollections.IVirtualSet
 import lazyCollections.ObjectReference
 import observable.*
-import java.lang.IllegalStateException
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.companionObject
-import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.createInstance
 
 
@@ -29,16 +25,22 @@ open class ReadOnlyVirtualSet<T : Observable>(
             loadedState = loader(steps).toMutableSet()
         }
 
-        val set = LazyObservableSet(loadedState!!.map { ObjectReference(it) })
+        val view = LazyObservableSet(loadedState!!.map { ObjectReference(it) })
 
         addListener { listChangeArgs, levelInformation ->
             when(listChangeArgs.elementChangeType){
-                ElementChangeType.Add -> listChangeArgs.elements.forEach { set.collection.add(ObjectReference(it)) }
-                ElementChangeType.Remove -> listChangeArgs.elements.forEach { set.collection.remove(ObjectReference(it)) }
+                ElementChangeType.Add -> {
+                    listChangeArgs.elements.forEach { view.collection.add(ObjectReference(it)) }
+                    view.listeners.forEach { it(listChangeArgs, levelInformation) }
+                }
+                ElementChangeType.Remove -> {
+                    listChangeArgs.elements.forEach { view.collection.remove(ObjectReference(it)) }
+                    view.listeners.forEach { it(listChangeArgs, levelInformation) }
+                }
             }
         }
 
-        return set
+        return view
 
     }
 

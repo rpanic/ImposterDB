@@ -40,13 +40,16 @@ class VirtualSetOperationsTest {
         val testObject2 = TestObject().apply { testProperty = "Hello" }
 
         val listener = mockk<ElementChangedListener<TestObject>>(relaxed = true)
+        val viewListener = mockk<ElementChangedListener<TestObject>>(relaxed = true)
         set.addListener(listener)
         set2.addListener(listener)
+        view.addListener(viewListener)
 
         set2.add(testObject2)
 
         verify { backend.insert("test", TestObject::class, testObject2) }
-        verify (exactly = 2) { listener.invoke(match { it.elementChangeType == ElementChangeType.Add }, any()) }
+        verify (exactly = 2) { listener.invoke(match { it.elementChangeType == ElementChangeType.Add && it.elements.first() == testObject2 }, any()) }
+        verify (exactly = 1) { viewListener.invoke(match { it.elementChangeType == ElementChangeType.Add && it.elements.first() == testObject2 }, any()) }
 
         //TODO Write test with insert where filter condition is not true
 
