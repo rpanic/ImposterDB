@@ -22,6 +22,7 @@ open class JsonBackend : DBBackend() {
     val loaded = mutableMapOf<String, MutableList<*>>()
 
     override fun <T : Observable> createSchema(key: String, clazz: KClass<T>) {
+        println("createSchema $key ${clazz.simpleName}")
         if(this.baseFile.child("$key.json").exists())
             throw UnsupportedOperationException()
         this.baseFile.child("$key.json").writeText("[]")
@@ -34,6 +35,7 @@ open class JsonBackend : DBBackend() {
     }
 
     override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
+        println("load $key ${clazz.simpleName} [${steps.map { it.javaClass.simpleName }.joinToString(", ")}]")
         val loaded = load(key, clazz)
         return StepInterpreter.interpretSteps(steps, loaded.toSet(), clazz)
     }

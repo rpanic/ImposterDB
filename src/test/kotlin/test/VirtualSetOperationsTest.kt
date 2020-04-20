@@ -14,16 +14,6 @@ import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
 import org.assertj.core.api.Assertions.assertThat as assertThat
 
-fun compareTo(set: VirtualSet<Parent>) : Int {
-
-    true() == true()
-
-    true eq true
-
-    println("1000")
-    return 1000
-}
-
 class VirtualSetOperationsTest {
 
     @Test

@@ -50,7 +50,6 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                     ElementChangeType.Add -> {
                         val entry = createEntry()
                         db.backendConnector.insert(table.tableName(), entry, MtoNTableEntry::class)
-                        db.cache.putObject(table.tableName(), entry)
                     }
                     ElementChangeType.Set -> {
                         if (args is SetListChangeArgs<T>) {
@@ -60,11 +59,9 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                             }
                             val deleteEntry = findEntry(deleteKeys[0], deleteKeys[1])
                             db.backendConnector.delete(table.tableName(), deleteEntry.keyValue<MtoNTableEntry, Any>(), MtoNTableEntry::class)
-                            db.cache.removeObject(table.tableName(), deleteEntry)
 
                             val insertEntry = createEntry()
                             db.backendConnector.insert(table.tableName(), insertEntry, MtoNTableEntry::class)
-                            db.cache.putObject(table.tableName(), insertEntry)
 
                         } else {
                             throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")

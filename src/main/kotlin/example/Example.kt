@@ -20,7 +20,7 @@ class Person : Observable(){
     var description: String? by observable(null)
 
     @Json(ignored = true)
-    val traits by detachedList<Trait>("traits")
+    val traits by detachedSet<Trait>("traits")
 
     @Json(ignored = true)
     var trait: Trait by detached<Trait>("trait")
@@ -60,14 +60,27 @@ fun main() {
     val db = DB()
     db += JsonBackend()
 
-//    val list = db.getDetachedList<Person>("persons")
+    val list = db.getSet<Person>("persons")
+
+    val view = list.view()
+
+    val traits = view.first().traits.view()
+
+    println(traits.size == 1)
+
+    val person = Person()
+    list.add(person)
+
+    person.name = "test"
+    val trait = Trait()
+    person.traits.add(trait)
 
     //Test2: Remove Relation
 //    list[0].traits.removeAt(1)
 
 //    list[0].traits.add(Trait().apply { value = 100 })
 
-
+    println()
 
     //TODO Collect all the i.e. Traits in Complete List, so that no double references are there and to remove that hideous JsonBackend stuff
 
