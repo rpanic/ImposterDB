@@ -5,7 +5,10 @@ import connection.MtoNTableEntry
 import connection.ObjectCache
 import db.DB
 import db.DBBackend
+import example.Person
+import example.Trait
 import io.mockk.*
+import json.JsonBackend
 import observable.DBAwareObject
 import observable.LevelInformation
 import observable.Observable
@@ -113,6 +116,52 @@ class RelationalTest{
                 }
             }
         }
+    }
+
+    @Test
+    fun testLoadFromBackend(){
+
+        val jsonBackend = JsonBackend()
+        jsonBackend.baseFile.resolve("loadingTest.json").delete()
+        jsonBackend.baseFile.resolve("children.json").delete()
+        jsonBackend.baseFile.resolve("ChildrenLoadingtest.json").delete()
+
+        val db1 = DB()
+        db1 += jsonBackend
+
+        val set1 = db1.getSet<Parent>("loadingTest")
+
+        val parent = Parent()
+        set1.add(parent)
+
+        parent.name = "name1"
+        val child = Child()
+        child.value = "testValue"
+        parent.children.add(child)
+
+        val db = DB()
+        db += JsonBackend()
+
+        val set = db.getSet<Parent>("loadingTest")
+        val view = set.view()
+
+        assertThat(view.size).isEqualTo(1)
+        assertThat(view.firstOrNull()).isNotNull
+        view.first().also {
+            assertThat(it.name).isEqualTo("name1")
+            assertThat(it.uuid).isEqualTo(parent.uuid)
+        }
+
+        val children = view.first().children.view()
+
+        assertThat(children.size).isEqualTo(1)
+        assertThat(children.firstOrNull()).isNotNull
+        children.first().also {
+            assertThat(it.value).isEqualTo("testValue")
+            assertThat(it.uuid).isEqualTo(child.uuid)
+        }
+
+
     }
 
     @Test

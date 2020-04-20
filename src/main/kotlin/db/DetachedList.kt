@@ -107,7 +107,19 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                 "MtoN Data could not be fetched for table ${table.tableName()}"
             }
 
-            val set = db.backendConnector.loadWithRules(key, it.filter { it !is MtoNRule<*> }, clazz)
+            val nSteps = mToN.map { entry ->
+                FilterStep<T>(listOf(
+                        NormalizedCompareRule(listOf(
+                                clazz.memberProperties.find { it.name == "uuid" }!!),
+                                if(table.namesFlipped()) entry.m else entry.n,
+                                CompareType.EQUALS)
+                ))
+            }
+
+//            val set = db.backendConnector.loadWithRules(key, it.filter { it !is MtoNRule<*> }, clazz)
+            val set = nSteps.map { rule -> db.backendConnector.loadWithRules(key, listOf(rule), clazz)
+                        .let { if(it.size == 1) it.first() else throw java.lang.IllegalStateException("This should not be possible") } }
+                    .toSet()
             set.forEach(initObservable)
             set
 
@@ -132,14 +144,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
 
                 }
             },
-            listOf(MtoNRule(),
-                FilterStep(listOf(
-                    NormalizedCompareRule<String>(listOf(
-                        clazz.memberProperties.find { it.name == "uuid" }!!),
-                        parent.uuid,
-                        CompareType.EQUALS)
-                ))
-            ), clazz)
+            listOf(MtoNRule()), clazz)
 
         virtualSet
     }
@@ -157,11 +162,8 @@ class VirtualSetReadOnlyProperty<P : Observable, T>(val key: String, protected v
     }
 
     override fun getValue(thisRef: P?, property: KProperty<*>): T {
-        checkNotNull(key) { //Is only the case, if the parent object did not get loaded, but initialized
-            "For Detached Properties to load, the Parent object must be initialized"
-        }
-        checkNotNull(parentkey){
-            "Key of parent should be set..."
+        checkNotNull(parentkey) { //Is only the case, if the parent object did not get loaded, but initialized
+            "For Detached Properties to load, the Parent object must be added to a DB Set" //TODO At some place, this should be possible
         }
         if(!initialized){
             init()
