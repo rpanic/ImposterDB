@@ -1,7 +1,10 @@
 package db
 
 import example.debug
-import observable.*
+import observable.ChangeListener
+import observable.LevelInformation
+import observable.Observable
+import observable.ObservableLevel
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty

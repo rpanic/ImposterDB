@@ -1,10 +1,11 @@
 package aNewCollections
 
 import example.debug
-import io.mockk.*
+import io.mockk.Call
+import io.mockk.MockKAnswerScope
+import io.mockk.every
+import io.mockk.mockkClass
 import observable.Observable
-import java.lang.Exception
-import java.lang.IllegalStateException
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1

@@ -1,7 +1,9 @@
 package observable
 
 import com.beust.klaxon.Json
-import db.*
+import db.ChangeObserver
+import db.Ignored
+import db.RevertableAction
 import lazyCollections.IObservableList
 
 typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit

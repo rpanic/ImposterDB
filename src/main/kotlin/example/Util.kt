@@ -1,6 +1,5 @@
 package example
 
-import mu.KLogging
 import mu.KotlinLogging
 import observable.Observable
 import kotlin.reflect.KClass

@@ -1,7 +1,6 @@
 package connection
 
 import observable.Observable
-import java.lang.IllegalStateException
 
 /**
  * Objects generally get added to the cache after all Backend and Imposter Operations are successful, except when adding to a Complete List retrieved by DB.getDetached()

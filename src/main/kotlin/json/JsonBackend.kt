@@ -5,11 +5,10 @@ import aNewCollections.StepInterpreter
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import db.*
+import db.DBBackend
+import db.DetachedObjectReadWriteProperty
 import example.findDelegatingProperties
 import observable.Observable
-import observable.ObservableArrayList
-import observable.observableListOf
 import java.io.File
 import java.io.FileReader
 import kotlin.reflect.KClass

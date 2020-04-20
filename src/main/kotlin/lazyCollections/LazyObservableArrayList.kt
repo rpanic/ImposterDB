@@ -1,8 +1,7 @@
 package lazyCollections
 
-import db.*
+import db.ChangeObserver
 import observable.*
-import java.lang.Exception
 import kotlin.reflect.KProperty
 
 class LazyObservableArrayList<X : Observable> : LazyObservableList<X>, IMutableObservableList<X> {

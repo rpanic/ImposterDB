@@ -1,7 +1,6 @@
 package observable
 
-import db.*
-import java.lang.Exception
+import db.ChangeObserver
 import kotlin.reflect.KProperty
 
 class ObservableArrayList<X> : ObservableList<X> {

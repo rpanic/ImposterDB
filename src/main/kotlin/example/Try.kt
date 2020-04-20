@@ -2,9 +2,6 @@ package example
 
 import aNewCollections.invoke
 import observable.Observable
-import java.lang.reflect.InvocationHandler
-import java.lang.reflect.Method
-import java.lang.reflect.Proxy
 
 fun main() {
 

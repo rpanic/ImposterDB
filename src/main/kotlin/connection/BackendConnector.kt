@@ -3,14 +3,10 @@ package main.kotlin.connection
 import aNewCollections.Step
 import com.beust.klaxon.internal.firstNotNullResult
 import connection.MtoNTable
-import connection.MtoNTableEntry
 import connection.ObjectCache
 import db.*
 import example.findDelegatingProperties
 import observable.Observable
-import observable.ObservableArrayList
-import observable.observableListOf
-import java.lang.IllegalStateException
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1

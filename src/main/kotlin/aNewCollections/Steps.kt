@@ -1,6 +1,5 @@
 package aNewCollections
 
-import connection.MtoNTableEntry
 import kotlin.reflect.KProperty1
 
 interface Step<T, V>

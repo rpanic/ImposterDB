@@ -1,7 +1,5 @@
 package aNewCollections
 
-import java.lang.IllegalStateException
-import java.lang.UnsupportedOperationException
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

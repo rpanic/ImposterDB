@@ -5,9 +5,6 @@ import observable.DBAwareObject
 import observable.Observable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.jvm.javaField
 
 interface Backend {
 

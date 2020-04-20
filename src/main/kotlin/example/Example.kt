@@ -1,17 +1,14 @@
 package example
 
 import com.beust.klaxon.Json
-import db.*
+import db.ChangeObserver
+import db.DB
+import db.detached
+import db.detachedSet
 import json.JsonBackend
-import json.userdir
-import lazyCollections.LazyObservableArrayList
 import observable.LevelInformation
 import observable.Observable
-import observable.ObservableArrayList
-import java.io.File
-import java.util.*
 import kotlin.reflect.KProperty
-import kotlin.reflect.jvm.isAccessible
 
 class Person : Observable(){
 

@@ -1,7 +1,8 @@
 package observable
 
 import com.beust.klaxon.Json
-import db.*
+import db.Ignored
+import db.RevertableAction
 import lazyCollections.Indexable
 import java.util.*
 import kotlin.properties.ObservableProperty

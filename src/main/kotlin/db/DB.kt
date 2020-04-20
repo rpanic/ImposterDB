@@ -1,10 +1,9 @@
 package db
 
 import aNewCollections.VirtualSet
-import main.kotlin.connection.BackendConnector
 import connection.ObjectCache
+import main.kotlin.connection.BackendConnector
 import observable.*
-import java.lang.Exception
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1

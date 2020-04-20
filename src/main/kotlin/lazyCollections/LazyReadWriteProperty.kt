@@ -1,7 +1,6 @@
 package lazyCollections
 
 import kotlin.properties.ReadOnlyProperty
-import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 abstract class LazyReadWriteProperty<T>(protected var initFunction: () -> T) : ReadOnlyProperty<Any?, T> {

@@ -1,9 +1,7 @@
 package aNewCollections
 
 import observable.Observable
-import java.lang.IllegalStateException
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 
 class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
 

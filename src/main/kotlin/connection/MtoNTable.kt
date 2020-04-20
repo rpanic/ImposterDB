@@ -1,7 +1,6 @@
 package connection
 
 import observable.Observable
-import observable.ObservableArrayList
 
 class MtoNTableEntry(val m: Any, val n: Any) : Observable(){
     fun <T> getMKey() : T{
@@ -14,8 +13,6 @@ class MtoNTableEntry(val m: Any, val n: Any) : Observable(){
 }
 
 class MtoNTable(private val key1: String, private val key2: String){
-
-    var tableData: ObservableArrayList<MtoNTableEntry>? = null
 
     private val tablename: String
     private var flip: Boolean
