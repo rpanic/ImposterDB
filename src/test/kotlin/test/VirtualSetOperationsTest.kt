@@ -39,8 +39,8 @@ class VirtualSetOperationsTest {
 
         val testObject2 = TestObject().apply { testProperty = "Hello" }
 
-        val listener = mockk<ElementChangedListener<TestObject>>(relaxed = true)
-        val viewListener = mockk<ElementChangedListener<TestObject>>(relaxed = true)
+        val listener = mockk<SetElementChangedListener<TestObject>>(relaxed = true)
+        val viewListener = mockk<SetElementChangedListener<TestObject>>(relaxed = true)
         set.addListener(listener)
         set2.addListener(listener)
         view.addListener(viewListener)

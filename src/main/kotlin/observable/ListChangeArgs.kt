@@ -5,8 +5,21 @@ import kotlin.reflect.KProperty
 open class ChangeArgs<T>(
         val elementChangeType: ElementChangeType,
         val elements: List<T>
-)
+){
+    constructor(elementChangeType: ElementChangeType,
+                element: T) : this(elementChangeType, listOf(element))
+}
+//### Set Change Args
+typealias SetChangeArgs<T> = ChangeArgs<T>
 
+class UpdateSetChangeArgs<T>(
+        elementChangeType: ElementChangeType,
+        elements: List<T>,
+        val prop: KProperty<*>
+) : SetChangeArgs<T>(elementChangeType, elements)
+
+
+//### List Change Args
 open class ListChangeArgs<T>(
         elementChangeType: ElementChangeType,
         elements: List<T>,

@@ -11,6 +11,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 
+//TODO Think about making detachedList Mutable and Observable -> Basically a proxy for removeAll() addAll()
 inline fun <reified T : Observable> Observable.detachedSet(key: String) : VirtualSetReadOnlyProperty<Observable, VirtualSet<T>> {
     return detachedSet(this, key, T::class)
 }
@@ -21,7 +22,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
         val db = parent.getDB()
 
         //Add Listeners for Changes in List
-        val performEvent = { args : ListChangeArgs<T>, levelinfo: List<Level> ->
+        val performEvent = { args : SetChangeArgs<T>, levelinfo: List<Level> ->
 
             //TODO Maybe not necessarily load Object when calling list.removeAt(1), since this is not really necessary.
             // Do this by changing the ChangeListener to give Objectreference instead of The Object itself
@@ -88,7 +89,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
         }
         val virtualSet = VirtualSet({
 
-            val mToN = it.find { it is MtoNRule<*> }?.let { s ->
+                val mToN = it.find { it is MtoNRule<*> }?.let { s ->
 
                 db.backendConnector.loadWithRules(table.tableName(), listOf(
                     FilterStep(listOf(
@@ -183,7 +184,6 @@ class VirtualSetReadOnlyProperty<P : Observable, T>(val key: String, protected v
     }
 }
 
-//TODO Think about making detachedList Observable -> Basically a proxy for removeAll() addAll()
 inline fun <reified T : Observable> Observable.detachedList(key: String) : DetachedListReadOnlyProperty<Observable, LazyObservableArrayList<T>> {
     return detachedList(this, key, T::class)
 }

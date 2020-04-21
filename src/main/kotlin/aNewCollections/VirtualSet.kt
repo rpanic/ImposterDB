@@ -8,13 +8,14 @@ import observable.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
+typealias SetElementChangedListener<T> = (SetChangeArgs<T>, LevelInformation) -> Unit
 
 open class ReadOnlyVirtualSet<T : Observable>(
     val loader: (List<Step<T, *>>) -> Set<T>,
     val steps: List<Step<T, *>>,
     val clazz: KClass<T>,
     val parent: VirtualSet<T>? = null
-): AbstractObservable<ElementChangedListener<T>>(), IReadonlyVirtualSet<T>{
+): AbstractObservable<SetElementChangedListener<T>>(), IReadonlyVirtualSet<T>{
 
     internal var loadedState: MutableSet<T>? = null
 
@@ -27,15 +28,15 @@ open class ReadOnlyVirtualSet<T : Observable>(
 
         val view = LazyObservableSet(loadedState!!.map { ObjectReference(it) })
 
-        addListener { listChangeArgs, levelInformation ->
-            when(listChangeArgs.elementChangeType){
+        addListener { setChangeArgs, levelInformation ->
+            when(setChangeArgs.elementChangeType){
                 ElementChangeType.Add -> {
-                    listChangeArgs.elements.forEach { view.collection.add(ObjectReference(it)) }
-                    view.listeners.forEach { it(listChangeArgs, levelInformation) }
+                    setChangeArgs.elements.forEach { view.collection.add(ObjectReference(it)) }
+                    view.listeners.forEach { it(setChangeArgs, levelInformation) }
                 }
                 ElementChangeType.Remove -> {
-                    listChangeArgs.elements.forEach { view.collection.remove(ObjectReference(it)) }
-                    view.listeners.forEach { it(listChangeArgs, levelInformation) }
+                    setChangeArgs.elements.forEach { view.collection.remove(ObjectReference(it)) }
+                    view.listeners.forEach { it(setChangeArgs, levelInformation) }
                 }
             }
         }
@@ -68,28 +69,28 @@ open class ReadOnlyVirtualSet<T : Observable>(
 //    }
 
 
-    fun tellChildren(args: ListChangeArgs<T>, levels: LevelInformation){
+    fun tellChildren(args: SetChangeArgs<T>, levels: LevelInformation){
         listeners.forEach { it(args, levels) }
     }
 }
 
 open class VirtualSet<T : Observable>(
     loader: (List<Step<T, *>>) -> Set<T>,
-    val performEvent: (VirtualSet<T>, ListChangeArgs<T>, LevelInformation) -> Unit,
+    val performEvent: (VirtualSet<T>, SetChangeArgs<T>, LevelInformation) -> Unit,
     steps: List<Step<T, *>>,
     clazz: KClass<T>,
     parent: VirtualSet<T>? = null
 ) : ReadOnlyVirtualSet<T>(loader, steps, clazz, parent), IVirtualSet<T> {
 
     override fun add(t: T) {
-        val args = ListChangeArgs(ElementChangeType.Add, t, -1) //TODO Replace ListChangeArgs by SetChangeArgs
+        val args = SetChangeArgs(ElementChangeType.Add, t) //TODO Replace ListChangeArgs by SetChangeArgs
         val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
         performEvent(getOrParent(), args, level)
         getOrParent().tellChildren(args, level)
     }
 
     override fun remove(t: T) {
-        val args = ListChangeArgs(ElementChangeType.Remove, t, -1)
+        val args = SetChangeArgs(ElementChangeType.Remove, t)
         val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
         performEvent(getOrParent(), args, level)
         getOrParent().tellChildren(args, level)
@@ -103,19 +104,19 @@ open class VirtualSet<T : Observable>(
 
         val newSet = VirtualSet(loader, { _, a, b -> performEvent(this, a, b) }, steps + FilterStep(normalizedConditions), clazz, this)
 
-        this.addListener { listChangeArgs, levelInformation ->
+        this.addListener { setChangeArgs, levelInformation ->
             println("Children got called")
-            val relay = { v: VirtualSet<T> -> v.tellChildren(listChangeArgs, levelInformation) }
-            when(listChangeArgs.elementChangeType){
+            val relay = { v: VirtualSet<T> -> v.tellChildren(setChangeArgs, levelInformation) }
+            when(setChangeArgs.elementChangeType){
                 ElementChangeType.Add -> {
-                    listChangeArgs.elements.forEach {
+                    setChangeArgs.elements.forEach {
                         if(StepInterpreter.interpretFilter(newSet.steps.last() as FilterStep<T>, it)){
                             newSet.loadedState?.add(it)
                             relay(newSet)
                         }
                     }
                 }
-                ElementChangeType.Remove -> listChangeArgs.elements.forEach {
+                ElementChangeType.Remove -> setChangeArgs.elements.forEach {
                     if(StepInterpreter.interpretFilter(newSet.steps.last() as FilterStep<T>, it)){
                         newSet.loadedState?.remove(it)
                         relay(newSet)

@@ -5,8 +5,7 @@ import db.Ignored
 
 interface IAbstractObservable<T : Any?>{
 
-    fun addListener(listener: T) {
-    }
+    fun addListener(listener: T) {}
 }
 
 abstract class AbstractObservable<T : Any?> : DBAwareObject(), IAbstractObservable<T>{

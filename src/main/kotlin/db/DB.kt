@@ -198,7 +198,7 @@ class DB{
 
 //    }
 
-    fun <T : Observable> performListAddEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+    fun <T : Observable> performListAddEventsOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Add -> {
@@ -215,7 +215,7 @@ class DB{
         }
     }
 
-    fun <T : Observable> performListDeleteEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+    fun <T : Observable> performListDeleteEventsOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Set -> {
@@ -230,11 +230,14 @@ class DB{
         }
     }
 
-    fun <T : Observable> performListUpdateEventsOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+    fun <T : Observable> performListUpdateEventsOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Update -> {
                     if(args is UpdateListChangeArgs<T>) {
+                        backendConnector.update(key, obj, clazz, args.prop)
+                    }
+                    if(args is UpdateSetChangeArgs<T>) {
                         backendConnector.update(key, obj, clazz, args.prop)
                     }
                 }

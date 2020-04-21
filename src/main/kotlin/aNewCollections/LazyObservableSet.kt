@@ -6,9 +6,7 @@ import lazyCollections.IObservableSet
 import lazyCollections.ObjectReference
 import observable.*
 
-typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
-
-open class LazyObservableSet<T : Observable> : AbstractObservable<ElementChangedListener<T>>, IObservableSet<T> {
+open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChangedListener<T>>, IObservableSet<T> {
 
     constructor(vararg arr: ObjectReference<T>) {
         collection.addAll(arr)
@@ -28,7 +26,7 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<ElementChanged
 //        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
 //    }
 
-    protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
+    protected fun signalChanged(args: SetChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
         println("New size: $size")
 
