@@ -35,6 +35,7 @@ class RelationalTest{
 
         verify { backend.insert("children", Child::class, child) }
         every { backend.load("children", Child::class, match { it.size == 1 }) } returns setOf(child)
+        every { backend.load("ChildrenTest11", MtoNTableEntry::class, match { it.size == 1 }) } returns setOf(MtoNTableEntry(child.uuid, parent.uuid))
 
         assertThat(set.view().first().children.view().first()).isEqualTo(child)
 

@@ -16,10 +16,8 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
-    @Json(ignored = true)
     val traits by detachedSet<Trait>("traits")
 
-    @Json(ignored = true)
     var trait: Trait by detached<Trait>("trait")
 
     //var trait: Trait by relation()

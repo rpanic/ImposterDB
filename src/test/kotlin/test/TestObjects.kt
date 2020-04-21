@@ -20,7 +20,6 @@ open class OneToManyParent : Observable(){
 
     var description: String? by observable(null)
 
-    @Json(ignored = true)
     var child by detached<Child>("children_1toM")
 
 }
@@ -29,7 +28,6 @@ open class Parent : Observable(){
 
     var name by observable("")
 
-    @Json(ignored = true)
     val children by detachedSet<Child>("children")
 
 //    @Json(ignored = true)

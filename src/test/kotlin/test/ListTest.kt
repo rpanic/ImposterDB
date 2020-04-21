@@ -8,6 +8,7 @@ import db.*
 import example.Person
 import example.Trait
 import json.JsonBackend
+import json.ObservableConverter
 import observable.LevelInformation
 import observable.Observable
 import org.assertj.core.api.Assertions.assertThat
@@ -27,6 +28,7 @@ class ListTest{
     fun exampleTest(){
         val jsonBackend = JsonBackend()
         val file = jsonBackend.baseFile.resolve("exampleTest.json")
+        jsonBackend.baseFile.resolve("children_1toM.json").delete()
         file.delete()
         val db = DB()
         db.addBackend(jsonBackend)
@@ -94,6 +96,7 @@ class ListTest{
         assertThat(content).isNotEmpty() //Remove?
 
         val klaxon = Klaxon()
+        klaxon.converter(ObservableConverter(klaxon, hashMapOf()))
         val jsonObject = klaxon.parseJsonObject(klaxon.toJsonString(obj).reader())
         jsonObject["child"] = child.keyValue<Child, String>()
         assertThat(content).isEqualTo("[${jsonObject.toJsonString()}]")

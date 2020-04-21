@@ -5,14 +5,18 @@ import aNewCollections.StepInterpreter
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
+import com.beust.klaxon.Parser
 import db.DBBackend
 import db.DetachedObjectReadWriteProperty
+import db.Ignored
+import db.VirtualSetReadOnlyProperty
 import example.findDelegatingProperties
 import observable.Observable
 import java.io.File
 import java.io.FileReader
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
@@ -80,6 +84,9 @@ open class JsonBackend : DBBackend() {
 
     //is used for JsonBackend to not overwrite data, since it saves the collection which is loaded atm, and does not really insert
     fun <T : Observable> loadIfNotLoaded(key: String, clazz: KClass<T>){
+        if(!keyExists(key)){
+            createSchema(key, clazz)
+        }
         if(keyExists(key) && !loaded.containsKey(key)){
             loadAll(key, clazz)
         }
@@ -95,7 +102,7 @@ open class JsonBackend : DBBackend() {
     fun <T : Observable> save(key: String, clazz : KClass<T>) {
         val intermediateList = if(loaded.containsKey(key)) (loaded[key] as List<T>) else listOf()
         val list = intermediateList.distinctBy { it.uuid }
-        if(intermediateList.size != list.size){
+        if(intermediateList.size != list.size) {
             println("Something is wrong with the caching")
         }
 
@@ -103,12 +110,15 @@ open class JsonBackend : DBBackend() {
         val json = klaxon.parseJsonArray(jsonString.reader()) as JsonArray<JsonObject>
 
         json.forEach {
+
             val uuid = it.string("uuid")
             val obj = list.find { it.uuid == uuid }!!
             clazz.memberProperties.forEach { prop ->
                 prop.isAccessible = true
                 val delegate = prop.getDelegate(obj)
                 if(delegate != null){
+
+                    //Remove Detached Objects
                     if(delegate is DetachedObjectReadWriteProperty<*>){
                         if(delegate.isInitialized())
                             it.set(prop.name, (prop.get(obj) as Observable).uuid)
@@ -123,7 +133,7 @@ open class JsonBackend : DBBackend() {
         this.baseFile.child("$key.json").writeText(json.toJsonString())
     }
 
-    val klaxon = Klaxon()
+    val klaxon = Klaxon().apply { converter(ObservableConverter(this, hashMapOf())) }
 
     val baseFile = userdir().child("data/")
 
