@@ -6,27 +6,40 @@ import io.zeko.db.sql.Query
 import io.zeko.db.sql.Update
 import io.zeko.model.Entity
 import observable.Observable
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.transaction
+import sql.SqlBackend
+import sql.createOrUpdateTable
 import java.sql.DriverManager
 import javax.sql.DataSource
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.*
 
 fun main() {
 
+//    var prop: KProperty1<Any, Any>? = null
+//
+//    val c = { clazz: KClass<Any> ->
+//        val companion = clazz.companionObject
+//        if(companion == null)
+//            clazz.superclasses.find { it. }
+//        !!.memberProperties.find { it.name == "key" }!! as KProperty1<Any, KProperty1<Test, Any>>
+//    }
+//    val pkProp = Test::class.companionObject!!.memberProperties.find { it.name == "key" }!! as KProperty1<Any, KProperty1<Test, Any>>
+
+//    val prop = pkProp.get(Test::class.companionObjectInstance!!)
+
+    val backend = SqlBackend()
+
+    backend.context.createOrUpdateTable("table1", Test::class)
+    backend.insert("table1", Test::class, Test().apply { b = 1337; s = "Hallo" })
+
 //    Class.forName("com.mysql.jdbc.Driver").newInstance()
-//    val conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/test", "root", "testpassword")
+//    val conn = DriverManager.getConnection("jdbc:mysql://localhost/test", "root", "root")
 
-    val db = Database.connect("jdbc:mysql://127.0.0.1:3306/test", user = "root", password = "testpassword")
-    transaction {
-        val x = this.exec("SHOW TABLES"){
-            it.print()
-        }
-    }
-
-//    val results = conn.createStatement().executeQuery("SHOW TABLES")
+//    val results = conn.createStatement().execute("CREATE TABLE test (name VARCHAR(100))")
 //    println(results)
-
-    val entity = GenericEntity("uuid" to "Hello", "name" to "wtf", "testint" to 0)
+//
+//    val entity = GenericEntity("uuid" to "Hello", "name" to "wtf", "testint" to 0)
 //
 //    Update(entity).toSql().print()
 //
@@ -42,8 +55,13 @@ class GenericEntity : Entity {
 
 open class Test : Observable(){
     open var s: String by observable("")
+    open var b: Int by observable(10)
 
-    open var test: Test2? by observable(null)
+//    companion object{
+//        val key = Test::s
+//    }
+
+//    open var test: Test2? by observable(null)
 
 }
 

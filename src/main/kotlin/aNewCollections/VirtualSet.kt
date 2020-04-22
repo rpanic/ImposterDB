@@ -96,6 +96,10 @@ open class VirtualSet<T : Observable>(
         getOrParent().tellChildren(args, level)
     }
 
+    fun <K> groupBy(f: (T) -> K){
+
+    }
+
     fun filter(f: (T) -> Boolean) : VirtualSet<T>{
 
         val extractor = RuleExtractionFramework.rulesExtractor(clazz)
