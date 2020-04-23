@@ -84,9 +84,7 @@ class DB{
                 throw IllegalAccessException("Couldn´t find key $key")
             else {
                 read = init.invoke()
-                backendConnector.forEachBackend {
-                    it.insert(key, clazz, read) //Be careful that this will not be used in combination with ObservableArrayList
-                }
+                backendConnector.insert(key, read, clazz) //Be careful that this will not be used in combination with ObservableArrayList
             }
         }
 
@@ -105,28 +103,27 @@ class DB{
 
     class DetachedBackendListener<T : Observable>(val db: DB, val observable: T, val key: String, val clazz: KClass<T>) : ChangeListener<Any?> {
         override fun invoke(prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation) {
-            db.backendConnector.forEachBackend { backend ->
 
-                //Prevent events from detached Objects from triggering updates on parent
-                val pathClear = levels.list.none {
-                    if(it is ObservableLevel){
-                        if(it.prop is KProperty1<*, *>){
-                            val v = (it.prop as KProperty1<Any?, Any?>).apply { isAccessible = true }.getDelegate(it.obj)
-                            v is DetachedObjectReadWriteProperty<*>
-                        }else{
-                            false //Is only the case for observable() Properties
-                        }
-                    }else if(it is ObservableListLevel) {
-                        //TODO Exclude Detached Lists
-                        false
-                    } else {
-                        false
+            //Prevent events from detached Objects from triggering updates on parent
+            val pathClear = levels.list.none {
+                if(it is ObservableLevel){
+                    if(it.prop is KProperty1<*, *>){
+                        val v = (it.prop as KProperty1<Any?, Any?>).apply { isAccessible = true }.getDelegate(it.obj)
+                        v is DetachedObjectReadWriteProperty<*>
+                    }else{
+                        false //Is only the case for observable() Properties
                     }
-                }
-                if(pathClear){
-                    backend.update(key, clazz, observable, prop)
+                }else if(it is ObservableListLevel) {
+                    //TODO Exclude Detached Lists
+                    false
+                } else {
+                    false
                 }
             }
+            if(pathClear){
+                db.backendConnector.update(key, observable, clazz, prop)
+            }
+
         }
     }
 

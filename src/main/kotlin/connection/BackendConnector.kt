@@ -245,7 +245,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         }
     }
 
-    fun forEachBackend(f: (Backend) -> Unit){
+    private fun forEachBackend(f: (Backend) -> Unit){
         backends.forEach(f)
     }
 

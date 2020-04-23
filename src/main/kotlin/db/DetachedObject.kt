@@ -34,9 +34,8 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
 
     private fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
         if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
-            observable.getDB().backendConnector.forEachBackend {
-                it.insert(key, clazz, newValue) //Be careful that this will not be used in combination with ObservableArrayList
-            }
+            observable.getDB().backendConnector.insert(key, newValue, clazz) //Be careful that this will not be used in combination with ObservableArrayList
+
             observable.getDB().addBackendListener(newValue, key, newValue::class as KClass<T>)
         }
         //TODO Safely delete the new and old detached objects
