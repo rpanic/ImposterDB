@@ -121,7 +121,7 @@ class DB{
                 }
             }
             if(pathClear){
-                db.backendConnector.update(key, observable, clazz, prop)
+                db.backendConnector.update(key, observable, clazz, prop, levels)
             }
 
         }
@@ -151,6 +151,12 @@ class DB{
                     listChangeArgs.elements.forEach {
                         backendConnector.insert(key, it, clazz)
                         initObservable(it)
+                        instance.loadedState?.add(it)
+                    }
+                }
+                ElementChangeType.Remove -> {
+                    listChangeArgs.elements.forEach {
+                        backendConnector.delete(key, it, clazz)
                         instance.loadedState?.remove(it)
                     }
                 }
@@ -227,25 +233,25 @@ class DB{
         }
     }
 
-    fun <T : Observable> performListUpdateEventsOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>){
+    fun <T : Observable> performListUpdateEventsOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>, levels: LevelInformation){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Update -> {
                     if(args is UpdateListChangeArgs<T>) {
-                        backendConnector.update(key, obj, clazz, args.prop)
+                        backendConnector.update(key, obj, clazz, args.prop, levels)
                     }
                     if(args is UpdateSetChangeArgs<T>) {
-                        backendConnector.update(key, obj, clazz, args.prop)
+                        backendConnector.update(key, obj, clazz, args.prop, levels)
                     }
                 }
             }
         }
     }
 
-    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>){
+    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>, levels: LevelInformation){
         performListAddEventsOnBackend(key, clazz, args)
         performListDeleteEventsOnBackend(key, clazz, args)
-        performListUpdateEventsOnBackend(key, clazz, args)
+        performListUpdateEventsOnBackend(key, clazz, args, levels)
     }
 
     operator fun plusAssign(b: Backend) {

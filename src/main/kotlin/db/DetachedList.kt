@@ -28,7 +28,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
             // Do this by changing the ChangeListener to give Objectreference instead of The Object itself
 
             db.performListAddEventsOnBackend(table.child(), clazz, args)
-            db.performListUpdateEventsOnBackend(table.child(), clazz, args) //TODO Is this actually necessary or does this actually cause a second update call?
+            db.performListUpdateEventsOnBackend(table.child(), clazz, args, LevelInformation(levelinfo)) //TODO Is this actually necessary or does this actually cause a second update call?
 
             args.elements.forEachIndexed { i, obj ->
                 var mnkeys = listOf(parent.keyValue<P, Any>(), obj.keyValue<T, Any>())
@@ -220,7 +220,7 @@ fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz:
             // Do this by changing the ChangeListener to give Objectreference instead of The Object itself
 
             db.performListAddEventsOnBackend(table.child(), clazz, args)
-            db.performListUpdateEventsOnBackend(table.child(), clazz, args) //TODO Is this actually necessary or does this actually cause a second update call?
+            db.performListUpdateEventsOnBackend(table.child(), clazz, args, levelinfo) //TODO Is this actually necessary or does this actually cause a second update call?
 
             args.elements.forEachIndexed { i, obj ->
                 var mnkeys = listOf(parentRef.keyValue<P, Any>(), obj.keyValue<T, Any>())

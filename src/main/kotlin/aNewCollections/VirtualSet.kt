@@ -110,6 +110,7 @@ open class VirtualSet<T : Observable>(
 
         this.addListener { setChangeArgs, levelInformation ->
             println("Children got called")
+            //TODO: Check if that can be unified with DetachedList#2? maybe integrate it into a part of VirtualSet itself
             val relay = { v: VirtualSet<T> -> v.tellChildren(setChangeArgs, levelInformation) }
             when(setChangeArgs.elementChangeType){
                 ElementChangeType.Add -> {

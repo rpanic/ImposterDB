@@ -1,9 +1,11 @@
 package example
 
 import aNewCollections.invoke
+import db.DB
 import io.zeko.db.sql.Insert
 import io.zeko.db.sql.Query
 import io.zeko.db.sql.Update
+import io.zeko.db.sql.dsl.eq
 import io.zeko.model.Entity
 import observable.Observable
 import sql.SqlBackend
@@ -28,10 +30,25 @@ fun main() {
 
 //    val prop = pkProp.get(Test::class.companionObjectInstance!!)
 
-    val backend = SqlBackend()
+    val sql = Update(GenericEntity().apply { test = "Test1" })
+            .where("test" eq "Test2")
+            .toSql()
 
-    backend.context.createOrUpdateTable("table1", Test::class)
-    backend.insert("table1", Test::class, Test().apply { b = 1337; s = "Hallo" })
+    val db = DB()
+    val backend = SqlBackend()
+    db += backend
+
+    val virtualSet = db.getSet<Test>("table2")
+//    backend.context.createOrUpdateTable("table2", Test::class)
+//    backend.insert("table2", Test::class, Test().apply { b = 1337; s = "Hallo"; test = Test2().apply { s2 = "String 2" } })
+//    val loaded = backend.load("table2", Test::class, listOf())
+
+    val loaded = virtualSet.view()
+    val obj = loaded.first()
+//    obj.s = "Updated"
+    obj.test!!.s2 = "Updated S2"
+    virtualSet.remove(obj)
+    println(loaded)
 
 //    Class.forName("com.mysql.jdbc.Driver").newInstance()
 //    val conn = DriverManager.getConnection("jdbc:mysql://localhost/test", "root", "root")
@@ -50,7 +67,7 @@ fun main() {
 class GenericEntity : Entity {
     constructor(map: Map<String, Any?>) : super(map)
     constructor(vararg props: Pair<String, Any?>) : super(*props)
-
+    var test: String? by map
 }
 
 open class Test : Observable(){
@@ -61,11 +78,11 @@ open class Test : Observable(){
 //        val key = Test::s
 //    }
 
-//    open var test: Test2? by observable(null)
+    open var test: Test2? by observable(null)
 
 }
 
 open class Test2 : Observable(){
 
-    open var s: String by observable("")
+    open var s2: String by observable("")
 }

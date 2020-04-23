@@ -47,7 +47,7 @@ fun <T : Observable> SqlContext.createOrUpdateTable(key: String, clazz: KClass<T
         true
     }else{
 
-        val pkProp = clazz.createInstance().key<T, Any>()
+        val pkProp = ReflectionUtils.getPkOfClass(clazz)
 
         val props = ReflectionUtils.getPropertySqlNames(clazz)
                 .map {

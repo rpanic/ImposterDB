@@ -3,10 +3,13 @@ package example
 import com.mchange.v2.sql.SqlUtils
 import db.Ignored
 import db.VirtualSetReadOnlyProperty
+import lazyCollections.Indexable
+import observable.Observable
 import sql.getSqlFieldName
 import sql.typeMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
@@ -54,6 +57,10 @@ object ReflectionUtils {
                 }
                 .flatten()
                 .toSet()
+    }
+
+    fun <T : Observable> getPkOfClass(clazz: KClass<T>): KProperty1<T, Any> {
+        return clazz.createInstance().key<T, Any>()
     }
 
 }

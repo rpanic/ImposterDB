@@ -1,17 +1,21 @@
 package sql
 
-import aNewCollections.*
-import aNewCollections.eq
-import com.mchange.v2.sql.SqlUtils
+import aNewCollections.CompareType
+import aNewCollections.FilterStep
+import aNewCollections.NormalizedCompareRule
+import aNewCollections.Step
 import db.Backend
 import db.VirtualSetReadOnlyProperty
 import example.GenericEntity
 import example.ReflectionUtils
 import example.info
+import example.logger
+import io.zeko.db.sql.Delete
 import io.zeko.db.sql.Insert
 import io.zeko.db.sql.Query
 import io.zeko.db.sql.Update
 import io.zeko.db.sql.dsl.*
+import io.zeko.db.sql.operators.eq
 import observable.LevelInformation
 import observable.Observable
 import observable.ObservableLevel
@@ -71,7 +75,7 @@ class SqlBackend : Backend{
                 step.conditions.forEach { condition ->
                     if(condition is NormalizedCompareRule<*>) {
                         val field = getSqlFieldName(condition.prop!!)
-                        val value = condition.obj2!!.toString()
+                        val value = condition.obj2!!.toString() //TODO Think about how this should work with Ints, Doubles, etc.
                         when(condition.type){
                             CompareType.EQUALS -> query.where(field eq value)
                             CompareType.NOT_EQUALS -> query.where(field neq value)
@@ -135,16 +139,30 @@ class SqlBackend : Backend{
         val props = levels.list.map { it as ObservableLevel }.map { it.prop as KProperty1<Any, Any> }
         val value = ReflectionUtils.getValue(props, obj)
 
-        val sql = Update(GenericEntity(getSqlFieldName(props) to value)).toSql()
+        val pkProp = ReflectionUtils.getPkOfClass(clazz)
 
-        println("update: $sql")
-
+        val sql = Update(GenericEntity(getSqlFieldName(props) to value))
+                .where(eq(pkProp.name, obj.keyValue<T, Any>().toString(), true))
+                .toSql()
+                .replace("generic_entity", key)
+//        val res = context.executeUpdate(sql)
+//
+//        info("Updated $res records in table $key")
+        println()
     }
 
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
 
+        val pkProp = ReflectionUtils.getPkOfClass(clazz)
 
-
+        val sql = Delete(GenericEntity())
+                .where(pkProp.name eq pk.toString())
+                .toSql()
+                .replace("generic_entity", key)
+//        val res = context.executeUpdate(sql)
+//
+//        info("Deleted $res records in table $key")
+        println()
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {

@@ -183,18 +183,25 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         }
     }
 
-    fun <T : Observable> update(key: String, obj: T, clazz: KClass<T>, prop: KProperty<*>){
+    fun <T : Observable> update(key: String, obj: T, clazz: KClass<T>, prop: KProperty<*>, levelInformation: LevelInformation){
         forEachBackend {
-            it.update(key, clazz, obj, prop, LevelInformation(listOf()))
+            it.update(key, clazz, obj, prop, levelInformation)
         }
     }
 
     fun <T : Observable, K : Any> delete(key: String, pk: K, clazz: KClass<T>){
+
+        //TODO Make a decicion whether delete should be called with a PK or Object and then unify the interfaces
+        val pk2 = if(pk is Observable){
+            pk.keyValue<T, Any>()
+        }else
+            pk
+
         //TODO Think about how to handle deletes
         forEachBackend {
-            it.delete(key, clazz, pk)
+            it.delete(key, clazz, pk2)
         }
-        cache.removeObject(key, pk)
+        cache.removeObject(key, pk2)
     }
 
     class BackendObjectRetriever <T : Any> (val backends : List<Backend>, val cache: ObjectCache){
