@@ -4,12 +4,15 @@ import aNewCollections.*
 import aNewCollections.eq
 import db.Backend
 import db.Ignored
+import db.VirtualSetReadOnlyProperty
 import example.GenericEntity
+import example.ReflectionUtils
 import example.info
 import io.vertx.kotlin.core.json.json
 import io.vertx.kotlin.core.json.obj
 import io.zeko.db.sql.Insert
 import io.zeko.db.sql.Query
+import io.zeko.db.sql.Update
 import io.zeko.db.sql.connections.HikariDBPool
 import io.zeko.db.sql.connections.HikariDBSession
 import io.zeko.db.sql.dsl.*
@@ -19,11 +22,12 @@ import kotlinx.coroutines.launch
 import observable.Observable
 import java.sql.DriverManager
 import java.sql.ResultSet
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
+import kotlin.reflect.*
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaType
 
 class SqlBackend : Backend{
 
@@ -66,7 +70,7 @@ class SqlBackend : Backend{
     override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
 
         val query = Query()
-                .fields(*getProperties(clazz).map { it.name }.toTypedArray()) //TODO Check if performance is better when using *
+                .fields(*ReflectionUtils.getPropertySqlNames(clazz).map { it.first }.toTypedArray()) //TODO Check if performance is better when using *
                 .from(key)
 
         steps.forEach { step ->
@@ -94,12 +98,43 @@ class SqlBackend : Backend{
 
     }
 
-    override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {
-        TODO("Not yet implemented")
+    override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> { //TODO To Set
+        return load(key, clazz, listOf()).toList()
     }
 
     fun <T : Observable> parse(set : ResultSet, clazz: KClass<T>) : Set<T>{
-        return setOf()
+        val parsed = mutableSetOf<T>()
+        while(set.next()) {
+            parsed.add(parseClass(set, clazz))
+        }
+
+        return parsed
+    }
+
+    fun <T : Any> parseClass(set : ResultSet, clazz: KClass<T>, prefix: String = "") : T{
+
+        val instance = clazz.createInstance()
+        val props = ReflectionUtils.getNotIgnoredOrDelegatedProperties(clazz)
+                .filter { it.isAccessible = true; it.getDelegate(instance) !is VirtualSetReadOnlyProperty<*, *> }
+
+        props.forEach {
+            val propName = prefix + it.name
+            val type = it.returnType.javaType
+            val value = when(type){
+                String::class.java -> set.getString(propName)
+                Double::class.java -> set.getDouble(propName)
+                Float::class.java -> set.getFloat(propName)
+                Byte::class.java -> set.getByte(propName)
+                Short::class.java -> set.getShort(propName)
+                Int::class.java -> set.getInt(propName)
+                Long::class.java -> set.getLong(propName)
+                Char::class.java -> set.getInt(propName).toChar()
+                Boolean::class.java -> set.getBoolean(propName)
+                else -> parseClass(set, (type as Class<Any>).kotlin, prefix + it.name + "_")
+            }
+            (it as KMutableProperty1<T, Any>).set(instance, value)
+        }
+        return instance
     }
 
     override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>) {
@@ -111,27 +146,17 @@ class SqlBackend : Backend{
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
-        val sql = Insert(GenericEntity(getPropertyStringMap(obj, clazz))).toSql()
+        val sql = Insert(GenericEntity(getPropertyMap(obj, clazz))).toSql()
                 .replace("generic_entity", key)
         val res = context.executeUpdate(sql)
         info("Insert in $key: ${if(res == 1) "OK" else "NOT OK"}") //TODO Debug
     }
 
-    fun <T : Observable> getPropertyStringMap(t: T, clazz: KClass<T>) : Map<String, Any?>{
-        return getPropertyMap(t, clazz).map{ it.key.name to it.value }.toMap()
-    }
+    fun <T : Observable> getPropertyMap(t: T, clazz: KClass<T>) : Map<String, Any> {
 
-    fun <T : Observable> getPropertyMap(t: T, clazz: KClass<T>) : Map<KProperty1<T, Any>, Any?>{
-
-        return getProperties(clazz)
-                .map { it to it.get(t) }
+        return ReflectionUtils.getPropertyTree(clazz)
+                .map { it.first to ReflectionUtils.getValue(it.second, t) }
                 .toMap()
-    }
-
-    fun <T : Observable> getProperties(clazz: KClass<T>) : List<KProperty1<T, Any>>{
-        return clazz.memberProperties
-                .filter { it.findAnnotation<Ignored>() == null }
-                .map { it as KProperty1<T, Any> }
     }
 
 }
