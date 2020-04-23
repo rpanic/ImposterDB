@@ -1,6 +1,5 @@
 package test
 
-import aNewCollections.ElementChangedListener
 import aNewCollections.LazyObservableSet
 import io.mockk.mockk
 import org.junit.Test
@@ -12,7 +11,7 @@ class ObservableSetTest{
 
         val set = LazyObservableSet<TestObject>()
 
-        val listener: ElementChangedListener<TestObject> = mockk()
+//        val listener: ElementChangedListener<TestObject> = mockk()
 
     }
 

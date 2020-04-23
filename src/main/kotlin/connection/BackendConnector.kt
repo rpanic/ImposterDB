@@ -6,6 +6,7 @@ import connection.MtoNTable
 import connection.ObjectCache
 import db.*
 import example.findDelegatingProperties
+import observable.LevelInformation
 import observable.Observable
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -184,7 +185,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
     fun <T : Observable> update(key: String, obj: T, clazz: KClass<T>, prop: KProperty<*>){
         forEachBackend {
-            it.update(key, clazz, obj, prop)
+            it.update(key, clazz, obj, prop, LevelInformation(listOf()))
         }
     }
 

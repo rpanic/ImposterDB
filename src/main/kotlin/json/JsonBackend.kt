@@ -5,18 +5,15 @@ import aNewCollections.StepInterpreter
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import com.beust.klaxon.Parser
 import db.DBBackend
 import db.DetachedObjectReadWriteProperty
-import db.Ignored
-import db.VirtualSetReadOnlyProperty
 import example.findDelegatingProperties
+import observable.LevelInformation
 import observable.Observable
 import java.io.File
 import java.io.FileReader
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
@@ -67,7 +64,7 @@ open class JsonBackend : DBBackend() {
         return list
     }
 
-    override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>) {
+    override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>, levels: LevelInformation) {
         println("update ${obj.keyValue<T, Any>()} ${prop.name} $key ${clazz.simpleName} ")
         if(prop.name == "uuid"){
             println("")

@@ -2,30 +2,23 @@ package sql
 
 import aNewCollections.*
 import aNewCollections.eq
+import com.mchange.v2.sql.SqlUtils
 import db.Backend
-import db.Ignored
 import db.VirtualSetReadOnlyProperty
 import example.GenericEntity
 import example.ReflectionUtils
 import example.info
-import io.vertx.kotlin.core.json.json
-import io.vertx.kotlin.core.json.obj
 import io.zeko.db.sql.Insert
 import io.zeko.db.sql.Query
 import io.zeko.db.sql.Update
-import io.zeko.db.sql.connections.HikariDBPool
-import io.zeko.db.sql.connections.HikariDBSession
 import io.zeko.db.sql.dsl.*
-import io.zeko.model.Select
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import observable.LevelInformation
 import observable.Observable
+import observable.ObservableLevel
 import java.sql.DriverManager
 import java.sql.ResultSet
 import kotlin.reflect.*
 import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaType
 
@@ -137,12 +130,21 @@ class SqlBackend : Backend{
         return instance
     }
 
-    override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>) {
-        TODO("Not yet implemented")
+    override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>, levels: LevelInformation) {
+
+        val props = levels.list.map { it as ObservableLevel }.map { it.prop as KProperty1<Any, Any> }
+        val value = ReflectionUtils.getValue(props, obj)
+
+        val sql = Update(GenericEntity(getSqlFieldName(props) to value)).toSql()
+
+        println("update: $sql")
+
     }
 
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
-        TODO("Not yet implemented")
+
+
+
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
