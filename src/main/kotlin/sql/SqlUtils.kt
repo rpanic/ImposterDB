@@ -88,13 +88,19 @@ fun <T : Observable> SqlContext.createOrUpdateTable(key: String, clazz: KClass<T
 
 }
 
-fun replaceWildCards(stmt: String, value: Any) : String{
+fun String.replaceWildCards(vararg values: Any) = this.replaceWildCards(values.toList())
 
-    val processed = when(value){
-        is String, is Char -> "'$value'" //quotes
-        else -> "$value"
+fun String.replaceWildCards(values: List<Any>) : String{
+
+    var tmp = this
+    values.forEach {
+        val processed = when(it){
+            is String, is Char -> "'$it'" //quotes
+            else -> "$it"
+        }
+        tmp = tmp.replaceFirst("?", processed)
     }
-    return stmt.replace("?", processed)
+    return tmp
 
 }
 

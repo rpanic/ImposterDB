@@ -1,16 +1,17 @@
 package example
 
+import aNewCollections.eq
 import aNewCollections.invoke
 import db.DB
-import io.zeko.db.sql.Insert
-import io.zeko.db.sql.Query
-import io.zeko.db.sql.Update
-import io.zeko.db.sql.dsl.eq
+import io.mockk.every
+import io.mockk.mockk
 import io.zeko.model.Entity
 import observable.Observable
 import sql.SqlBackend
+import sql.SqlContext
 import sql.createOrUpdateTable
 import java.sql.DriverManager
+import java.sql.ResultSet
 import javax.sql.DataSource
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -30,12 +31,17 @@ fun main() {
 
 //    val prop = pkProp.get(Test::class.companionObjectInstance!!)
 
-    val sql = Update(GenericEntity().apply { test = "Test1" })
-            .where("test" eq "Test2")
-            .toSql()
+    val function: (SqlBackend) -> SqlContext = {
+        val mock = mockk<SqlContext>(relaxed = true)
+//        val rs = mockk<ResultSet>()  //TODO Write resultset mock for test
+//        every { rs.next() } returns true
+//        every { mock.executeQuery() }
+        mock
+    }
+
 
     val db = DB()
-    val backend = SqlBackend()
+    val backend = SqlBackend(createContextFun = function)
     db += backend
 
     val virtualSet = db.getSet<Test>("table2")
@@ -43,7 +49,9 @@ fun main() {
 //    backend.insert("table2", Test::class, Test().apply { b = 1337; s = "Hallo"; test = Test2().apply { s2 = "String 2" } })
 //    val loaded = backend.load("table2", Test::class, listOf())
 
-    val loaded = virtualSet.view()
+
+
+    val loaded = virtualSet.filter { it.s eq "hello" }.view()
     val obj = loaded.first()
 //    obj.s = "Updated"
     obj.test!!.s2 = "Updated S2"

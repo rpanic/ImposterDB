@@ -26,30 +26,27 @@ import kotlin.reflect.full.createInstance
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaType
 
-class SqlBackend : Backend{
-
-//    private val pool: HikariDBPool
-//    private var session: HikariDBSession? = null
+class SqlBackend (
+        val url: String = "jdbc:mysql://localhost", //TODO Remove default (+user, password, dbName)
+        val dbname: String = "test",
+        val user: String = "root",
+        val password: String = "root",
+        val driver: String = "com.mysql.jdbc.Driver",
+        val createContextFun: (SqlBackend) -> SqlContext = SqlBackend::createContext
+) : Backend{
 
     val context: SqlContext
 
     init {
-//        val mysqlConfig = json {
-//            obj(
-//                    "url" to "jdbc:mysql://localhost/test?user=root&password=root",
-//                    "max_pool_size" to 5
-//            )
-//        }
-//        pool = HikariDBPool(mysqlConfig)
-//        GlobalScope.launch {
-//            session = HikariDBSession(pool, pool.createConnection())
-//        }
+        context = createContextFun(this)
+    }
 
-        Class.forName("com.mysql.jdbc.Driver").newInstance()
-        val conn = DriverManager.getConnection("jdbc:mysql://localhost/test", "root", "root")
+    private fun createContext(): SqlContext {
+        val connectionString = url + (if (url.endsWith("/")) "" else "/") + dbname
+        Class.forName(driver).newInstance()
+        val conn = DriverManager.getConnection(connectionString, user, password)
 
-        context = SqlContext(conn, "test")
-
+        return SqlContext(conn, "test")
     }
 
     override fun keyExists(key: String): Boolean {
@@ -70,26 +67,32 @@ class SqlBackend : Backend{
                 .fields(*ReflectionUtils.getPropertySqlNames(clazz).map { it.first }.toTypedArray()) //TODO Check if performance is better when using *
                 .from(key)
 
+        val valuesToReplace = mutableListOf<Any>()
+
         steps.forEach { step ->
             if(step is FilterStep<*>){
                 step.conditions.forEach { condition ->
                     if(condition is NormalizedCompareRule<*>) {
                         val field = getSqlFieldName(condition.prop!!)
-                        val value = condition.obj2!!.toString() //TODO Think about how this should work with Ints, Doubles, etc.
                         when(condition.type){
-                            CompareType.EQUALS -> query.where(field eq value)
-                            CompareType.NOT_EQUALS -> query.where(field neq value)
-                            CompareType.LESS -> query.where(field less value)
-                            CompareType.LESS_EQUALS -> query.where(field lessEq value)
-                            CompareType.GREATER -> query.where(field greater value)
-                            CompareType.GREATER_EQUALS -> query.where(field greaterEq value)
+                            CompareType.EQUALS -> query.where(field eq "")
+                            CompareType.NOT_EQUALS -> query.where(field neq "")
+                            CompareType.LESS -> query.where(field less "")
+                            CompareType.LESS_EQUALS -> query.where(field lessEq "")
+                            CompareType.GREATER -> query.where(field greater "")
+                            CompareType.GREATER_EQUALS -> query.where(field greaterEq "")
                         }
+                        val value = condition.obj2!!
+                        valuesToReplace += value
                     }
                 }
             }
         }
 
-        val rs = context.executeQuery(query.toSql())
+        val sql = query.toSql()
+                    .replaceWildCards(valuesToReplace)
+
+        val rs = context.executeQuery(sql)
 
         return parse(rs, clazz)
 
@@ -141,13 +144,15 @@ class SqlBackend : Backend{
 
         val pkProp = ReflectionUtils.getPkOfClass(clazz)
 
-        val sql = Update(GenericEntity(getSqlFieldName(props) to value))
-                .where(eq(pkProp.name, obj.keyValue<T, Any>().toString(), true))
+        var sql = Update(GenericEntity(getSqlFieldName(props) to value))
+                .where(pkProp.name eq "")
                 .toSql()
                 .replace("generic_entity", key)
-//        val res = context.executeUpdate(sql)
-//
-//        info("Updated $res records in table $key")
+                .replaceWildCards(obj.keyValue<T, Any>().toString())
+
+        val res = context.executeUpdate(sql)
+
+        info("Updated $res records in table $key")
         println()
     }
 

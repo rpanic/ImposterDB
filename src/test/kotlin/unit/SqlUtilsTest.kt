@@ -9,11 +9,13 @@ class SqlUtilsTest{
     @Test
     fun testReplaceWildcard(){
 
-        assertThat(replaceWildCards("TEST ?", "wild")).isEqualTo("TEST 'wild'")
-        assertThat(replaceWildCards("TEST ?", 'w')).isEqualTo("TEST 'w'")
-        assertThat(replaceWildCards("TEST ?", 1)).isEqualTo("TEST 1")
-        assertThat(replaceWildCards("TEST ?", 1.0)).isEqualTo("TEST 1.0")
-        assertThat(replaceWildCards("TEST ?", 1.0f)).isEqualTo("TEST 1.0")
+        assertThat("TEST ?".replaceWildCards("wild")).isEqualTo("TEST 'wild'")
+        assertThat("TEST ?".replaceWildCards('w')).isEqualTo("TEST 'w'")
+        assertThat("TEST ?".replaceWildCards( 1)).isEqualTo("TEST 1")
+        assertThat("TEST ?".replaceWildCards( 1.0)).isEqualTo("TEST 1.0")
+        assertThat("TEST ?".replaceWildCards( 1.0f)).isEqualTo("TEST 1.0")
+        assertThat("TEST ? AND ?".replaceWildCards("t", 1.0f)).isEqualTo("TEST 't' AND 1.0")
+        assertThat("TEST ? AND ?".replaceWildCards(Long.MAX_VALUE, Double.MAX_VALUE)).isEqualTo("TEST ${Long.MAX_VALUE} AND ${Double.MAX_VALUE}")
 
     }
 
