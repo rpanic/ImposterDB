@@ -1,7 +1,6 @@
-package test
+package integration
 
 import aNewCollections.LazyObservableSet
-import io.mockk.mockk
 import org.junit.Test
 
 class ObservableSetTest{

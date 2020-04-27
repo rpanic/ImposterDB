@@ -1,16 +1,11 @@
-package test
+package integration
 
-import aNewCollections.eq
 import connection.MtoNTableEntry
-import connection.ObjectCache
 import db.DB
 import db.DBBackend
-import example.Person
-import example.Trait
 import io.mockk.*
 import json.JsonBackend
 import observable.DBAwareObject
-import observable.LevelInformation
 import observable.Observable
 import org.assertj.core.api.Assertions.*
 import org.junit.Test

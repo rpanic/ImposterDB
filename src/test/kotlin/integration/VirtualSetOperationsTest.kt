@@ -1,7 +1,6 @@
-package test
+package integration
 
 import aNewCollections.*
-import com.nhaarman.mockitokotlin2.times
 import db.Backend
 import db.DB
 import io.mockk.every
@@ -10,7 +9,6 @@ import io.mockk.mockkClass
 import io.mockk.verify
 import observable.ElementChangeType
 import org.junit.Test
-import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KMutableProperty1
 import org.assertj.core.api.Assertions.assertThat as assertThat
 

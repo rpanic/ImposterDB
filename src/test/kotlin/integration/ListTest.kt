@@ -1,12 +1,10 @@
-package test
+package integration
 
 import com.beust.klaxon.Klaxon
 import com.nhaarman.mockitokotlin2.argumentCaptor
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import db.*
-import example.Person
-import example.Trait
 import json.JsonBackend
 import json.ObservableConverter
 import observable.LevelInformation

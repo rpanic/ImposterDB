@@ -1,4 +1,4 @@
-package test
+package integration
 
 import com.nhaarman.mockitokotlin2.*
 import db.*

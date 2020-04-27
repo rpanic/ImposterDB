@@ -1,8 +1,6 @@
-package test
+package integration
 
-import com.beust.klaxon.Json
 import db.detached
-import db.detachedList
 import db.detachedSet
 import observable.Observable
 
