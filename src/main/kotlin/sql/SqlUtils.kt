@@ -88,6 +88,16 @@ fun <T : Observable> SqlContext.createOrUpdateTable(key: String, clazz: KClass<T
 
 }
 
+fun replaceWildCards(stmt: String, value: Any) : String{
+
+    val processed = when(value){
+        is String, is Char -> "'$value'" //quotes
+        else -> "$value"
+    }
+    return stmt.replace("?", processed)
+
+}
+
 fun getSqlFieldName(props : Iterable<KProperty1<*, *>>) = props.map { it.name }.joinToString("_")
 
 val typeMap = mapOf(
