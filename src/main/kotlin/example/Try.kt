@@ -16,51 +16,35 @@ import javax.sql.DataSource
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.*
+import kotlin.system.measureTimeMillis
 
 fun main() {
 
-//    var prop: KProperty1<Any, Any>? = null
-//
-//    val c = { clazz: KClass<Any> ->
-//        val companion = clazz.companionObject
-//        if(companion == null)
-//            clazz.superclasses.find { it. }
-//        !!.memberProperties.find { it.name == "key" }!! as KProperty1<Any, KProperty1<Test, Any>>
-//    }
-//    val pkProp = Test::class.companionObject!!.memberProperties.find { it.name == "key" }!! as KProperty1<Any, KProperty1<Test, Any>>
+    mstart()
+    val db = DB(); mpoint()
+    val backend = SqlBackend(); mpoint()
+    db += backend; mpoint()
 
-//    val prop = pkProp.get(Test::class.companionObjectInstance!!)
+    val virtualSet = db.getSet<Person>("person"); mpoint()
 
-    val db = DB()
-    val backend = SqlBackend(createContextFun = function)
-    db += backend
+    //Part 1
+    val person = Person()
+    person.name = "Raphael Panic"
+//    person.trait = Trait().apply { value = 98 }
 
-    val virtualSet = db.getSet<Test>("table2")
-//    backend.context.createOrUpdateTable("table2", Test::class)
-//    backend.insert("table2", Test::class, Test().apply { b = 1337; s = "Hallo"; test = Test2().apply { s2 = "String 2" } })
-//    val loaded = backend.load("table2", Test::class, listOf())
+    virtualSet.add(person)
 
+    person.traits.add(Trait().apply { this.value = 111 })
 
+    //Part 2
 
-    val loaded = virtualSet.filter { it.s eq "hello" }.view()
-    val obj = loaded.first()
-//    obj.s = "Updated"
-    obj.test!!.s2 = "Updated S2"
-    virtualSet.remove(obj)
-    println(loaded)
+//    val loaded = virtualSet.view(); mpoint()
+//    println(loaded.size == 1); mpoint()
+//    val obj = loaded.first(); mpoint()
+//    obj.description = "Desc2"; mpoint()
+//    obj.traits.view().first().value = 1234; mpoint()
 
-//    Class.forName("com.mysql.jdbc.Driver").newInstance()
-//    val conn = DriverManager.getConnection("jdbc:mysql://localhost/test", "root", "root")
-
-//    val results = conn.createStatement().execute("CREATE TABLE test (name VARCHAR(100))")
-//    println(results)
-//
-//    val entity = GenericEntity("uuid" to "Hello", "name" to "wtf", "testint" to 0)
-//
-//    Update(entity).toSql().print()
-//
-//    Insert(entity).toSql().print()
-
+    TimeMeasurer.dump()
 }
 
 class GenericEntity : Entity {

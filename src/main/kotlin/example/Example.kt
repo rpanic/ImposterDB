@@ -18,7 +18,7 @@ class Person : Observable(){
 
     val traits by detachedSet<Trait>("traits")
 
-    var trait: Trait by detached<Trait>("trait")
+//    var trait: Trait by detached<Trait>("trait") //TODO Better error message
 
     //var trait: Trait by relation()
 
