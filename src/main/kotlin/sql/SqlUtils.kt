@@ -98,7 +98,18 @@ fun String.replaceWildCards(values: List<Any>) : String{
             is String, is Char -> "'$it'" //quotes
             else -> "$it"
         }
-        tmp = tmp.replaceFirst("?", processed)
+        var insideQuotes = false
+        val index = tmp.toCharArray().indexOfFirst { c ->
+            if(c == '\''){
+                insideQuotes = !insideQuotes
+                false
+            } else if(c == '?'){
+                !insideQuotes
+            } else {
+                false
+            }
+        }
+        tmp = tmp.replaceRange(index, index + 1, processed)
     }
     return tmp
 
