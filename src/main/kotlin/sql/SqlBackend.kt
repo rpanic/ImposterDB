@@ -156,7 +156,6 @@ class SqlBackend (
         val res = context.executeUpdate(sql)
 
         info("Updated $res records in table $key")
-        println()
     }
 
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
@@ -164,13 +163,13 @@ class SqlBackend (
         val pkProp = ReflectionUtils.getPkOfClass(clazz)
 
         val sql = Delete(GenericEntity())
-                .where(pkProp.name eq pk.toString())
+                .where(pkProp.name eq "")
                 .toSql()
                 .replace("generic_entity", key)
-//        val res = context.executeUpdate(sql)
-//
-//        info("Deleted $res records in table $key")
-        println()
+                .replaceWildCards(pk.toString())
+        val res = context.executeUpdate(sql)
+
+        info("Deleted $res records in table $key")
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {

@@ -19,7 +19,7 @@ import kotlin.reflect.jvm.javaType
 fun SqlContext.checkIfTableExists(key: String) : Boolean{
     val result = this.executeQuery("SELECT count(*) " +
             "FROM information_schema.TABLES " +
-            "WHERE (TABLE_SCHEMA = '${this.dbName}') AND (TABLE_NAME = '$key')")
+            "WHERE (TABLE_SCHEMA = '${this.dbName}') AND (UPPER(TABLE_NAME) = '${key.toUpperCase()}')")
     return result.next() && result.getBoolean(1)
 }
 
