@@ -17,6 +17,8 @@ class SqlUtilsTest{
         assertThat("TEST ? AND ?".replaceWildCards("t", 1.0f)).isEqualTo("TEST 't' AND 1.0")
         assertThat("TEST ? AND ?".replaceWildCards(Long.MAX_VALUE, Double.MAX_VALUE)).isEqualTo("TEST ${Long.MAX_VALUE} AND ${Double.MAX_VALUE}")
 
+        assertThat("TEST 'a?' AND ?".replaceWildCards("wild")).isEqualTo("TEST 'a?' AND 'wild'")
+
     }
 
 }

@@ -31,15 +31,6 @@ fun main() {
 
 //    val prop = pkProp.get(Test::class.companionObjectInstance!!)
 
-    val function: (SqlBackend) -> SqlContext = {
-        val mock = mockk<SqlContext>(relaxed = true)
-//        val rs = mockk<ResultSet>()  //TODO Write resultset mock for test
-//        every { rs.next() } returns true
-//        every { mock.executeQuery() }
-        mock
-    }
-
-
     val db = DB()
     val backend = SqlBackend(createContextFun = function)
     db += backend

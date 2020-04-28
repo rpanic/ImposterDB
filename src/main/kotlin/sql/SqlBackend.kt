@@ -31,7 +31,7 @@ class SqlBackend (
         val dbname: String = "test",
         val user: String = "root",
         val password: String = "root",
-        val driver: String = "com.mysql.jdbc.Driver",
+        val driver: String? = "com.mysql.jdbc.Driver",
         val createContextFun: (SqlBackend) -> SqlContext = SqlBackend::createContext
 ) : Backend{
 
@@ -43,10 +43,13 @@ class SqlBackend (
 
     private fun createContext(): SqlContext {
         val connectionString = url + (if (url.endsWith("/")) "" else "/") + dbname
-        Class.forName(driver).newInstance()
+
+        if(driver != null){
+            Class.forName(driver).newInstance()
+        }
         val conn = DriverManager.getConnection(connectionString, user, password)
 
-        return SqlContext(conn, "test")
+        return SqlContext(conn, dbname )
     }
 
     override fun keyExists(key: String): Boolean {
@@ -132,7 +135,7 @@ class SqlBackend (
                 Boolean::class.java -> set.getBoolean(propName)
                 else -> parseClass(set, (type as Class<Any>).kotlin, prefix + it.name + "_")
             }
-            (it as KMutableProperty1<T, Any>).set(instance, value)
+            (it as KMutableProperty1<T, Any?>).set(instance, value)
         }
         return instance
     }

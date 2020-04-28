@@ -2,6 +2,7 @@ package example
 
 import mu.KotlinLogging
 import observable.Observable
+import java.sql.ResultSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
@@ -52,3 +53,20 @@ fun error(s: String) =
         logger.error(s)
 
 fun logger() = logger
+
+fun ResultSet.printData(){
+    val rsmd = this.getMetaData()
+    val columnsNumber: Int = rsmd.getColumnCount()
+    for (i in 1..columnsNumber){
+        print(rsmd.getColumnName(i) + " ")
+    }
+    println()
+    while (this.next()) {
+        for (i in 1..columnsNumber) {
+            if (i > 1) print(",  ")
+            val columnValue: String? = this.getString(i)
+            print(columnValue)
+        }
+        println("")
+    }
+}
