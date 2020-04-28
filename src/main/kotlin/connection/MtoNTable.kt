@@ -2,14 +2,18 @@ package connection
 
 import observable.Observable
 
-class MtoNTableEntry(val m: Any, val n: Any) : Observable(){
-    fun <T> getMKey() : T{
+class MtoNTableEntry(var m: String, var n: String) : Observable(){ //TODO Make this val again and find some way to parse MToNTableEntry directly
+    fun <T : String> getMKey() : T{
         return m as T
     }
 
-    fun <T> getNKey() : T{
+    fun <T : String> getNKey() : T{
         return n as T
     }
+
+    @Deprecated("Use primary constructor (m, n)")
+    constructor() : this("", "") //This constructor is only for reflection createInstance()
+
 }
 
 class MtoNTable(private val key1: String, private val key2: String){

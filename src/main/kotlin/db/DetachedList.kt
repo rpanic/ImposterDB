@@ -31,15 +31,15 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
             db.performListUpdateEventsOnBackend(table.child(), clazz, args, LevelInformation(levelinfo)) //TODO Is this actually necessary or does this actually cause a second update call?
 
             args.elements.forEachIndexed { i, obj ->
-                var mnkeys = listOf(parent.keyValue<P, Any>(), obj.keyValue<T, Any>())
+                var mnkeys = listOf(parent.keyValue<P, String>(), obj.keyValue<T, String>())
                 if (table.namesFlipped()) {
                     mnkeys = mnkeys.reversed()
                 }
 
                 //Convenience functions
-                val findEntry = { m: Any, n: Any ->
+                val findEntry = { m: String, n: String ->
                     db.cache.findCachedObject<MtoNTableEntry>(table.tableName()) {
-                        it.getMKey<Any>() == m && it.getNKey<Any>() == n
+                        it.m == m && it.n == n
                     }!!
                 }
                 val createEntry = {
@@ -54,7 +54,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                     }
                     ElementChangeType.Set -> {
                         if (args is SetListChangeArgs<T>) {
-                            var deleteKeys = listOf(parent.keyValue<P, Any>(), args.replacedElements[i].keyValue<T, Any>())
+                            var deleteKeys = listOf(parent.keyValue<P, String>(), args.replacedElements[i].keyValue<T, String>())
                             if (table.namesFlipped()) {
                                 deleteKeys = deleteKeys.reversed()
                             }
@@ -89,7 +89,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
         }
         val virtualSet = VirtualSet({
 
-                val mToN = it.find { it is MtoNRule<*> }?.let { s ->
+                val mToNTableEntry = it.find { it is MtoNRule<*> }?.let { s ->
 
                 db.backendConnector.loadWithRules(table.tableName(), listOf(
                     FilterStep(listOf(
@@ -101,11 +101,11 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                 ), MtoNTableEntry::class)
             }
 
-            checkNotNull(mToN){
+            checkNotNull(mToNTableEntry){
                 "MtoN Data could not be fetched for table ${table.tableName()}"
             }
 
-            val nSteps = mToN.map { entry ->
+            val nSteps = mToNTableEntry.map { entry ->
                 FilterStep<T>(listOf(
                         NormalizedCompareRule(listOf(
                                 clazz.memberProperties.find { it.name == "uuid" }!!),
@@ -223,16 +223,16 @@ fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz:
             db.performListUpdateEventsOnBackend(table.child(), clazz, args, levelinfo) //TODO Is this actually necessary or does this actually cause a second update call?
 
             args.elements.forEachIndexed { i, obj ->
-                var mnkeys = listOf(parentRef.keyValue<P, Any>(), obj.keyValue<T, Any>())
+                var mnkeys = listOf(parentRef.keyValue<P, String>(), obj.keyValue<T, String>())
                 if(table.namesFlipped()){
                     mnkeys = mnkeys.reversed()
                 }
 
                 //Convenience functions
-                val findEntry = { m: Any, n: Any ->
+                val findEntry = { m: String, n: String ->
                     println(list)
                     db.cache.findCachedObject<MtoNTableEntry>(table.tableName()){
-                        it.getMKey<Any>() == m && it.getNKey<Any>() == n
+                        it.m == m && it.m == n
                     }!!
                 }
                 val createEntry = {
@@ -248,7 +248,7 @@ fun <P : Observable, T : Observable> detachedList(parent: P, key: String, clazz:
                     }
                     ElementChangeType.Set -> {
                         if(args is SetListChangeArgs<T>){
-                            var deleteKeys = listOf(parentRef.keyValue<P, Any>(), args.replacedElements[i].keyValue<T, Any>())
+                            var deleteKeys = listOf(parentRef.keyValue<P, String>(), args.replacedElements[i].keyValue<T, String>())
                             if(table.namesFlipped()){
                                 deleteKeys = deleteKeys.reversed()
                             }
