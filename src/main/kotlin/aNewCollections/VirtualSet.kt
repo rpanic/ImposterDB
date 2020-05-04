@@ -62,13 +62,6 @@ open class ReadOnlyVirtualSet<T : Observable>(
         )).firstOrNull()
     }
 
-//    fun <V> map(f: (T) -> V) : ReadOnlyVirtualSet<T>{
-//        return ReadOnlyVirtualSet({
-//            get(it)
-//        }, steps + MapStep<T, V>(), clazz)
-//    }
-
-
     fun tellChildren(args: SetChangeArgs<T>, levels: LevelInformation){
         listeners.forEach { it(args, levels) }
     }
@@ -100,36 +93,62 @@ open class VirtualSet<T : Observable>(
 
     }
 
+    //TODO Tests
+    fun find(f: (T) -> Boolean) : T{
+        val extractor = RuleExtractionFramework.rulesExtractor(clazz)
+
+        val filterStep = FilterStep<T>(extractor.extractFilterRules(f))
+
+        val findCondition = FindStep(filterStep)
+
+        val newSet = createDependent(findCondition){ t, f ->
+            if(StepInterpreter.interpretFilter(filterStep, t)) {
+                f(t)
+            }
+        }
+
+        return newSet.view().first()
+
+    }
+
     fun filter(f: (T) -> Boolean) : VirtualSet<T>{
 
         val extractor = RuleExtractionFramework.rulesExtractor(clazz)
 
-        val normalizedConditions = extractor.extractFilterRules(f)
+        val normalizedConditions = FilterStep<T>(extractor.extractFilterRules(f))
 
-        val newSet = VirtualSet(loader, { _, a, b -> performEvent(this, a, b) }, steps + FilterStep(normalizedConditions), clazz, this)
+        val newSet = createDependent( normalizedConditions ){ t, f ->
+            if(StepInterpreter.interpretFilter(normalizedConditions, t)) {
+                f(t)
+            }
+        }
+
+        return newSet
+    }
+
+    protected fun createDependent(newSteps: Step<T, T>, f:(T, (T) -> Unit) -> Unit): VirtualSet<T> {
+
+        val newSet = VirtualSet(loader, { _, a, b -> performEvent(this, a, b) }, steps + newSteps, clazz, this)
 
         this.addListener { setChangeArgs, levelInformation ->
             println("Children got called")
             //TODO: Check if that can be unified with DetachedList#2? maybe integrate it into a part of VirtualSet itself
             val relay = { v: VirtualSet<T> -> v.tellChildren(setChangeArgs, levelInformation) }
             when(setChangeArgs.elementChangeType){
-                ElementChangeType.Add -> {
-                    setChangeArgs.elements.forEach {
-                        if(StepInterpreter.interpretFilter(newSet.steps.last() as FilterStep<T>, it)){
-                            newSet.loadedState?.add(it)
-                            relay(newSet)
-                        }
+                ElementChangeType.Add -> setChangeArgs.elements.forEach {
+                    f(it){ t ->
+                        newSet.loadedState?.add(t)
+                        relay(newSet)
                     }
                 }
                 ElementChangeType.Remove -> setChangeArgs.elements.forEach {
-                    if(StepInterpreter.interpretFilter(newSet.steps.last() as FilterStep<T>, it)){
-                        newSet.loadedState?.remove(it)
+                    f(it){ t ->
+                        newSet.loadedState?.remove(t)
                         relay(newSet)
                     }
                 }
             }
         }
-
         return newSet
     }
 

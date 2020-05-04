@@ -15,6 +15,26 @@ import org.assertj.core.api.Assertions.assertThat as assertThat
 class VirtualSetOperationsTest {
 
     @Test
+    fun testFind(){
+        //Since Filter uses the same procedures as Filter, we only have to test the basic execution
+
+        val backend = mockkClass(Backend::class)
+        val objs = setOf("TestKey", "OtherKey").map { s -> TestObject().apply { testProperty = s } }
+        every { backend.load<TestObject>(any(), any(), match { it.size == 1 } ) } returns objs.toSet()
+        every { backend.keyExists(any()) } returns true
+
+        val db = DB()
+        db += backend
+
+        val set = db.getSet<TestObject>("test")
+        val obj = set.find { it.testProperty eq "TestKey" } //TODO Investiage why () == "TestKey"() is not working
+
+        assertThat(obj).isNotNull
+        assertThat(obj.testProperty).isEqualTo("TestKey")
+
+    }
+
+    @Test
     fun testChainWithFilter(){
 
         val backend = mockkClass(Backend::class)

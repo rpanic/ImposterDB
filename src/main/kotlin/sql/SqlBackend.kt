@@ -1,9 +1,6 @@
 package sql
 
-import aNewCollections.CompareType
-import aNewCollections.FilterStep
-import aNewCollections.NormalizedCompareRule
-import aNewCollections.Step
+import aNewCollections.*
 import db.Backend
 import db.VirtualSetReadOnlyProperty
 import example.GenericEntity
@@ -16,6 +13,7 @@ import io.zeko.db.sql.Query
 import io.zeko.db.sql.Update
 import io.zeko.db.sql.dsl.*
 import io.zeko.db.sql.operators.eq
+import mu.KotlinLogging
 import observable.LevelInformation
 import observable.Observable
 import observable.ObservableLevel
@@ -34,6 +32,8 @@ class SqlBackend (
         val driver: String? = "com.mysql.jdbc.Driver",
         val createContextFun: (SqlBackend) -> SqlContext = SqlBackend::createContext
 ) : Backend{
+
+    val logger = KotlinLogging.logger("SQLBackend")
 
     val context: SqlContext
 
@@ -73,32 +73,42 @@ class SqlBackend (
         val valuesToReplace = mutableListOf<Any>()
 
         steps.forEach { step ->
-            if(step is FilterStep<*>){
-                step.conditions.forEach { condition ->
-                    if(condition is NormalizedCompareRule<*>) {
-                        val field = getSqlFieldName(condition.prop!!)
-                        when(condition.type){
-                            CompareType.EQUALS -> query.where(field eq "")
-                            CompareType.NOT_EQUALS -> query.where(field neq "")
-                            CompareType.LESS -> query.where(field less "")
-                            CompareType.LESS_EQUALS -> query.where(field lessEq "")
-                            CompareType.GREATER -> query.where(field greater "")
-                            CompareType.GREATER_EQUALS -> query.where(field greaterEq "")
-                        }
-                        val value = condition.obj2!!
-                        valuesToReplace += value
-                    }
-                }
-            }
+            evaluateStep(step, query, valuesToReplace)
         }
 
         val sql = query.toSql()
                     .replaceWildCards(valuesToReplace)
 
+        logger.info(sql)
+
         val rs = context.executeQuery(sql)
 
         return parse(rs, clazz)
 
+    }
+
+    private fun evaluateStep(step: Step<*, *>, query: Query, valuesToReplace: MutableList<Any>) {
+
+        if(step is FilterStep<*>){
+            step.conditions.forEach { condition ->
+                if(condition is NormalizedCompareRule<*>) {
+                    val field = getSqlFieldName(condition.prop!!)
+                    when(condition.type){
+                        CompareType.EQUALS -> query.where(field eq "")
+                        CompareType.NOT_EQUALS -> query.where(field neq "")
+                        CompareType.LESS -> query.where(field less "")
+                        CompareType.LESS_EQUALS -> query.where(field lessEq "")
+                        CompareType.GREATER -> query.where(field greater "")
+                        CompareType.GREATER_EQUALS -> query.where(field greaterEq "")
+                    }
+                    val value = condition.obj2!!
+                    valuesToReplace += value
+                }
+            }
+        }else if(step is FindStep<*>){
+            query.limit(1)
+            evaluateStep(step.filter, query, valuesToReplace)
+        }
     }
 
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> { //TODO To Set
@@ -153,9 +163,11 @@ class SqlBackend (
                 .replace("generic_entity", key)
                 .replaceWildCards(obj.keyValue<T, Any>().toString())
 
+        logger.info(sql)
+
         val res = context.executeUpdate(sql)
 
-        info("Updated $res records in table $key")
+        logger.info("Updated $res records in table $key")
     }
 
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
@@ -167,16 +179,20 @@ class SqlBackend (
                 .toSql()
                 .replace("generic_entity", key)
                 .replaceWildCards(pk.toString())
+
+        logger.info(sql)
         val res = context.executeUpdate(sql)
 
-        info("Deleted $res records in table $key")
+        logger.info("Deleted $res records in table $key")
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
         val sql = Insert(GenericEntity(getPropertyMap(obj, clazz))).toSql()
                 .replace("generic_entity", key)
+
+        logger.info(sql)
         val res = context.executeUpdate(sql)
-        info("Insert in $key: ${if(res == 1) "OK" else "NOT OK"}") //TODO Debug
+        logger.info("Insert in $key: ${if(res == 1) "OK" else "NOT OK"}") //TODO Debug
     }
 
     fun <T : Observable> getPropertyMap(t: T, clazz: KClass<T>) : Map<String, Any> {

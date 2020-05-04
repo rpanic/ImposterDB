@@ -8,6 +8,10 @@ class FilterStep<T> (
         val conditions: List<NormalizedExtractedRule>
 ) : Step<T, T>
 
+class FindStep<T> (
+        val filter: FilterStep<T>
+) : Step<T, T>
+
 class MtoNRule<T>() : Step<T, T> //TODO Make Generic work reasonable
 
 interface NormalizedExtractedRule
