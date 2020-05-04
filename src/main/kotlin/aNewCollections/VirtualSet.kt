@@ -1,5 +1,6 @@
 package aNewCollections
 
+import example.logger
 import lazyCollections.IObservableSet
 import lazyCollections.IReadonlyVirtualSet
 import lazyCollections.IVirtualSet
@@ -16,6 +17,15 @@ open class ReadOnlyVirtualSet<T : Observable>(
     val clazz: KClass<T>,
     val parent: VirtualSet<T>? = null
 ): AbstractObservable<SetElementChangedListener<T>>(), IReadonlyVirtualSet<T>{
+
+    override fun iterator(): Iterator<T> {
+
+        if(steps.isEmpty()){
+            logger().warn("You are retrieving a VirtualSet without any filtering.\nThis retrieves all elements and is very expensive, try using filter{} or find{}")
+        }
+
+        return view().iterator()
+    }
 
     internal var loadedState: MutableSet<T>? = null
 

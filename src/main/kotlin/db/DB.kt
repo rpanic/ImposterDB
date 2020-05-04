@@ -73,6 +73,7 @@ class DB{
         return getDetached(key, pk, ignoreInit, T::class, init)
     }
 
+    //Is currently used by detached() Delegated
     fun <T : Observable, K: Any> getDetached(key: String, pk: K, ignoreInit: Boolean = false, clazz: KClass<T>, init : () -> T) : T{
 
         backendConnector.initIfNotYet(key, clazz)

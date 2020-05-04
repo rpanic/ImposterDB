@@ -25,6 +25,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
     val initialized = mutableListOf<String>()
 
+    //TODO Unify usage of initIfNotYet and createSchema calls in backendConnector
     fun <T : Observable> initIfNotYet(key: String, clazz: KClass<T>){
         if(key !in initialized) {
             backends.forEach { it.createSchema(key, clazz) }

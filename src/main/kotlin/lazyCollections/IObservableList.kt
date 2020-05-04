@@ -8,7 +8,7 @@ interface IVirtualSet <T> : IReadonlyVirtualSet<T>{
     fun remove(t: T)
 }
 
-interface IReadonlyVirtualSet <T>{
+interface IReadonlyVirtualSet <T> : Iterable<T> {
     operator fun get(v: Any): T?
     fun view() : IObservableSet<T>
 }
