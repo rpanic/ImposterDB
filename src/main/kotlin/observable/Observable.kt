@@ -93,20 +93,6 @@ abstract class Observable : DBAwareObject(), Indexable{
             }
         }
     }
-
-    fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ObservableArrayList<S>>{
-
-        val list = observableListOf(*initialValues)
-        hookToObservable(list, null)
-
-        return object : ObservableProperty<ObservableArrayList<S>>(list) {
-            override fun afterChange(property: KProperty<*>, oldValue: ObservableArrayList<S>, newValue: ObservableArrayList<S>){
-                changed(property, oldValue, newValue, LevelInformation(emptyList()))
-            }
-        }
-
-    }
-
 }
 
 abstract class ObservableRevertableAction<T>(val observable: Observable, val prop: KProperty<*>, val old: T, val new: T) : RevertableAction {
