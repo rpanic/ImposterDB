@@ -6,21 +6,21 @@ import lazyCollections.IObservableSet
 import lazyCollections.ObjectReference
 import observable.*
 
-open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChangedListener<T>>, IObservableSet<T> {
+open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedListener<T>>, IObservableSet<T> {
 
-    constructor(vararg arr: ObjectReference<T>) {
+    constructor(vararg arr: T) {
         collection.addAll(arr)
-        arr.forEach { ref -> ref.onLoad { addHook(it) } }
+        arr.forEach { addHook(it) }
     }
 
-    constructor(arr: List<ObjectReference<T>>) {
+    constructor(arr: List<T>) {
         collection.addAll(arr)
-        arr.forEach { ref -> ref.onLoad { addHook(it) } }
+        arr.forEach { addHook(it) }
     }
 
     @Json(ignored = true)
     @Ignored
-    var collection = mutableListOf<ObjectReference<T>>()
+    var collection = mutableListOf<T>()
 
 //    protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
 //        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
@@ -71,7 +71,7 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChan
         get() = collection.size
 
     operator fun get(key: Any?) : T?{
-        return collection.find { it.getObject().keyValue<T, Any>() == key }?.getObject()
+        return collection.find { it.keyValue<T, Any>() == key }
     }
 
     override fun iterator() = getAndResolveObjects().iterator()
@@ -81,16 +81,16 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChan
 //    override operator fun get(i: Int) = collection[i].getObject()
 
     override fun contains(element: T): Boolean {
-        return collection.any { it.pk == element.keyValue<T, Any>() }
+        return collection.contains(element)
     }
 
-    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.pk == element.keyValue<T, Any>() } }
+    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.keyValue<T, Any>() == element.keyValue<T, Any>() } }
 
     override fun isEmpty() = collection.isEmpty()
 
     private fun getAndResolveObjects() : List<T>{
         //TODO Optimize
-        return collection.map { it.getObject() }
+        return collection
     }
 
     fun resolve() {
@@ -100,7 +100,7 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChan
     fun <K : Any> getIndizesFromElements(list: List<K>) : List<Int>{
         val indizes = mutableListOf<Int>()
         this.collection.forEachIndexed { index, t ->
-            if(t.pk in list)
+            if(t in list)
                 indizes += index
         }
         return indizes

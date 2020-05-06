@@ -93,6 +93,15 @@ abstract class Observable : DBAwareObject(), Indexable{
             }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        return if(other is Observable){
+            other.keyValue<Observable, Any>() == keyValue<Observable, Any>()
+        }else {
+            super.equals(other)
+        }
+    }
+
 }
 
 abstract class ObservableRevertableAction<T>(val observable: Observable, val prop: KProperty<*>, val old: T, val new: T) : RevertableAction {

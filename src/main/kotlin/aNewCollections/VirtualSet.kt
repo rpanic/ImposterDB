@@ -36,16 +36,16 @@ open class ReadOnlyVirtualSet<T : Observable>(
             loadedState = loader(steps).toMutableSet()
         }
 
-        val view = LazyObservableSet(loadedState!!.map { ObjectReference(it) })
+        val view = ObservableSet(loadedState!!.toList())
 
         addListener { setChangeArgs, levelInformation ->
             when(setChangeArgs.elementChangeType){
                 ElementChangeType.Add -> {
-                    setChangeArgs.elements.forEach { view.collection.add(ObjectReference(it)) }
+                    setChangeArgs.elements.forEach { view.collection.add(it) } //TODO Maybe it is reasonable to only add it, so the user sees only the events of the actual ObservableSet and not the parent VirtualSet
                     view.listeners.forEach { it(setChangeArgs, levelInformation) }
                 }
                 ElementChangeType.Remove -> {
-                    setChangeArgs.elements.forEach { view.collection.remove(ObjectReference(it)) }
+                    setChangeArgs.elements.forEach { view.collection.remove(it) }
                     view.listeners.forEach { it(setChangeArgs, levelInformation) }
                 }
             }
