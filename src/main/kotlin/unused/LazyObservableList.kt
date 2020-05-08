@@ -1,13 +1,12 @@
-package lazyCollections
+package unused
 
+import aNewCollections.ElementChangeType
 import com.beust.klaxon.Json
 import db.ChangeObserver
 import db.Ignored
 import db.RevertableAction
 import example.debug
 import observable.*
-
-typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
 
 open class LazyObservableList<T : Observable> : AbstractObservable<ElementChangedListener<T>>, IObservableList<T> {
     override fun subList(fromIndex: Int, toIndex: Int): List<T> {
@@ -29,7 +28,7 @@ open class LazyObservableList<T : Observable> : AbstractObservable<ElementChange
     var collection = mutableListOf<ObjectReference<T>>()
 
     protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
-        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
+//        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
     }
 
     protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {

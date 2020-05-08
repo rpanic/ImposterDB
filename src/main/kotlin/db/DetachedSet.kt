@@ -3,8 +3,6 @@ package db
 import aNewCollections.*
 import connection.MtoNTable
 import connection.MtoNTableEntry
-import lazyCollections.LazyObservableArrayList
-import lazyCollections.ObjectReference
 import observable.*
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
@@ -53,7 +51,8 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                         db.backendConnector.insert(table.tableName(), entry, MtoNTableEntry::class)
                     }
                     ElementChangeType.Set -> {
-                        if (args is SetListChangeArgs<T>) {
+                        //TODO Is this ever used?
+                        if (args is SetSetChangeArgs<T>) {
                             var deleteKeys = listOf(parent.keyValue<P, String>(), args.replacedElements[i].keyValue<T, String>())
                             if (table.namesFlipped()) {
                                 deleteKeys = deleteKeys.reversed()
@@ -85,11 +84,11 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
 
         val initObservable = { obj : T ->
             obj.setDbReference(db)
-            db.addBackendListener(obj, key, clazz)
+            db.addBackendUpdateListener(obj, key, clazz)
         }
         val virtualSet = VirtualSet({
 
-                val mToNTableEntry = it.find { it is MtoNRule<*> }?.let { s ->
+            val mToNTableEntry = it.find { it is MtoNRule<*> }?.let { s ->
 
                 db.backendConnector.loadWithRules(table.tableName(), listOf(
                     FilterStep(listOf(
