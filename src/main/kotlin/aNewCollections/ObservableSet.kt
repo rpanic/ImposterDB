@@ -3,7 +3,6 @@ package aNewCollections
 import com.beust.klaxon.Json
 import db.*
 import lazyCollections.IObservableSet
-import lazyCollections.ObjectReference
 import observable.*
 
 open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedListener<T>>, IObservableSet<T> {
@@ -22,9 +21,9 @@ open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedL
     @Ignored
     var collection = mutableListOf<T>()
 
-//    protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
-//        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
-//    }
+    protected fun signalChanged(args: SetChangeArgs<T>, revert: () -> Unit){
+        signalChanged(args, LevelInformation(listOf(ObservableSetLevel(this, args))), revert)
+    }
 
     protected fun signalChanged(args: SetChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
@@ -61,9 +60,7 @@ open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedL
     fun addHook(element: T) {
 
         hooks.add(GenericChangeObserver(element) { prop, levels ->
-            //TODO Check, if element references and indizes are 1 to 1 in all ListChangeArgs, so element and indizes can be correlated. Like below
-            val indizes = getIndizesFromElements(listOf(element))
-            signalChanged(UpdateListChangeArgs(ElementChangeType.Update, indizes.indices.map { element }, indizes, prop), levels) {}
+            signalChanged(UpdateSetChangeArgs(ElementChangeType.Update, listOf(element), prop), levels) {}
         })
     }
 
@@ -74,7 +71,7 @@ open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedL
         return collection.find { it.keyValue<T, Any>() == key }
     }
 
-    override fun iterator() = getAndResolveObjects().iterator()
+    override fun iterator() = collection.iterator()
 
     fun list() = collection.toList()
 
@@ -88,22 +85,11 @@ open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedL
 
     override fun isEmpty() = collection.isEmpty()
 
-    private fun getAndResolveObjects() : List<T>{
-        //TODO Optimize
-        return collection
-    }
+}
 
-    fun resolve() {
-        getAndResolveObjects()
-    }
-
-    fun <K : Any> getIndizesFromElements(list: List<K>) : List<Int>{
-        val indizes = mutableListOf<Int>()
-        this.collection.forEachIndexed { index, t ->
-            if(t in list)
-                indizes += index
-        }
-        return indizes
-    }
-
+fun <T : Observable> observableSetOf(vararg e: T): ObservableSet<T> {
+    return observableSetOf(e.toList())
+}
+fun <T : Observable> observableSetOf(e: List<T>): ObservableSet<T> {
+    return ObservableSet(e)
 }

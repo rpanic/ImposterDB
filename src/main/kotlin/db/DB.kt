@@ -1,6 +1,6 @@
 package db
 
-import aNewCollections.VirtualSet
+import aNewCollections.*
 import connection.ObjectCache
 import main.kotlin.connection.BackendConnector
 import observable.*
@@ -89,7 +89,7 @@ class DB{
             }
         }
 
-        addBackendListener(read, key, clazz)
+        addBackendUpdateListener(read, key, clazz)
 
         read.setDbReference(this)
 
@@ -98,7 +98,7 @@ class DB{
     }
 
     //Is for detached objects
-    fun <T : Observable> addBackendListener(observable: T, key: String, clazz: KClass<T>){
+    fun <T : Observable> addBackendUpdateListener(observable: T, key: String, clazz: KClass<T>){
         observable.addListener (DetachedBackendListener(this, observable, key, clazz))
     }
 
@@ -114,12 +114,7 @@ class DB{
                     }else{
                         false //Is only the case for observable() Properties
                     }
-                }else if(it is ObservableListLevel) {
-                    //TODO Exclude Detached Lists
-                    false
-                } else {
-                    false
-                }
+                }else it is SetLevel<*> //Prevent Events from VirtualSets to trigger update
             }
             if(pathClear){
                 db.backendConnector.update(key, observable, clazz, prop, levels)
@@ -135,7 +130,7 @@ class DB{
     fun <T : Observable> getSet(key: String, clazz: KClass<T>) : VirtualSet<T>{
         val initObservable = { obj : T ->
             obj.setDbReference(this)
-            addBackendListener(obj, key, clazz)
+            addBackendUpdateListener(obj, key, clazz)
         }
         val set = VirtualSet({
             val set = backendConnector.loadWithRules(key, it, clazz)
@@ -177,7 +172,7 @@ class DB{
                     backendConnector.insert(key, obj, clazz) //Check for duplicates, bc used references could be added
                 }
                 ElementChangeType.Set -> {
-                    if(args is SetListChangeArgs<T>){
+                    if(args is SetSetChangeArgs<T>){
                         backendConnector.insert(key, obj, clazz)
                     }else{
                         throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
@@ -191,7 +186,7 @@ class DB{
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Set -> {
-                    if(args is SetListChangeArgs<T>){
+                    if(args is SetSetChangeArgs<T>){
                         backendConnector.delete(key, args.replacedElements[i], clazz)
                     }
                 }
@@ -206,9 +201,6 @@ class DB{
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Update -> {
-                    if(args is UpdateListChangeArgs<T>) {
-                        backendConnector.update(key, obj, clazz, args.prop, levels)
-                    }
                     if(args is UpdateSetChangeArgs<T>) {
                         backendConnector.update(key, obj, clazz, args.prop, levels)
                     }
@@ -217,7 +209,7 @@ class DB{
         }
     }
 
-    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>, levels: LevelInformation){
+    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>, levels: LevelInformation){
         performListAddEventsOnBackend(key, clazz, args)
         performListDeleteEventsOnBackend(key, clazz, args)
         performListUpdateEventsOnBackend(key, clazz, args, levels)
