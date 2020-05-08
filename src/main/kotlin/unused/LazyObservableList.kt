@@ -1,12 +1,17 @@
-package aNewCollections
+package unused
 
+import aNewCollections.ElementChangeType
 import com.beust.klaxon.Json
-import db.*
-import lazyCollections.IObservableSet
-import lazyCollections.ObjectReference
+import db.ChangeObserver
+import db.Ignored
+import db.RevertableAction
+import example.debug
 import observable.*
 
-open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChangedListener<T>>, IObservableSet<T> {
+open class LazyObservableList<T : Observable> : AbstractObservable<ElementChangedListener<T>>, IObservableList<T> {
+    override fun subList(fromIndex: Int, toIndex: Int): List<T> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     constructor(vararg arr: ObjectReference<T>) {
         collection.addAll(arr)
@@ -22,13 +27,13 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChan
     @Ignored
     var collection = mutableListOf<ObjectReference<T>>()
 
-//    protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
+    protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
 //        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
-//    }
+    }
 
-    protected fun signalChanged(args: SetChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
+    protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
-        println("New size: $size")
+        debug("New size: $size")
 
         val action = object : RevertableAction {
             override fun action() {
@@ -70,15 +75,13 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChan
     override val size: Int
         get() = collection.size
 
-    operator fun get(key: Any?) : T?{
-        return collection.find { it.getObject().keyValue<T, Any>() == key }?.getObject()
-    }
 
     override fun iterator() = getAndResolveObjects().iterator()
 
     fun list() = collection.toList()
 
-//    override operator fun get(i: Int) = collection[i].getObject()
+    override operator fun get(i: Int) = collection[i].getObject()
+
 
     override fun contains(element: T): Boolean {
         return collection.any { it.pk == element.keyValue<T, Any>() }
@@ -86,7 +89,15 @@ open class LazyObservableSet<T : Observable> : AbstractObservable<SetElementChan
 
     override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.pk == element.keyValue<T, Any>() } }
 
+    override fun indexOf(element: T) = collection.indexOfFirst { it.pk == element.keyValue<T, Any>() }
+
     override fun isEmpty() = collection.isEmpty()
+
+    override fun lastIndexOf(element: T) = collection.indexOfLast { it.pk == element.keyValue<T, Any>() }
+
+    override fun listIterator() = getAndResolveObjects().listIterator()
+
+    override fun listIterator(index: Int) = getAndResolveObjects().listIterator(index)
 
     private fun getAndResolveObjects() : List<T>{
         //TODO Optimize

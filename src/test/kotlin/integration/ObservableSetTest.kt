@@ -1,6 +1,6 @@
 package integration
 
-import aNewCollections.LazyObservableSet
+import aNewCollections.ObservableSet
 import org.junit.Test
 
 class ObservableSetTest{
@@ -8,7 +8,7 @@ class ObservableSetTest{
     @Test
     fun testMutableObservableSet() {
 
-        val set = LazyObservableSet<TestObject>()
+        val set = ObservableSet<TestObject>()
 
 //        val listener: ElementChangedListener<TestObject> = mockk()
 

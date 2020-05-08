@@ -1,5 +1,6 @@
-package lazyCollections
+package unused
 
+import aNewCollections.ElementChangeType
 import db.ChangeObserver
 import observable.*
 import kotlin.reflect.KProperty
@@ -128,6 +129,3 @@ class GenericChangeObserver <X : Observable> (t : X, val f: (KProperty<*>, Level
         f(prop, levels)
     }
 }
-
-fun <X> observableListOf(vararg initial: X) = ObservableArrayList(*initial)
-fun <X> observableListOf(initial: List<X>) = ObservableArrayList(initial)

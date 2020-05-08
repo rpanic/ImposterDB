@@ -1,6 +1,8 @@
 package observable
 
+import aNewCollections.VirtualSet
 import com.beust.klaxon.Json
+import db.ChangeObserver
 import db.Ignored
 import db.RevertableAction
 import lazyCollections.Indexable
@@ -76,9 +78,9 @@ abstract class Observable : DBAwareObject(), Indexable{
             obj.addListener { childProp: KProperty<*>, old: T, new: T, levels: LevelInformation ->
                 changed(childProp, old, new, levels.append(this, parentProperty))
             }
-        } else if(obj is ObservableArrayList<*>){
+        } else if(obj is VirtualSet<*>){ //TODO Remove now
             obj.addListener { args, levels ->
-                changed(ObservableArrayList<*>::collection, args.elements[0], args.elements[0], levels.append(ObservableListLevel(obj, args)))
+                changed(VirtualSet<*>::loadedState, args.elements[0], args.elements[0], levels.append(VirtualSetLevel(obj, args)))
             }
         }
     }
@@ -94,17 +96,12 @@ abstract class Observable : DBAwareObject(), Indexable{
         }
     }
 
-    fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ObservableArrayList<S>>{
-
-        val list = observableListOf(*initialValues)
-        hookToObservable(list, null)
-
-        return object : ObservableProperty<ObservableArrayList<S>>(list) {
-            override fun afterChange(property: KProperty<*>, oldValue: ObservableArrayList<S>, newValue: ObservableArrayList<S>){
-                changed(property, oldValue, newValue, LevelInformation(emptyList()))
-            }
+    override fun equals(other: Any?): Boolean {
+        return if(other is Observable){
+            other.keyValue<Observable, Any>() == keyValue<Observable, Any>()
+        }else {
+            super.equals(other)
         }
-
     }
 
 }
@@ -123,4 +120,11 @@ abstract class ObservableRevertableAction<T>(val observable: Observable, val pro
 
     abstract fun executeListeners(prop: KProperty<*>, old_p: T, new_p: T)
 
+}
+
+class GenericChangeObserver <X : Observable> (t : X, val f: (KProperty<*>, LevelInformation) -> Unit) : ChangeObserver<X>(t){
+
+    fun all(prop: KProperty<*>, new: Any?, old: Any?, levels: LevelInformation){
+        f(prop, levels)
+    }
 }

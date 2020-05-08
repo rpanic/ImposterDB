@@ -162,11 +162,6 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         //Add Table definition for new Objects which got constructed like T()
         obj::class.memberProperties.forEach {
             it.isAccessible = true
-            val delegate = ((it as? KProperty1<Any?, Any?>)?.getDelegate(obj) as? DetachedListReadOnlyProperty<Observable, *>)
-            if(delegate != null){
-                delegate.table = MtoNTable(key, delegate.key)
-                delegate.pks = listOf()
-            }
             val virtualSetDelegate = ((it as? KProperty1<Any?, Any?>)?.getDelegate(obj) as? VirtualSetReadOnlyProperty<Observable, *>)
             virtualSetDelegate?.setParentKey(key)
         }

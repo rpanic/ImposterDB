@@ -1,6 +1,6 @@
 package db
 
-import aNewCollections.VirtualSet
+import aNewCollections.*
 import connection.ObjectCache
 import main.kotlin.connection.BackendConnector
 import observable.*
@@ -89,7 +89,7 @@ class DB{
             }
         }
 
-        addBackendListener(read, key, clazz)
+        addBackendUpdateListener(read, key, clazz)
 
         read.setDbReference(this)
 
@@ -98,7 +98,7 @@ class DB{
     }
 
     //Is for detached objects
-    fun <T : Observable> addBackendListener(observable: T, key: String, clazz: KClass<T>){
+    fun <T : Observable> addBackendUpdateListener(observable: T, key: String, clazz: KClass<T>){
         observable.addListener (DetachedBackendListener(this, observable, key, clazz))
     }
 
@@ -114,12 +114,7 @@ class DB{
                     }else{
                         false //Is only the case for observable() Properties
                     }
-                }else if(it is ObservableListLevel) {
-                    //TODO Exclude Detached Lists
-                    false
-                } else {
-                    false
-                }
+                }else it is SetLevel<*> //Prevent Events from VirtualSets to trigger update
             }
             if(pathClear){
                 db.backendConnector.update(key, observable, clazz, prop, levels)
@@ -135,7 +130,7 @@ class DB{
     fun <T : Observable> getSet(key: String, clazz: KClass<T>) : VirtualSet<T>{
         val initObservable = { obj : T ->
             obj.setDbReference(this)
-            addBackendListener(obj, key, clazz)
+            addBackendUpdateListener(obj, key, clazz)
         }
         val set = VirtualSet({
             val set = backendConnector.loadWithRules(key, it, clazz)
@@ -170,38 +165,6 @@ class DB{
         //TODO Hook Set to observable elements and relay Update events?
     }
 
-    //Only for retrieving of "actual" lists, so for Tuples of T
-    //TODO Integrate this into view() Process
-    //Udpate: This logic should be already included in the 3 lines above, so this can be thrown away
-//    inline fun <reified T : Observable> getDetachedList(key: String) : ObservableArrayList<T> {
-
-//        val list = backendConnector.loadList(key, T::class) ?: throw java.lang.IllegalStateException("Collection with key $key could not be found in backends")
-
-
-//        if(list.listeners.size == 0){
-//
-//            list.addListener { args, levels -> //TODO Add Level stuff to Backend interface for incremental saves
-//                performListEventOnBackend(key, T::class, args)
-//
-//                //Object is self aware, therefore should be responsible for updates, since that is not relevant for the list
-//                if(args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set){
-//                    args.elements.forEach { obj ->
-//                        obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
-//                            backendConnector.update(key, obj, T::class, prop)
-//                        }
-//                    }
-//
-//                }
-//            }
-//
-//        }
-//
-//        list.setDbReference(this)
-//
-//        return list
-
-//    }
-
     fun <T : Observable> performListAddEventsOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>){
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
@@ -209,7 +172,7 @@ class DB{
                     backendConnector.insert(key, obj, clazz) //Check for duplicates, bc used references could be added
                 }
                 ElementChangeType.Set -> {
-                    if(args is SetListChangeArgs<T>){
+                    if(args is SetSetChangeArgs<T>){
                         backendConnector.insert(key, obj, clazz)
                     }else{
                         throw IllegalStateException("Args with Type Set must be instance of SetListChangeArgs!!")
@@ -223,7 +186,7 @@ class DB{
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Set -> {
-                    if(args is SetListChangeArgs<T>){
+                    if(args is SetSetChangeArgs<T>){
                         backendConnector.delete(key, args.replacedElements[i], clazz)
                     }
                 }
@@ -238,9 +201,6 @@ class DB{
         args.elements.forEachIndexed { i, obj ->
             when(args.elementChangeType){
                 ElementChangeType.Update -> {
-                    if(args is UpdateListChangeArgs<T>) {
-                        backendConnector.update(key, obj, clazz, args.prop, levels)
-                    }
                     if(args is UpdateSetChangeArgs<T>) {
                         backendConnector.update(key, obj, clazz, args.prop, levels)
                     }
@@ -249,7 +209,7 @@ class DB{
         }
     }
 
-    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ListChangeArgs<T>, levels: LevelInformation){
+    fun <T : Observable> performListEventOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>, levels: LevelInformation){
         performListAddEventsOnBackend(key, clazz, args)
         performListDeleteEventsOnBackend(key, clazz, args)
         performListUpdateEventsOnBackend(key, clazz, args, levels)
@@ -258,57 +218,5 @@ class DB{
     operator fun plusAssign(b: Backend) {
         addBackend(b)
     }
-
-//    inline fun <reified T : Observable> getList(key: String) : ObservableArrayList<T> {
-//
-//        if(parsed.containsKey(key)){
-//            return parsed[key]!! as ObservableArrayList<T>
-//        }
-//
-//        val lread : List<T>? = if(primaryBackend.keyExists(key)){
-//            primaryBackend.loadList(key, T::class)
-//        }else{
-//            listOf()
-//        }
-//
-//        val list = observableListOf(*lread!!.toTypedArray())
-//
-//        list.addListener { _,  _ -> //TODO Add Level stuff to Backend interface for incremental saves
-//            for (backend in listOf(primaryBackend) + backends){
-//                backend.saveList(key, T::class, list.collection)
-//            }
-//        }
-//
-//        parsed.put(key, list)
-//        parsedObjects.put(key, list.collection.toList())
-//
-//        return list
-//
-//    }
-//
-//    //TODO Rework to getSingleton
-//    inline fun <reified T : Observable> getObject(key: String, init : () -> T) : T{
-//
-//        if(parsedObjects.containsKey(key)){
-//            return parsedObjects[key]!! as T
-//        }
-//
-//        val obj = if(primaryBackend.keyExists(key)){
-//            primaryBackend.load(key, T::class)
-//        }else{
-//            init.invoke()
-//        }
-//
-//        GenericChangeObserver(obj!!) {
-//            for (backend in listOf(primaryBackend) + backends) {
-//                backend.save(key, T::class, obj)
-//            }
-//        }.all(LevelInformation::list /* unused, so doesn´t whats in there*/, null, null, LevelInformation(emptyList()))
-//
-//        parsedObjects.put(key, listOf(obj))
-//
-//        return obj
-//
-//    }
 
 }

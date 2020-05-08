@@ -1,6 +1,9 @@
-package observable
+package unused
 
+import aNewCollections.ElementChangeType
 import db.ChangeObserver
+import observable.LevelInformation
+import observable.Observable
 import kotlin.reflect.KProperty
 
 class ObservableArrayList<X> : ObservableList<X> {
@@ -98,13 +101,6 @@ class ObservableArrayList<X> : ObservableList<X> {
 
     fun clear() {
         removeAt(collection.indices.toList())
-    }
-}
-
-class GenericChangeObserver <X : Observable> (t : X, val f: (KProperty<*>, LevelInformation) -> Unit) : ChangeObserver<X>(t){
-
-    fun all(prop: KProperty<*>, new: Any?, old: Any?, levels: LevelInformation){
-        f(prop, levels)
     }
 }
 
