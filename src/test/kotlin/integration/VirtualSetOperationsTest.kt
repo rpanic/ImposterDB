@@ -7,7 +7,6 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkClass
 import io.mockk.verify
-import observable.ElementChangeType
 import org.junit.Test
 import kotlin.reflect.KMutableProperty1
 import org.assertj.core.api.Assertions.assertThat as assertThat
