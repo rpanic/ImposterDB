@@ -1,6 +1,7 @@
 package integration
 
 import aNewCollections.*
+import virtual.*
 import db.Backend
 import db.DB
 import io.mockk.every

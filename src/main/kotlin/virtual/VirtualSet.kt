@@ -1,10 +1,10 @@
-package aNewCollections
+package virtual
 
+import aNewCollections.*
 import example.logger
 import lazyCollections.IObservableSet
 import lazyCollections.IReadonlyVirtualSet
 import lazyCollections.IVirtualSet
-import lazyCollections.ObjectReference
 import observable.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
@@ -12,10 +12,10 @@ import kotlin.reflect.full.createInstance
 typealias SetElementChangedListener<T> = (SetChangeArgs<T>, LevelInformation) -> Unit
 
 open class ReadOnlyVirtualSet<T : Observable>(
-    val loader: (List<Step<T, *>>) -> Set<T>,
-    val steps: List<Step<T, *>>,
-    val clazz: KClass<T>,
-    val parent: VirtualSet<T>? = null
+        val loader: (List<Step<T, *>>) -> Set<T>,
+        val steps: List<Step<T, *>>,
+        val clazz: KClass<T>,
+        val parent: VirtualSet<T>? = null
 ): AbstractObservable<SetElementChangedListener<T>>(), IReadonlyVirtualSet<T>{
 
     override fun iterator(): Iterator<T> {
@@ -74,6 +74,27 @@ open class ReadOnlyVirtualSet<T : Observable>(
 
     fun tellChildren(args: SetChangeArgs<T>, levels: LevelInformation){
         listeners.forEach { it(args, levels) }
+    }
+
+    override val size: Int
+        get() {
+            return if(loadedState != null){
+                loadedState!!.size
+            }else{
+                1 //TODO maybe access this trough a VirtualSetAccessor Object?
+            }
+        }
+
+    override fun contains(element: T): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun containsAll(elements: Collection<T>): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun isEmpty(): Boolean {
+        return size == 0
     }
 }
 

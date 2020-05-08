@@ -4,6 +4,7 @@ import aNewCollections.*
 import connection.MtoNTable
 import connection.MtoNTableEntry
 import observable.*
+import virtual.VirtualSet
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty

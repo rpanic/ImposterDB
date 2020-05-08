@@ -4,6 +4,7 @@ import aNewCollections.*
 import connection.ObjectCache
 import main.kotlin.connection.BackendConnector
 import observable.*
+import virtual.VirtualSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1

@@ -1,6 +1,6 @@
 package integration
 
-import aNewCollections.VirtualSet
+import virtual.VirtualSet
 import aNewCollections.eq
 import com.beust.klaxon.Klaxon
 import com.mchange.v2.sql.SqlUtils

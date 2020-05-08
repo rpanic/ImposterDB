@@ -1,6 +1,6 @@
 package integration
 
-import aNewCollections.VirtualSet
+import virtual.VirtualSet
 import db.detached
 import db.detachedSet
 import observable.Observable

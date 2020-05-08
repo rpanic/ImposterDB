@@ -1,7 +1,7 @@
 package lazyCollections
 
-import aNewCollections.SetElementChangedListener
 import observable.IAbstractObservable
+import virtual.SetElementChangedListener
 
 interface IVirtualSet <T> : IReadonlyVirtualSet<T>{
     fun add(t: T)

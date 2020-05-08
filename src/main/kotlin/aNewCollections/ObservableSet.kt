@@ -4,6 +4,7 @@ import com.beust.klaxon.Json
 import db.*
 import lazyCollections.IObservableSet
 import observable.*
+import virtual.SetElementChangedListener
 
 open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedListener<T>>, IObservableSet<T> {
 
