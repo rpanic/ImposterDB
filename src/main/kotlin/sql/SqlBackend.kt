@@ -66,25 +66,30 @@ class SqlBackend (
 
     override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
 
-        val query = Query()
-                .fields(*ReflectionUtils.getPropertySqlNames(clazz).map { it.first }.toTypedArray()) //TODO Check if performance is better when using *
-                .from(key)
-
-        val valuesToReplace = mutableListOf<Any>()
-
-        steps.forEach { step ->
-            evaluateStep(step, query, valuesToReplace)
-        }
+        val (query, valuesToReplace) = createFilterQuery(key, clazz, steps)
 
         val sql = query.toSql()
-                    .replaceWildCards(valuesToReplace)
-
+                .replaceWildCards(valuesToReplace)
+        
         logger.info(sql)
 
         val rs = context.executeQuery(sql)
 
         return parse(rs, clazz)
 
+    }
+    
+    private fun <T : Observable> createFilterQuery(key: String, clazz: KClass<T>, steps: List<Step<T, *>>) : Pair<Query, List<Any>>{
+        val query = Query()
+                .fields(*ReflectionUtils.getPropertySqlNames(clazz).map { it.first }.toTypedArray()) //TODO Check if performance is better when using *
+                .from(key)
+    
+        val valuesToReplace = mutableListOf<Any>()
+    
+        steps.forEach { step ->
+            evaluateStep(step, query, valuesToReplace)
+        }
+        return query to valuesToReplace
     }
 
     private fun evaluateStep(step: Step<*, *>, query: Query, valuesToReplace: MutableList<Any>) {
@@ -194,7 +199,7 @@ class SqlBackend (
         val res = context.executeUpdate(sql)
         logger.info("Insert in $key: ${if(res == 1) "OK" else "NOT OK"}") //TODO Debug
     }
-
+    
     fun <T : Observable> getPropertyMap(t: T, clazz: KClass<T>) : Map<String, Any> {
 
         return ReflectionUtils.getPropertyTree(clazz)
