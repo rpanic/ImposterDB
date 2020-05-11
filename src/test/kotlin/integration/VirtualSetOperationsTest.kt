@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkClass
 import io.mockk.verify
+import observable.LevelInformation
 import org.junit.Test
 import kotlin.reflect.KMutableProperty1
 import org.assertj.core.api.Assertions.assertThat as assertThat
@@ -88,7 +89,15 @@ class VirtualSetOperationsTest {
 
     private fun performExtractionCheck(type: CompareType, prop: KMutableProperty1<*, *>, obj: Any? = null, filter: (SimpleObservableChildParent) -> Boolean){
 
-        val set = VirtualSet({ setOf(SimpleObservableChildParent()) }, {_, _, _ -> }, listOf(), SimpleObservableChildParent::class)
+        val accessor = object : VirtualSetAccessor<SimpleObservableChildParent>{
+            override fun load(steps: List<Step<SimpleObservableChildParent, *>>) =
+                    setOf(SimpleObservableChildParent())
+    
+            override fun count(steps: List<Step<SimpleObservableChildParent, *>>) = 1
+            override fun performEvent(set: VirtualSet<SimpleObservableChildParent>, changeArgs: SetChangeArgs<SimpleObservableChildParent>, levels: LevelInformation){}
+        }
+        
+        val set = VirtualSet(accessor, listOf(), SimpleObservableChildParent::class)
 
         val set2 = set.filter (filter)
 

@@ -5,6 +5,7 @@ import connection.ObjectCache
 import main.kotlin.connection.BackendConnector
 import observable.*
 import virtual.VirtualSet
+import virtual.VirtualSetAccessor
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -133,34 +134,44 @@ class DB{
             obj.setDbReference(this)
             addBackendUpdateListener(obj, key, clazz)
         }
-        val set = VirtualSet({
-            val set = backendConnector.loadWithRules(key, it, clazz)
-            set.forEach(initObservable)
-            set
-        },
-        { instance, listChangeArgs, levelInformation ->
-            println("Parent set got called")
-
-            when(listChangeArgs.elementChangeType){
-
-                //TODO Maybe performAddEventsOnBackend?
-                ElementChangeType.Add -> {
-                    listChangeArgs.elements.forEach {
-                        backendConnector.insert(key, it, clazz)
-                        initObservable(it)
-                        instance.loadedState?.add(it)
-                    }
-                }
-                ElementChangeType.Remove -> {
-                    listChangeArgs.elements.forEach {
-                        backendConnector.delete(key, it, clazz)
-                        instance.loadedState?.remove(it)
-                    }
-                }
-
+        
+        val accessor = object : VirtualSetAccessor<T>{
+            override fun load(steps: List<Step<T, *>>): Set<T> {
+                val set = backendConnector.loadWithRules(key, steps, clazz)
+                set.forEach(initObservable)
+                return set
             }
-        },
-        listOf(), clazz)
+    
+            override fun count(steps: List<Step<T, *>>): Int {
+                TODO("Not yet implemented")
+            }
+    
+            override fun performEvent(instance: VirtualSet<T>, listChangeArgs: SetChangeArgs<T>, levelInformation: LevelInformation) {
+                println("Parent set got called")
+    
+                when(listChangeArgs.elementChangeType){
+        
+                    //TODO Maybe performAddEventsOnBackend?
+                    ElementChangeType.Add -> {
+                        listChangeArgs.elements.forEach {
+                            backendConnector.insert(key, it, clazz)
+                            initObservable(it)
+                            instance.loadedState?.add(it)
+                        }
+                    }
+                    ElementChangeType.Remove -> {
+                        listChangeArgs.elements.forEach {
+                            backendConnector.delete(key, it, clazz)
+                            instance.loadedState?.remove(it)
+                        }
+                    }
+        
+                }
+            }
+    
+        }
+        
+        val set = VirtualSet(accessor, listOf(), clazz)
 
         return set
         //TODO Hook Set to observable elements and relay Update events?

@@ -5,6 +5,7 @@ import connection.MtoNTable
 import connection.MtoNTableEntry
 import observable.*
 import virtual.VirtualSet
+import virtual.VirtualSetAccessor
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -82,53 +83,58 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
             //After relation table remove operations because of constraints
             db.performListDeleteEventsOnBackend(table.child(), clazz, args)
         }
-
-        val initObservable = { obj : T ->
-            obj.setDbReference(db)
-            db.addBackendUpdateListener(obj, key, clazz)
-        }
-        val virtualSet = VirtualSet({
-
-            val mToNTableEntry = it.find { it is MtoNRule<*> }?.let { s ->
-
-                db.backendConnector.loadWithRules(table.tableName(), listOf(
-                    FilterStep(listOf(
-                            NormalizedCompareRule<String>(listOf(
-                                    if(!table.namesFlipped()) MtoNTableEntry::m else MtoNTableEntry::n),
-                                    parent.uuid,
+    
+        val virtualSetAccessor = object: VirtualSetAccessor<T>{
+            override fun load(steps: List<Step<T, *>>): Set<T> {
+                val mToNTableEntry = steps.find { step -> step is MtoNRule<*> }?.let { _ ->
+        
+                    db.backendConnector.loadWithRules(table.tableName(), listOf(
+                            FilterStep(listOf(
+                                    NormalizedCompareRule<String>(listOf(
+                                            if(!table.namesFlipped()) MtoNTableEntry::m else MtoNTableEntry::n),
+                                            parent.uuid,
+                                            CompareType.EQUALS)
+                            ))
+                    ), MtoNTableEntry::class)
+                }
+    
+                checkNotNull(mToNTableEntry){
+                    "MtoN Data could not be fetched for table ${table.tableName()}"
+                }
+    
+                val nSteps = mToNTableEntry.map { entry ->
+                    FilterStep<T>(listOf(
+                            NormalizedCompareRule(listOf(
+                                    clazz.memberProperties.find { it.name == "uuid" }!!),
+                                    if(table.namesFlipped()) entry.m else entry.n,
                                     CompareType.EQUALS)
                     ))
-                ), MtoNTableEntry::class)
-            }
-
-            checkNotNull(mToNTableEntry){
-                "MtoN Data could not be fetched for table ${table.tableName()}"
-            }
-
-            val nSteps = mToNTableEntry.map { entry ->
-                FilterStep<T>(listOf(
-                        NormalizedCompareRule(listOf(
-                                clazz.memberProperties.find { it.name == "uuid" }!!),
-                                if(table.namesFlipped()) entry.m else entry.n,
-                                CompareType.EQUALS)
-                ))
-            }
-
-//            val set = db.backendConnector.loadWithRules(key, it.filter { it !is MtoNRule<*> }, clazz)
-            val set = nSteps.map { rule -> db.backendConnector.loadWithRules(key, listOf(rule), clazz)
+                }
+                
+                val set = nSteps.map { rule -> db.backendConnector.loadWithRules(key, listOf(rule), clazz)
                         .let { if(it.size == 1) it.first() else throw java.lang.IllegalStateException("This should not be possible") } }
-                    .toSet()
-            set.forEach(initObservable)
-            set
-
-            },
-            { instance, listChangeArgs, levelInformation ->
+                        .toSet()
+    
+                val initObservable = { obj : T ->
+                    obj.setDbReference(db)
+                    db.addBackendUpdateListener(obj, key, clazz)
+                }
+                
+                set.forEach(initObservable)
+                return set
+            }
+        
+            override fun count(steps: List<Step<T, *>>): Int {
+                TODO("Not yet implemented")
+            }
+        
+            override fun performEvent(instance: VirtualSet<T>, listChangeArgs: SetChangeArgs<T>, levelInformation: LevelInformation) {
                 println("Parent set got called")
-
+    
                 performEvent(listChangeArgs, levelInformation.list)
-
+    
                 when(listChangeArgs.elementChangeType){
-
+        
                     ElementChangeType.Add -> {
                         listChangeArgs.elements.forEach {
                             instance.loadedState?.add(it)
@@ -139,9 +145,13 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                             instance.loadedState?.remove(it)
                         }
                     }
-
+        
                 }
-            },
+            }
+        
+        }
+        
+        val virtualSet = VirtualSet(virtualSetAccessor,
             listOf(MtoNRule()), clazz)
 
         virtualSet

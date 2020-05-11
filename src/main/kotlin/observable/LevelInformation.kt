@@ -2,6 +2,7 @@ package observable
 
 import aNewCollections.ObservableSet
 import aNewCollections.SetChangeArgs
+import virtual.ReadOnlyVirtualSet
 import virtual.VirtualSet
 import kotlin.reflect.KProperty
 
@@ -43,14 +44,14 @@ abstract class SetLevel<T : Set<*>>(
     abstract fun isVirtualSet() : Boolean
     abstract fun isObservableSet() : Boolean
 
-    abstract fun getVirtualSet() : VirtualSet<*>
+    abstract fun getVirtualSet() : ReadOnlyVirtualSet<*>
     abstract fun getObservableSet() : ObservableSet<*>
 }
 
 class VirtualSetLevel(
-        set: VirtualSet<*>,
+        set: ReadOnlyVirtualSet<*>,
         changeArgs: SetChangeArgs<*>
-) : SetLevel<VirtualSet<*>>(set, changeArgs){
+) : SetLevel<ReadOnlyVirtualSet<*>>(set, changeArgs){
 
     override fun isVirtualSet() = true
     override fun isObservableSet() = false

@@ -12,7 +12,7 @@ import kotlin.reflect.full.createInstance
 typealias SetElementChangedListener<T> = (SetChangeArgs<T>, LevelInformation) -> Unit
 
 open class ReadOnlyVirtualSet<T : Observable>(
-        val loader: (List<Step<T, *>>) -> Set<T>,
+        val accessor: ReadOnlyVirtualSetAccessor<T>,
         val steps: List<Step<T, *>>,
         val clazz: KClass<T>,
         val parent: VirtualSet<T>? = null
@@ -33,7 +33,8 @@ open class ReadOnlyVirtualSet<T : Observable>(
     override fun view(): IObservableSet<T> {
         //Make a ObservableSet here
         if(loadedState == null){
-            loadedState = loader(steps).toMutableSet()
+            //TODO Check if parent already has a loaded state, and if yes, take data from there
+            loadedState = accessor.load(steps).toMutableSet()
         }
 
         val view = ObservableSet(loadedState!!.toList())
@@ -63,7 +64,7 @@ open class ReadOnlyVirtualSet<T : Observable>(
         if(loadedState != null) {
             return loadedState!!.find { it.keyValue<T, Any>() == key }
         }
-        return loader(listOf(
+        return accessor.load(listOf(
                 FilterStep(listOf(
                         NormalizedCompareRule(listOf(
                                 clazz.createInstance().key<T, Any>()),
@@ -81,7 +82,7 @@ open class ReadOnlyVirtualSet<T : Observable>(
             return if(loadedState != null){
                 loadedState!!.size
             }else{
-                1 //TODO maybe access this trough a VirtualSetAccessor Object?
+                accessor.count(listOf(MappingStep<T, Int>(MappingType.COUNT)) + steps)
             }
         }
 
@@ -99,24 +100,23 @@ open class ReadOnlyVirtualSet<T : Observable>(
 }
 
 open class VirtualSet<T : Observable>(
-    loader: (List<Step<T, *>>) -> Set<T>,
-    val performEvent: (VirtualSet<T>, SetChangeArgs<T>, LevelInformation) -> Unit,
+    private val mutableAccessor: VirtualSetAccessor<T>,
     steps: List<Step<T, *>>,
     clazz: KClass<T>,
     parent: VirtualSet<T>? = null
-) : ReadOnlyVirtualSet<T>(loader, steps, clazz, parent), IVirtualSet<T> {
-
+) : ReadOnlyVirtualSet<T>(mutableAccessor, steps, clazz, parent), IVirtualSet<T> {
+    
     override fun add(t: T) {
-        val args = SetChangeArgs(ElementChangeType.Add, t) //TODO Replace ListChangeArgs by SetChangeArgs
+        val args = SetChangeArgs(ElementChangeType.Add, t)
         val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
-        performEvent(getOrParent(), args, level)
+        mutableAccessor.performEvent(getOrParent() as VirtualSet<T>, args, level)
         getOrParent().tellChildren(args, level)
     }
 
     override fun remove(t: T) {
         val args = SetChangeArgs(ElementChangeType.Remove, t)
         val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
-        performEvent(getOrParent(), args, level)
+        mutableAccessor.performEvent(getOrParent() as VirtualSet<T>, args, level)
         getOrParent().tellChildren(args, level)
     }
 
@@ -157,9 +157,19 @@ open class VirtualSet<T : Observable>(
         return newSet
     }
 
-    protected fun createDependent(newSteps: Step<T, T>, f:(T, (T) -> Unit) -> Unit): VirtualSet<T> {
+    protected fun createDependent(newStep: Step<T, T>, f:(T, (T) -> Unit) -> Unit): VirtualSet<T> {
 
-        val newSet = VirtualSet(loader, { _, a, b -> performEvent(this, a, b) }, steps + newSteps, clazz, this)
+//        val accessor2 = object : VirtualSetAccessor<T>{
+//            override fun load(steps: List<Step<T, *>>) = mutableAccessor.load(steps)
+//            override fun count(steps: List<Step<T, *>>) = mutableAccessor.count(steps)
+//            override fun contains(steps: List<Step<T, *>>, elements: Collection<T>) = mutableAccessor.contains(steps, elements)
+//
+//            override fun performEvent(set: VirtualSet<T>, changeArgs: SetChangeArgs<T>, levels: LevelInformation) =
+//                    mutableAccessor.performEvent(this@VirtualSet, changeArgs, levels)
+//
+//        } //TODO Investigate if this is needed or if it works with getOrParent()
+        
+        val newSet = VirtualSet(mutableAccessor, steps + newStep, clazz, this)
 
         this.addListener { setChangeArgs, levelInformation ->
             println("Children got called")
