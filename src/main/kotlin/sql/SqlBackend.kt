@@ -63,6 +63,18 @@ class SqlBackend (
     override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
         TODO("Not yet implemented")
     }
+    
+    override fun <T : Observable, V : Any> loadTransformed(key: String, clazz: KClass<T>, steps: List<Step<T, *>>, to: KClass<V>): Set<V> {
+        
+        val (query, valuesToReplace) = createFilterQuery(key, clazz, steps.filter { it is FilterStep<*> })
+        
+        //Get Mapping query
+//        steps.filter { it is MappingStep<*, *> }.first().apply {   //TODO Make this multi-level, f.e. UPPER_CASE(COUNT(*)) or CONCAT('Size: ', COUNT(*))
+//
+//        }
+        return setOf()
+        
+    }
 
     override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
 

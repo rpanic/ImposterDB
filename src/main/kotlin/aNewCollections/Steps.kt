@@ -12,6 +12,14 @@ class FindStep<T> (
         val filter: FilterStep<T>
 ) : Step<T, T>
 
+class MappingStep<T, V>(
+    val type: MappingType
+) : Step<T, V>
+
+enum class MappingType {
+    COUNT
+}
+
 class MtoNRule<T>() : Step<T, T> //TODO Make Generic work reasonable
 
 interface NormalizedExtractedRule

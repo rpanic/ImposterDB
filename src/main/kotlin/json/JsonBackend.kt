@@ -95,7 +95,11 @@ open class JsonBackend : DBBackend() {
         (loaded[key] as? MutableList<T>)!!.add(obj)
         save(key, clazz)
     }
-
+    
+    override fun <T : Observable, V : Any> loadTransformed(key: String, clazz: KClass<T>, steps: List<Step<T, *>>, to: KClass<V>): Set<V> {
+        TODO("Not yet implemented")
+    }
+    
     fun <T : Observable> save(key: String, clazz : KClass<T>) {
         val intermediateList = if(loaded.containsKey(key)) (loaded[key] as List<T>) else listOf()
         val list = intermediateList.distinctBy { it.uuid }
