@@ -2,6 +2,10 @@ package aNewCollections
 
 import io.mockk.every
 import io.mockk.mockk
+import ruleExtraction.CompareComparisonRule
+import ruleExtraction.CompareType
+import ruleExtraction.NestedRule
+import ruleExtraction.RuleExtractionFramework
 
 private inline fun <reified V : Any, reified T : Comparable<V>> createMock(t: V) : T{
     val answerer = RuleExtractionFramework.answerer[t]!!

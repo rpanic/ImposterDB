@@ -1,5 +1,6 @@
-package aNewCollections
+package ruleExtraction
 
+import aNewCollections.NormalizedCompareRule
 import observable.Observable
 import kotlin.reflect.KClass
 
@@ -14,7 +15,7 @@ class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
     fun extractFilterRules(f: (T) -> Boolean): List<NormalizedCompareRule<Any>> {
 
         val conditions = mutableListOf<ComparisonRule>()
-        val mock = RuleExtractionFramework.createMock(clazz){
+        val mock = RuleExtractionFramework.createMock(clazz) {
             conditions += it
         }
         val ret = f(mock)
@@ -32,7 +33,7 @@ class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
 
                 if(actualCondition.type == CompareType.EQUALS){
 
-                    NormalizedCompareRule(rule.props, actualCondition.obj2, if(ret) CompareType.EQUALS else CompareType.NOT_EQUALS)
+                    NormalizedCompareRule(rule.props, actualCondition.obj2, if (ret) CompareType.EQUALS else CompareType.NOT_EQUALS)
 
                 }else {
 

@@ -1,5 +1,6 @@
 package aNewCollections
 
+import ruleExtraction.CompareType
 import kotlin.reflect.KProperty1
 
 interface Step<T, V>

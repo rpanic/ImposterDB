@@ -1,4 +1,4 @@
-package aNewCollections
+package ruleExtraction
 
 import example.debug
 import io.mockk.Call
@@ -44,7 +44,7 @@ object RuleExtractionFramework {
 
                     val type = method.returnType
                     val ret = createMock(type as KClass<Any>) {
-                        f(it.apply { props.add(prop) } )
+                        f(it.apply { props.add(prop) })
                     }
 
                     ret

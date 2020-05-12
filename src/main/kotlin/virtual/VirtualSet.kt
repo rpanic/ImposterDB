@@ -6,6 +6,7 @@ import lazyCollections.IObservableSet
 import lazyCollections.IReadonlyVirtualSet
 import lazyCollections.IVirtualSet
 import observable.*
+import ruleExtraction.RuleExtractionFramework
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 

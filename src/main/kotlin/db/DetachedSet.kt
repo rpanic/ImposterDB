@@ -4,6 +4,7 @@ import aNewCollections.*
 import connection.MtoNTable
 import connection.MtoNTableEntry
 import observable.*
+import ruleExtraction.CompareType
 import virtual.VirtualSet
 import virtual.VirtualSetAccessor
 import kotlin.properties.ReadOnlyProperty
