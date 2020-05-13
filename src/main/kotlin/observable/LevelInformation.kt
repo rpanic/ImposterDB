@@ -10,7 +10,7 @@ class LevelInformation(val list: List<Level>){
 
     fun append(level: Level) = LevelInformation(list.toMutableList().apply { add(0, level) })
 
-    fun append(obj: Observable, prop: KProperty<*>?) = append(ObservableLevel(obj, prop))
+    fun append(obj: Observable, old: Any?, new: Any?, prop: KProperty<*>?) = append(ObservableLevel(obj, old, new, prop))
 
 }
 
@@ -22,6 +22,8 @@ interface Level{
 
 class ObservableLevel(
     val obj: Observable,
+    val old: Any?,
+    val new: Any?,
     val prop: KProperty<*>?
 ) : Level{
     override fun isObservable() = true
@@ -29,6 +31,10 @@ class ObservableLevel(
     override fun getObservable() = obj
 
     override fun getSet() = throw IllegalAccessException("Field of Level is not a ObservableArrayList")
+    
+    override fun toString(): String {
+        return "ObservableLevel(obj=$obj, old=$old, new=$new, prop=$prop)"
+    }
 }
 
 abstract class SetLevel<T : Set<*>>(
@@ -46,6 +52,11 @@ abstract class SetLevel<T : Set<*>>(
 
     abstract fun getVirtualSet() : ReadOnlyVirtualSet<*>
     abstract fun getObservableSet() : ObservableSet<*>
+    
+    override fun toString(): String {
+        return "SetLevel(set=$set, changeArgs=$changeArgs)"
+    }
+    
 }
 
 class VirtualSetLevel(
@@ -58,7 +69,7 @@ class VirtualSetLevel(
 
     override fun getVirtualSet() = getSet()
     override fun getObservableSet() = throw IllegalAccessException("Field of Level is not a VirtualSet")
-
+    
 }
 
 class ObservableSetLevel(

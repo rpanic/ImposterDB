@@ -109,14 +109,14 @@ open class VirtualSet<T : Observable>(
     
     override fun add(t: T) {
         val args = SetChangeArgs(ElementChangeType.Add, t)
-        val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
+        val level = LevelInformation(listOf(VirtualSetLevel(this, args)))
         mutableAccessor.performEvent(getOrParent() as VirtualSet<T>, args, level)
         getOrParent().tellChildren(args, level)
     }
 
     override fun remove(t: T) {
         val args = SetChangeArgs(ElementChangeType.Remove, t)
-        val level = LevelInformation(listOf(ObservableLevel(t, Observable::uuid)))
+        val level = LevelInformation(listOf(VirtualSetLevel(this, args)))
         mutableAccessor.performEvent(getOrParent() as VirtualSet<T>, args, level)
         getOrParent().tellChildren(args, level)
     }

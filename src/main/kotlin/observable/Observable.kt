@@ -76,7 +76,7 @@ abstract class Observable : DBAwareObject(), Indexable{
     internal fun <T> hookToObservable(obj: T, parentProperty: KProperty<*>?){
         if(obj is Observable){
             obj.addListener { childProp: KProperty<*>, old: T, new: T, levels: LevelInformation ->
-                changed(childProp, old, new, levels.append(this, parentProperty))
+                changed(childProp, old, new, levels.append(this, old, new, parentProperty))
             }
         } else if(obj is VirtualSet<*>){ //TODO Remove now
             obj.addListener { args, levels ->
@@ -91,7 +91,7 @@ abstract class Observable : DBAwareObject(), Indexable{
 
         return object : ObservableProperty<T>(initialValue) {
             override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T){
-                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable, property))))
+                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable, oldValue, newValue, property))))
             }
         }
     }
