@@ -8,6 +8,7 @@ import lazyCollections.IVirtualSet
 import observable.*
 import ruleExtraction.RuleExtractionFramework
 import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.createInstance
 
 typealias SetElementChangedListener<T> = (SetChangeArgs<T>, LevelInformation) -> Unit
@@ -36,6 +37,7 @@ open class ReadOnlyVirtualSet<T : Observable>(
         if(loadedState == null){
             //TODO Check if parent already has a loaded state, and if yes, take data from there
             loadedState = accessor.load(steps).toMutableSet()
+            loadedState!!.forEach { initObj(it) }
         }
 
         val view = ObservableSet(loadedState!!.toList())
@@ -98,6 +100,27 @@ open class ReadOnlyVirtualSet<T : Observable>(
     override fun isEmpty(): Boolean {
         return size == 0
     }
+    
+    fun getOrParent() : ReadOnlyVirtualSet<T>{
+        return parent?.getOrParent() ?: this
+    }
+    
+    private fun makeListener(t: T) : ChangeListener<Any>{
+        return { prop, old, new, levels -> //Stehengeblieben: Information gets lost here, make new way of relaying Events
+            val changeargs = SetChangeArgs(ElementChangeType.Update, t)
+            getOrParent().tellChildren(changeargs, levels.append(VirtualSetLevel(this, changeargs)))
+        }
+    }
+    
+    protected fun initObj(t: T){
+        //TODO Figure out if the object is not already been initialized by a parent VirtualSet
+//        val isLastInChain = if(parent != null){
+//            if(parent.loadedState != null){
+//                !parent!!.loadedState.contains(t)
+//            }else true
+//        }else true
+        t.addListener(makeListener(t))
+    }
 }
 
 open class VirtualSet<T : Observable>(
@@ -112,6 +135,9 @@ open class VirtualSet<T : Observable>(
         val level = LevelInformation(listOf(VirtualSetLevel(this, args)))
         mutableAccessor.performEvent(getOrParent() as VirtualSet<T>, args, level)
         getOrParent().tellChildren(args, level)
+        
+        //Add Listener to obj
+        initObj(t)
     }
 
     override fun remove(t: T) {
@@ -119,6 +145,8 @@ open class VirtualSet<T : Observable>(
         val level = LevelInformation(listOf(VirtualSetLevel(this, args)))
         mutableAccessor.performEvent(getOrParent() as VirtualSet<T>, args, level)
         getOrParent().tellChildren(args, level)
+        
+//   TODO     t.classListeners.remove(objListener)
     }
 
     fun <K> groupBy(f: (T) -> K){
@@ -192,9 +220,5 @@ open class VirtualSet<T : Observable>(
             }
         }
         return newSet
-    }
-
-    fun getOrParent() : VirtualSet<T>{
-        return parent?.getOrParent() ?: this
     }
 }

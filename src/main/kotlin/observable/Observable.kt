@@ -78,10 +78,6 @@ abstract class Observable : DBAwareObject(), Indexable{
             obj.addListener { childProp: KProperty<*>, old: T, new: T, levels: LevelInformation ->
                 changed(childProp, old, new, levels.append(this, old, new, parentProperty))
             }
-        } else if(obj is VirtualSet<*>){ //TODO Remove now
-            obj.addListener { args, levels ->
-                changed(VirtualSet<*>::loadedState, args.elements[0], args.elements[0], levels.append(VirtualSetLevel(obj, args)))
-            }
         }
     }
 

@@ -19,9 +19,9 @@ inline fun <reified T : Observable> Observable.detachedSet(key: String) : Virtua
 
 fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: KClass<T>) : VirtualSetReadOnlyProperty<P, VirtualSet<T>> {
 
-    return VirtualSetReadOnlyProperty(key) { table ->
+    return VirtualSetReadOnlyProperty(key) { table, property ->
         val db = parent.getDB()
-
+        
         //Add Listeners for Changes in List
         val performEvent = { args : SetChangeArgs<T>, levelinfo: List<Level> ->
 
@@ -115,13 +115,11 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                 val set = nSteps.map { rule -> db.backendConnector.loadWithRules(key, listOf(rule), clazz)
                         .let { if(it.size == 1) it.first() else throw java.lang.IllegalStateException("This should not be possible") } }
                         .toSet()
-    
-                val initObservable = { obj : T ->
+                
+                set.forEach { obj : T ->
                     obj.setDbReference(db)
                     db.addBackendUpdateListener(obj, key, clazz)
                 }
-                
-                set.forEach(initObservable)
                 return set
             }
         
@@ -155,11 +153,17 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
         val virtualSet = VirtualSet(virtualSetAccessor,
             listOf(MtoNRule()), clazz)
 
+        //Relay events to underlying observable
+        virtualSet.addListener { changeArgs, levels ->
+//            parent.changed(property, virtualSet, virtualSet, levels.append(VirtualSetLevel(virtualSet, changeArgs)))
+            parent.changed(property, virtualSet, virtualSet, levels.append(ObservableLevel(parent, virtualSet, virtualSet, property)))
+        }
+
         virtualSet
     }
 }
 
-class VirtualSetReadOnlyProperty<P : Observable, T>(val key: String, protected var initFunction: (MtoNTable) -> T) : ReadOnlyProperty<P?, T> {
+class VirtualSetReadOnlyProperty<P : Observable, T>(val key: String, protected var initFunction: (MtoNTable, property: KProperty<*>) -> T) : ReadOnlyProperty<P?, T> {
 
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
@@ -175,14 +179,14 @@ class VirtualSetReadOnlyProperty<P : Observable, T>(val key: String, protected v
             "For Detached Properties to load, the Parent object must be added to a DB Set" //TODO At some place, this should be possible
         }
         if(!initialized){
-            init()
+            init(property)
         }
         return value!!
     }
 
-    fun init(){
+    fun init(property: KProperty<*>){
         val table = MtoNTable(parentkey!!, key)
-        value = initFunction(table)
+        value = initFunction(table, property)
         initialized = true
     }
 }

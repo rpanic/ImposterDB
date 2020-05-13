@@ -1,25 +1,33 @@
 package example
 
-import aNewCollections.eq
-import aNewCollections.invoke
 import db.DB
-import io.mockk.every
-import io.mockk.mockk
 import io.zeko.model.Entity
 import observable.Observable
 import sql.SqlBackend
-import sql.SqlContext
-import sql.createOrUpdateTable
-import java.sql.DriverManager
-import java.sql.ResultSet
-import javax.sql.DataSource
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.*
-import kotlin.system.measureTimeMillis
+
+fun main2(){
+
+//    val db = DB();
+//    val backend = SqlBackend();
+//    db += backend;
+
+//    val set = db.getSet<>("asd")
+
+}
+
+fun main3(){
+    
+    val list = listOf("Hello", "No")
+    
+    list.forEach { list.forEach { println(it) } }
+    
+    
+}
 
 fun main() {
 
+    main3()
+    
     mstart()
     val db = DB(); mpoint()
     val backend = SqlBackend(); mpoint()
