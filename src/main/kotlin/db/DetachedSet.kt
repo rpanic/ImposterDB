@@ -185,12 +185,4 @@ class VirtualSetReadOnlyProperty<P : Observable, T>(val key: String, protected v
         value = initFunction(table)
         initialized = true
     }
-
-    protected fun getValue() : T{
-        if(!initialized){
-            init()
-            error("Should not happen - LazyReadWriteProperty :: 53")
-        }
-        return value!!
-    }
 }
