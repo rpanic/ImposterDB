@@ -24,8 +24,6 @@ class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
             val rule = it as NestedRule
             rule.props.reverse()
 
-            //TODO Remove NormalizedRule, since it is basically the same object
-
             val actualCondition = rule.rule
 
             if(actualCondition is CompareComparisonRule<*>) {

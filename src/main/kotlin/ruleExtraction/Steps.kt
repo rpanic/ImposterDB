@@ -5,7 +5,7 @@ import kotlin.reflect.KProperty1
 interface Step<T, V>
 
 class FilterStep<T> (
-        val conditions: List<NormalizedExtractedRule>
+        val conditions: List<ExtractedRule>
 ) : Step<T, T>
 
 class FindStep<T> (
@@ -22,14 +22,12 @@ enum class MappingType {
 
 class MtoNRule<T>() : Step<T, T> //TODO Make Generic work reasonable
 
-interface NormalizedExtractedRule
+interface ExtractedRule
 
 open class NormalizedCompareRule<T>(
         val prop: List<KProperty1<*, *>>?,
 //        val obj1: Any?, //TODO Enable cases where the mock is no used at all
         val obj2 : T,
         var type: CompareType? = null
-) : NormalizedExtractedRule
+) : ExtractedRule
 
-
-class MapStep<T, V> : Step<T, V> //Add fields
