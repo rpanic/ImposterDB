@@ -1,5 +1,8 @@
 package ruleExtraction
 
+import io.zeko.db.sql.Query
+import observable.Observable
+import sql.query
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
@@ -15,7 +18,7 @@ object StepInterpreter {
         }
         return set as Set<V>
     }
-
+    
     fun <T : Any> interpretFilter(step: FilterStep<T>, t: T) : Boolean{
         return step.conditions.map {
             val rule = (it as NormalizedCompareRule<T>)

@@ -1,6 +1,6 @@
 package unit
 
-import aNewCollections.eq
+import ruleExtraction.eq
 import db.DB
 import integration.TestObject
 import io.mockk.*

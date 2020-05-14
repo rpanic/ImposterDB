@@ -1,6 +1,6 @@
 package integration
 
-import aNewCollections.ObservableSet
+import collections.ObservableSet
 import org.junit.Test
 
 class ObservableSetTest{

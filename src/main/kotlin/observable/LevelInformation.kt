@@ -1,6 +1,6 @@
 package observable
 
-import aNewCollections.ObservableSet
+import collections.ObservableSet
 import collections.SetChangeArgs
 import virtual.ReadOnlyVirtualSet
 import kotlin.reflect.KProperty

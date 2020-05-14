@@ -1,6 +1,7 @@
 package db
 
-import aNewCollections.ObservableSet
+import collections.ObservableSet
+import collections.SetChangeArgs
 import observable.Observable
 
 fun <T : Observable, R : Observable> ObservableSet<T>.map(f: (T) -> R) : ObservableSet<R> {

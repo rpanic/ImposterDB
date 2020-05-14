@@ -11,10 +11,7 @@ import io.mockk.mockkClass
 import io.mockk.verify
 import observable.LevelInformation
 import org.junit.Test
-import ruleExtraction.CompareType
-import ruleExtraction.FilterStep
-import ruleExtraction.NormalizedCompareRule
-import ruleExtraction.Step
+import ruleExtraction.*
 import kotlin.reflect.KMutableProperty1
 import org.assertj.core.api.Assertions.assertThat as assertThat
 

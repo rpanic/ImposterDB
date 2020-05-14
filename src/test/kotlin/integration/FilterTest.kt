@@ -1,7 +1,7 @@
 package integration
 
 import virtual.SetElementChangedListener
-import aNewCollections.observableSetOf
+import collections.observableSetOf
 import com.nhaarman.mockitokotlin2.*
 import org.assertj.core.api.Assertions
 import org.junit.Test
