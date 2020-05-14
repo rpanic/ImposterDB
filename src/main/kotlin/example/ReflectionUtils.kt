@@ -1,9 +1,7 @@
 package example
 
-import com.mchange.v2.sql.SqlUtils
 import db.Ignored
 import db.VirtualSetReadOnlyProperty
-import lazyCollections.Indexable
 import observable.Observable
 import sql.getSqlFieldName
 import sql.typeMap

@@ -1,7 +1,7 @@
 package json
 
-import aNewCollections.Step
-import aNewCollections.StepInterpreter
+import ruleExtraction.Step
+import ruleExtraction.StepInterpreter
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon

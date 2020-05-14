@@ -1,4 +1,4 @@
-package lazyCollections
+package collections
 
 import observable.IAbstractObservable
 import virtual.SetElementChangedListener

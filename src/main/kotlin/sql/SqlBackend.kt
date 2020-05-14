@@ -1,6 +1,5 @@
 package sql
 
-import aNewCollections.*
 import db.Backend
 import db.VirtualSetReadOnlyProperty
 import example.GenericEntity
@@ -14,7 +13,7 @@ import mu.KotlinLogging
 import observable.LevelInformation
 import observable.Observable
 import observable.ObservableLevel
-import ruleExtraction.CompareType
+import ruleExtraction.*
 import java.sql.DriverManager
 import java.sql.ResultSet
 import kotlin.reflect.*

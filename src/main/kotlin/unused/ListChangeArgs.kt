@@ -1,7 +1,7 @@
 package unused
 
-import aNewCollections.ChangeArgs
-import aNewCollections.ElementChangeType
+import collections.ChangeArgs
+import collections.ElementChangeType
 import kotlin.reflect.KProperty
 
 //### List Change Args

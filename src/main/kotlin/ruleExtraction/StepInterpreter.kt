@@ -1,6 +1,5 @@
-package aNewCollections
+package ruleExtraction
 
-import ruleExtraction.CompareType
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

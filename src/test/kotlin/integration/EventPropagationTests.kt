@@ -1,6 +1,6 @@
 package integration
 
-import aNewCollections.ElementChangeType
+import collections.ElementChangeType
 import connection.MtoNTableEntry
 import db.Backend
 import db.DB
@@ -11,12 +11,9 @@ import observable.ObservableLevel
 import observable.VirtualSetLevel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import sql.SqlBackend
 import virtual.SetElementChangedListener
 import virtual.VirtualSet
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
 
 class EventPropagationTests{
 

@@ -1,8 +1,7 @@
 package virtual
 
-import aNewCollections.SetChangeArgs
-import aNewCollections.Step
-import main.kotlin.connection.BackendConnector
+import collections.SetChangeArgs
+import ruleExtraction.Step
 import observable.LevelInformation
 import observable.Observable
 

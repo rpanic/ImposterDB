@@ -1,8 +1,7 @@
-package aNewCollections
+package collections
 
 import com.beust.klaxon.Json
 import db.*
-import lazyCollections.IObservableSet
 import observable.*
 import virtual.SetElementChangedListener
 

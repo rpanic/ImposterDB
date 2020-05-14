@@ -1,4 +1,4 @@
-package aNewCollections
+package ruleExtraction
 
 import io.mockk.every
 import io.mockk.mockk

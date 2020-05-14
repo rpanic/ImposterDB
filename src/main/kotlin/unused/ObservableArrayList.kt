@@ -1,10 +1,7 @@
 package unused
 
-import aNewCollections.ElementChangeType
-import db.ChangeObserver
+import collections.ElementChangeType
 import observable.LevelInformation
-import observable.Observable
-import kotlin.reflect.KProperty
 
 class ObservableArrayList<X> : ObservableList<X> {
 

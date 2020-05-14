@@ -1,6 +1,5 @@
 package ruleExtraction
 
-import aNewCollections.NormalizedCompareRule
 import observable.Observable
 import kotlin.reflect.KClass
 
@@ -32,7 +31,7 @@ class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
             if(actualCondition is CompareComparisonRule<*>) {
 
                 if(actualCondition.type == CompareType.EQUALS){
-
+    
                     NormalizedCompareRule(rule.props, actualCondition.obj2, if (ret) CompareType.EQUALS else CompareType.NOT_EQUALS)
 
                 }else {
@@ -46,7 +45,7 @@ class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
                             listOf(false, true, true) to CompareType.LESS_EQUALS)
 
                     actualCondition.type = types[results]
-
+    
                     NormalizedCompareRule(rule.props, actualCondition.obj2, actualCondition.type)
                 }
             } else {

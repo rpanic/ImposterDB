@@ -1,6 +1,6 @@
 package unused
 
-import aNewCollections.ElementChangeType
+import collections.ElementChangeType
 import db.ChangeObserver
 import observable.*
 import kotlin.reflect.KProperty

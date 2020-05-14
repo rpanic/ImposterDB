@@ -1,6 +1,6 @@
 package unused
 
-import aNewCollections.ElementChangeType
+import collections.ElementChangeType
 import com.beust.klaxon.Json
 import db.ChangeObserver
 import db.Ignored

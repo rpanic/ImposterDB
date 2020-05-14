@@ -1,8 +1,7 @@
 package main.kotlin.connection
 
-import aNewCollections.Step
+import ruleExtraction.Step
 import com.beust.klaxon.internal.firstNotNullResult
-import connection.MtoNTable
 import connection.ObjectCache
 import db.*
 import example.findDelegatingProperties

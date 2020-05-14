@@ -1,9 +1,8 @@
 package observable
 
 import aNewCollections.ObservableSet
-import aNewCollections.SetChangeArgs
+import collections.SetChangeArgs
 import virtual.ReadOnlyVirtualSet
-import virtual.VirtualSet
 import kotlin.reflect.KProperty
 
 class LevelInformation(val list: List<Level>){

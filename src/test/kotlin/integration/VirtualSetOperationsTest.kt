@@ -1,6 +1,7 @@
 package integration
 
-import aNewCollections.*
+import collections.ElementChangeType
+import collections.SetChangeArgs
 import virtual.*
 import db.Backend
 import db.DB
@@ -11,6 +12,9 @@ import io.mockk.verify
 import observable.LevelInformation
 import org.junit.Test
 import ruleExtraction.CompareType
+import ruleExtraction.FilterStep
+import ruleExtraction.NormalizedCompareRule
+import ruleExtraction.Step
 import kotlin.reflect.KMutableProperty1
 import org.assertj.core.api.Assertions.assertThat as assertThat
 

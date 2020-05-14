@@ -1,4 +1,4 @@
-package aNewCollections
+package collections
 
 import kotlin.reflect.KProperty
 

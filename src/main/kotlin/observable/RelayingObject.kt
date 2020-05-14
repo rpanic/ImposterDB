@@ -1,8 +1,7 @@
 package observable
 
-import aNewCollections.ChangeArgs
-import aNewCollections.ElementChangeType
-import aNewCollections.SetChangeArgs
+import collections.ElementChangeType
+import collections.SetChangeArgs
 import virtual.VirtualSet
 import kotlin.reflect.KProperty
 

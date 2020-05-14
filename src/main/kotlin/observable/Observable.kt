@@ -4,8 +4,7 @@ import com.beust.klaxon.Json
 import db.ChangeObserver
 import db.Ignored
 import db.RevertableAction
-import lazyCollections.Indexable
-import virtual.VirtualSet
+import collections.Indexable
 import java.util.*
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty

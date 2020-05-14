@@ -1,14 +1,10 @@
 package virtual
 
-import aNewCollections.*
+import collections.*
 import example.logger
-import lazyCollections.IObservableSet
-import lazyCollections.IReadonlyVirtualSet
-import lazyCollections.IVirtualSet
 import observable.*
-import ruleExtraction.RuleExtractionFramework
+import ruleExtraction.*
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty
 import kotlin.reflect.full.createInstance
 
 typealias SetElementChangedListener<T> = (SetChangeArgs<T>, LevelInformation) -> Unit
@@ -124,10 +120,10 @@ open class ReadOnlyVirtualSet<T : Observable>(
 }
 
 open class VirtualSet<T : Observable>(
-    private val mutableAccessor: VirtualSetAccessor<T>,
-    steps: List<Step<T, *>>,
-    clazz: KClass<T>,
-    parent: VirtualSet<T>? = null
+        private val mutableAccessor: VirtualSetAccessor<T>,
+        steps: List<Step<T, *>>,
+        clazz: KClass<T>,
+        parent: VirtualSet<T>? = null
 ) : ReadOnlyVirtualSet<T>(mutableAccessor, steps, clazz, parent), IVirtualSet<T> {
     
     override fun add(t: T) {

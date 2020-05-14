@@ -1,4 +1,4 @@
-package lazyCollections
+package collections
 
 import observable.Observable
 import kotlin.reflect.KProperty1
