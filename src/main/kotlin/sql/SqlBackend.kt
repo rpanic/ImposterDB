@@ -62,23 +62,27 @@ class SqlBackend (
     }
     
     override fun <T : Observable, V : Any> loadTransformed(key: String, clazz: KClass<T>, steps: List<Step<T, *>>, to: KClass<V>): Set<V> {
-        
-        val (query, valuesToReplace) = createFilterQuery(key, clazz, steps.filter { it is FilterStep<*> })
-        
-        //Get Mapping query
-//        steps.filter { it is MappingStep<*, *> }.first().apply {   //TODO Make this multi-level, f.e. UPPER_CASE(COUNT(*)) or CONCAT('Size: ', COUNT(*))
-//
-//        }
-        return setOf()
+    
+        val query = createQueryFromClass(clazz, key)
+        val sql = SqlStepInterpreter.interpretSteps(query, steps)
+    
+        val rs = context.executeQuery(sql)
+    
+        return parse(rs, to)
         
     }
 
+    private fun <T : Observable> createQueryFromClass(clazz: KClass<T>, key: String) : Query{
+        return Query()
+                .fields(*ReflectionUtils.getPropertySqlNames(clazz).map { it.first }.toTypedArray()) //TODO Check if performance is better when using *
+                .from(key)
+    }
+    
     override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
-
-        val (query, valuesToReplace) = createFilterQuery(key, clazz, steps)
-
-        val sql = query.toSql()
-                .replaceWildCards(valuesToReplace)
+    
+        val query = createQueryFromClass(clazz, key)
+        
+        val sql = SqlStepInterpreter.interpretSteps(query, steps)
         
         logger.info(sql)
 
@@ -87,49 +91,12 @@ class SqlBackend (
         return parse(rs, clazz)
 
     }
-    
-    private fun <T : Observable> createFilterQuery(key: String, clazz: KClass<T>, steps: List<Step<T, *>>) : Pair<Query, List<Any>>{
-        val query = Query()
-                .fields(*ReflectionUtils.getPropertySqlNames(clazz).map { it.first }.toTypedArray()) //TODO Check if performance is better when using *
-                .from(key)
-    
-        val valuesToReplace = mutableListOf<Any>()
-    
-        steps.forEach { step ->
-            evaluateStep(step, query, valuesToReplace)
-        }
-        return query to valuesToReplace
-    }
-
-    private fun evaluateStep(step: Step<*, *>, query: Query, valuesToReplace: MutableList<Any>) {
-
-        if(step is FilterStep<*>){
-            step.conditions.forEach { condition ->
-                if(condition is NormalizedCompareRule<*>) {
-                    val field = getSqlFieldName(condition.prop!!)
-                    when(condition.type){
-                        CompareType.EQUALS -> query.where(field eq "")
-                        CompareType.NOT_EQUALS -> query.where(field neq "")
-                        CompareType.LESS -> query.where(field less "")
-                        CompareType.LESS_EQUALS -> query.where(field lessEq "")
-                        CompareType.GREATER -> query.where(field greater "")
-                        CompareType.GREATER_EQUALS -> query.where(field greaterEq "")
-                    }
-                    val value = condition.obj2!!
-                    valuesToReplace += value
-                }
-            }
-        }else if(step is FindStep<*>){
-            query.limit(1)
-            evaluateStep(step.filter, query, valuesToReplace)
-        }
-    }
 
     override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> { //TODO To Set
         return load(key, clazz, listOf()).toList()
     }
 
-    fun <T : Observable> parse(set : ResultSet, clazz: KClass<T>) : Set<T>{
+    fun <T : Any> parse(set : ResultSet, clazz: KClass<T>) : Set<T>{
         val parsed = mutableSetOf<T>()
         while(set.next()) {
             parsed.add(parseClass(set, clazz))
