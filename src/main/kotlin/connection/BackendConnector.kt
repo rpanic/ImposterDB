@@ -48,6 +48,16 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         return read ?: setOf()
 
     }
+    
+    fun <T : Observable, V: Any> loadTransformed(key: String, steps: List<Step<T, *>>, clazz: KClass<T>, to: KClass<V>) : Set<V>{
+    
+        initIfNotYet(key, clazz)
+    
+        val read = backends.firstOrNull()?.loadTransformed(key, clazz, steps, to)
+        
+        return read ?: setOf()
+        
+    }
 
     fun <T : Observable, K : Any> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
     

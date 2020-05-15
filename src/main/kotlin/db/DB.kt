@@ -4,6 +4,8 @@ import collections.*
 import connection.ObjectCache
 import main.kotlin.connection.BackendConnector
 import observable.*
+import ruleExtraction.MappingStep
+import ruleExtraction.MappingType
 import ruleExtraction.Step
 import virtual.VirtualSet
 import virtual.VirtualSetAccessor
@@ -144,7 +146,8 @@ class DB{
             }
     
             override fun count(steps: List<Step<T, *>>): Int {
-                TODO("Not yet implemented")
+                return backendConnector
+                        .loadTransformed(key, listOf(MappingStep<T, Int>(MappingType.COUNT)) + steps, clazz, Int::class).firstOrNull() ?: 0
             }
     
             override fun performEvent(instance: VirtualSet<T>, listChangeArgs: SetChangeArgs<T>, levelInformation: LevelInformation) {

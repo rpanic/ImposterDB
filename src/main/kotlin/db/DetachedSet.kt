@@ -126,7 +126,8 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
             }
         
             override fun count(steps: List<Step<T, *>>): Int {
-                TODO("Not yet implemented")
+                return db.backendConnector
+                        .loadTransformed(key, listOf(MappingStep<T, Int>(MappingType.COUNT)) + steps, clazz, Int::class).firstOrNull() ?: 0
             }
         
             override fun performEvent(instance: VirtualSet<T>, listChangeArgs: SetChangeArgs<T>, levelInformation: LevelInformation) {

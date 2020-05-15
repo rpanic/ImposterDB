@@ -1,11 +1,13 @@
 package virtual
 
 import collections.*
+import example.ReflectionUtils
 import example.logger
 import observable.*
 import ruleExtraction.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
+import kotlin.reflect.full.memberProperties
 
 typealias SetElementChangedListener<T> = (SetChangeArgs<T>, LevelInformation) -> Unit
 
@@ -86,11 +88,18 @@ open class ReadOnlyVirtualSet<T : Observable>(
         }
 
     override fun contains(element: T): Boolean {
-        TODO("Not yet implemented")
+        return containsAll(listOf(element))
     }
 
     override fun containsAll(elements: Collection<T>): Boolean {
-        TODO("Not yet implemented")
+        return loadedState?.containsAll(elements) ?:
+                elements.all { element ->
+                    accessor.count(listOf(FilterStep<T>(listOf(NormalizedCompareRule(
+                            listOf(clazz.memberProperties.find { it.name == "uuid" }!!),
+                            element.uuid,
+                            CompareType.EQUALS
+                            )))) + steps) > 0
+                }
     }
 
     override fun isEmpty(): Boolean {

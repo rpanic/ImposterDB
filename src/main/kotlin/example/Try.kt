@@ -17,9 +17,15 @@ fun main2(){
 
 fun main3(){
     
-    val list = listOf("Hello", "No")
+    val db = DB()
+    val backend = SqlBackend()
+    db += backend
     
-    list.forEach { list.forEach { println(it) } }
+    val virtualSet = db.getSet<Person>("person")
+    
+    val person = Person()
+    person.name = "Raphael Panic"
+    
     
     
 }

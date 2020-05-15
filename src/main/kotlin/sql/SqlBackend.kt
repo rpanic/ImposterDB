@@ -64,8 +64,11 @@ class SqlBackend (
     override fun <T : Observable, V : Any> loadTransformed(key: String, clazz: KClass<T>, steps: List<Step<T, *>>, to: KClass<V>): Set<V> {
     
         val query = createQueryFromClass(clazz, key)
+        
         val sql = SqlStepInterpreter.interpretSteps(query, steps)
-    
+        
+        logger.info(sql)
+        
         val rs = context.executeQuery(sql)
     
         return parse(rs, to)
@@ -80,15 +83,7 @@ class SqlBackend (
     
     override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
     
-        val query = createQueryFromClass(clazz, key)
-        
-        val sql = SqlStepInterpreter.interpretSteps(query, steps)
-        
-        logger.info(sql)
-
-        val rs = context.executeQuery(sql)
-
-        return parse(rs, clazz)
+        return loadTransformed(key, clazz, steps, clazz)
 
     }
 
