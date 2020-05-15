@@ -38,7 +38,14 @@ class SqlBackendTest{
         
     }
     
+    @Test
+//    @Ignore
     //TODO
+            /**
+             * This test checks a complete SQL VirutalSet operation. Creation, Filtering and retrieval
+             * At first is checks if the Count() Select Statement gets called correctly to check if the table already exists.
+             * After that, the create Table statement and the select statement get checked
+             */
     fun testCreateTableAndFilterSelect(){
 
         val testObject = TestObject().apply { testProperty = "TestProp" }
@@ -46,11 +53,14 @@ class SqlBackendTest{
         val db = DB()
         val backend = createMockedBackend(testObject, TestObject::class)
 
+        val resultSet = createIntResultSet(0)
+        
         every { backend.context.executeQuery(match {
-            it.startsWith("SELECT count(*)") && it.contains("information_schema.TABLES")
+            it.startsWith("SELECT COUNT(*)") && it.contains("information_schema.TABLES")
         }) } answers {
             val rs2 = mockk<ResultSet>()
-            every { rs2.next() } returns false
+            every { rs2.next() } returnsMany listOf(false, true)  //First time for checking if it exists, the second time for checking if creation was successful
+            every { rs2.getInt(1) } returns 1
             rs2
         }
 
@@ -64,11 +74,11 @@ class SqlBackendTest{
 
         val loaded = virtualSet.filter { it.testProperty eq "hello" }.view()
 
-        verify (exactly = 1) { backend.context.executeQuery(match {
-            it.startsWith("SELECT count(*)") && it.contains("information_schema.TABLES")
+        verify (exactly = 2) { backend.context.executeQuery(match {
+            it.startsWith("SELECT COUNT(*)") && it.contains("information_schema.TABLES")
         }) }
-        verify (exactly = 1 ) { backend.context.execute("CREATE TABLE table2 (testProperty VARCHAR(2000)") }
-        verify (exactly = 1 ) { backend.context.executeQuery("SELECT testProperty FROM test2 WHERE s = 'hello'") }
+        verify (exactly = 1 ) { backend.context.execute("CREATE TABLE table2 (testProperty VARCHAR(2000) NOT NULL,\nuuid VARCHAR(255) NOT NULL,\nPRIMARY KEY (uuid))") }
+        verify (exactly = 1 ) { backend.context.executeQuery("SELECT testProperty, uuid FROM table2 WHERE testProperty = 'hello'") }
 
         assertThat(loaded.first()).isEqualTo(testObject)
 

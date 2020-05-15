@@ -22,7 +22,7 @@ fun SqlContext.checkIfTableExists(key: String) : Boolean{
     val result = this.executeQuery("SELECT COUNT(*) " +
             "FROM information_schema.TABLES " +
             "WHERE (TABLE_SCHEMA = '${this.dbName}') AND (UPPER(TABLE_NAME) = '${key.toUpperCase()}')")
-    return result.next() && result.getBoolean(1)
+    return result.next() && ( result.getInt(1) > 0 )
 }
 
 fun <T : Observable> SqlContext.query(query: String, clazz: KClass<T>) : Set<T>{

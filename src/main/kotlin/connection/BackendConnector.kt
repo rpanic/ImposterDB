@@ -27,13 +27,17 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
     //TODO Unify usage of initIfNotYet and createSchema calls in backendConnector
     fun <T : Observable> initIfNotYet(key: String, clazz: KClass<T>){
         if(key !in initialized) {
-            backends.forEach { it.createSchema(key, clazz) }
+            forEachBackend {
+                it.createSchema(key, clazz)
+            }
             initialized += key
         }
     }
 
     fun <T : Observable> loadWithRules(key: String, steps: List<Step<T, *>>, clazz: KClass<T>): Set<T> {
 
+        initIfNotYet(key, clazz)
+        
         val read = backends.firstOrNull()?.load(key, clazz, steps)
 
         read?.forEach {
@@ -46,7 +50,9 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
     }
 
     fun <T : Observable, K : Any> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
-
+    
+        initIfNotYet(key, clazz)
+        
         val read = BackendObjectRetriever<T>(backends, cache)
             .tryCache { getCachedObject(key, pk) }
             .orBackends {
