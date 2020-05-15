@@ -99,7 +99,13 @@ class SqlBackend (
     fun <T : Any> parse(set : ResultSet, clazz: KClass<T>) : Set<T>{
         val parsed = mutableSetOf<T>()
         while(set.next()) {
-            parsed.add(parseClass(set, clazz))
+            if(clazz in kotlinTypeMap.keys){
+                check(set.metaData.columnCount == 1){ "Result must have only one column to be parsed into type ${clazz.simpleName}" }
+                parsed.add(getPrimitiveTypeFromResultSet(set, set.metaData.getColumnName(0), clazz) as T)
+            }else{
+                parsed.add(parseClass(set, clazz))
+            }
+            
         }
 
         return parsed
@@ -114,18 +120,10 @@ class SqlBackend (
         props.forEach {
             val propName = prefix + it.name
             val type = it.returnType.javaType
-            val value = when(type){
-                String::class.java -> set.getString(propName)
-                Double::class.java -> set.getDouble(propName)
-                Float::class.java -> set.getFloat(propName)
-                Byte::class.java -> set.getByte(propName)
-                Short::class.java -> set.getShort(propName)
-                Int::class.java -> set.getInt(propName)
-                Long::class.java -> set.getLong(propName)
-                Char::class.java -> set.getInt(propName).toChar()
-                Boolean::class.java -> set.getBoolean(propName)
-                else -> parseClass(set, (type as Class<Any>).kotlin, prefix + it.name + "_")
-            }
+            
+            val value = getPrimitiveTypeFromResultSet(set, propName, (type as Class<Any>).kotlin) //If primitive type returns null, parse Class recursively
+                    ?: parseClass(set, (type as Class<Any>).kotlin, prefix + it.name + "_")
+            
             (it as KMutableProperty1<T, Any?>).set(instance, value)
         }
         return instance

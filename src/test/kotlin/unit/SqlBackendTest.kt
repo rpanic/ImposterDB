@@ -9,17 +9,35 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert
 import org.junit.Ignore
 import org.junit.Test
+import ruleExtraction.MappingStep
+import ruleExtraction.MappingType
 import sql.SqlBackend
 import sql.SqlContext
 import sql.createOrUpdateTable
 import java.sql.ResultSet
+import java.sql.ResultSetMetaData
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
 class SqlBackendTest{
 
     @Test
-    @Ignore
+    fun testCountReturn(){
+        
+        val resultSet = createIntResultSet(100)
+        
+        val backend = SqlBackend(createContextFun = {
+            val context = mockk<SqlContext>()
+            every { context.executeQuery(any()) } returns resultSet
+            context
+        })
+        
+        val ints = backend.loadTransformed("key", TestObject::class, listOf(MappingStep<TestObject, Int>(MappingType.COUNT)), Int::class)
+        
+        assertThat(ints.first()).isEqualTo(100)
+        
+    }
+    
     //TODO
     fun testCreateTableAndFilterSelect(){
 
@@ -60,19 +78,39 @@ class SqlBackendTest{
 //        virtualSet.remove(obj)
         println(loaded)
     }
+    
+    private fun createIntResultSet(value: Int) : ResultSet{
+    
+        val resultSet = resultsSetFromObject(value, Int::class)
+    
+        every { resultSet.getInt("a") } returns value
+        every { resultSet.next() } returnsMany listOf(true, false)
+        
+        val metadata = mockk<ResultSetMetaData>()
+        every { resultSet.metaData } returns metadata
+        every { metadata.columnCount } returns 1
+        every { metadata.getColumnName(0) } returns "a"
+        
+        return resultSet
+    }
 
     private fun <T : Observable> createMockedBackend(t: T, clazz: KClass<T>) : SqlBackend{
 
         val function: (SqlBackend) -> SqlContext = {
             val mock = mockk<SqlContext>(relaxed = true)
-            every { mock.executeQuery(any()) } answers { resultsSetFromObject(t, clazz) }
+            every { mock.executeQuery(any()) } answers {
+                val resultSet = resultsSetFromObject(t, clazz)
+                every { resultSet.next() } returnsMany listOf(true, false)
+                resultSet
+            }
+            
             mock
         }
 
         return SqlBackend(createContextFun = function)
     }
 
-    private fun <T : Observable> resultsSetFromObject(t: T, clazz: KClass<T>) : ResultSet{
+    private fun <T : Any> resultsSetFromObject(t: T, clazz: KClass<T>) : ResultSet{
         val rs = mockk<ResultSet>()  //TODO Write resultset mock for test
         every { rs.next() } returns true
 

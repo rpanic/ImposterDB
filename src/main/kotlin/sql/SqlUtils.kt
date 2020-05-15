@@ -7,8 +7,10 @@ import example.ReflectionUtils
 import example.info
 import net.bytebuddy.agent.builder.AgentBuilder
 import observable.Observable
+import java.lang.IllegalStateException
 import java.sql.Connection
 import java.sql.Date
+import java.sql.ResultSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -17,7 +19,7 @@ import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaType
 
 fun SqlContext.checkIfTableExists(key: String) : Boolean{
-    val result = this.executeQuery("SELECT count(*) " +
+    val result = this.executeQuery("SELECT COUNT(*) " +
             "FROM information_schema.TABLES " +
             "WHERE (TABLE_SCHEMA = '${this.dbName}') AND (UPPER(TABLE_NAME) = '${key.toUpperCase()}')")
     return result.next() && result.getBoolean(1)
@@ -115,9 +117,24 @@ fun String.replaceWildCards(values: List<Any>) : String{
 
 }
 
+fun <T : Any> getPrimitiveTypeFromResultSet(set: ResultSet, propName: String, clazz: KClass<T>) : Any?{
+    return when(clazz) {
+        String::class -> set.getString(propName)
+        Double::class -> set.getDouble(propName)
+        Float::class -> set.getFloat(propName)
+        Byte::class -> set.getByte(propName)
+        Short::class -> set.getShort(propName)
+        Int::class -> set.getInt(propName)
+        Long::class -> set.getLong(propName)
+        Char::class -> set.getInt(propName).toChar()
+        Boolean::class -> set.getBoolean(propName)
+        else -> null
+    }
+}
+
 fun getSqlFieldName(props : Iterable<KProperty1<*, *>>) = props.map { it.name }.joinToString("_")
 
-val typeMap = mapOf(
+val kotlinTypeMap = mapOf(
         String::class to "VARCHAR(2000)",
         Byte::class to "TINYINT",
         Short::class to "SMALLINT",
@@ -127,4 +144,6 @@ val typeMap = mapOf(
         Double::class to "FLOAT",
         Boolean::class to "BIT",
         Date::class to "DATE"
-).mapKeys { it.key.java }
+)
+
+val typeMap = kotlinTypeMap.mapKeys { it.key.java }
