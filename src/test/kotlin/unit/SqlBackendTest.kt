@@ -1,19 +1,16 @@
 package unit
 
-import ruleExtraction.eq
+import ruleExtraction1.eq
 import db.DB
 import integration.TestObject
 import io.mockk.*
 import observable.Observable
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
-import ruleExtraction.MappingStep
-import ruleExtraction.MappingType
+import ruleExtraction1.MappingStep
+import ruleExtraction1.MappingType
 import sql.SqlBackend
 import sql.SqlContext
-import sql.createOrUpdateTable
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import kotlin.reflect.KClass

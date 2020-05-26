@@ -4,9 +4,9 @@ import collections.*
 import connection.ObjectCache
 import main.kotlin.connection.BackendConnector
 import observable.*
-import ruleExtraction.MappingStep
-import ruleExtraction.MappingType
-import ruleExtraction.Step
+import ruleExtraction1.MappingStep
+import ruleExtraction1.MappingType
+import ruleExtraction1.Step
 import virtual.VirtualSet
 import virtual.VirtualSetAccessor
 import kotlin.reflect.KClass

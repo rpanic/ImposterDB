@@ -1,6 +1,6 @@
 package db
 
-import ruleExtraction.Step
+import ruleExtraction1.Step
 import observable.DBAwareObject
 import observable.LevelInformation
 import observable.Observable
