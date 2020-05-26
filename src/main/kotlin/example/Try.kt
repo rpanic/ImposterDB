@@ -35,11 +35,16 @@ fun callsToString(list: List<Parameterable>) : String{
 
 fun main2(){
 
+//    var calls = RuleExtractionFramework(RuleExtractorTest::class)
+//            .getAllExecutedFunctions {     it.getOne().getTwo(it.getStr()).getThree()     }
+//
+//    println("Lambda1: " + callsToString(calls))
+
     var calls = RuleExtractionFramework(RuleExtractorTest::class)
-            .getAllExecutedFunctions {     it.getOne().getTwo(it.getStr()).getThree()     }
+//            .getAllExecutedFunctions { it.getOne() eq RuleExtractorTestChild() }
+            .getAllExecutedFunctions { it.getStr()() == "hallo"() }
 
-    println("Lambda1: " + callsToString(calls))
-
+    println("Lambda2: " + callsToString(calls))
 
 
     System.exit(0)

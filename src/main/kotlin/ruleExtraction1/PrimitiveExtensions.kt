@@ -2,6 +2,7 @@ package ruleExtraction1
 
 import io.mockk.every
 import io.mockk.mockk
+import ruleExtraction.*
 
 private inline fun <reified V : Any, reified T : Comparable<V>> createMock(t: V) : T{
     val answerer = RuleExtractionFramework.answerer[t]!!
@@ -65,12 +66,12 @@ operator fun Char.invoke() : CharClone{
     return createMock(this)
 }
 
-interface StringClone : Comparable<String>, CharSequence
-interface IntClone : Comparable<Int>, CharSequence
-interface DoubleClone : Comparable<Double>, CharSequence
-interface ByteClone : Comparable<Byte>, CharSequence
-interface LongClone : Comparable<Long>, CharSequence
-interface ShortClone : Comparable<Short>, CharSequence
-interface FloatClone : Comparable<Float>, CharSequence
-interface BooleanClone : Comparable<Boolean>, CharSequence
-interface CharClone : Comparable<Char>
+//interface StringClone : Comparable<String>, CharSequence
+//interface IntClone : Comparable<Int>, CharSequence
+//interface DoubleClone : Comparable<Double>, CharSequence
+//interface ByteClone : Comparable<Byte>, CharSequence
+//interface LongClone : Comparable<Long>, CharSequence
+//interface ShortClone : Comparable<Short>, CharSequence
+//interface FloatClone : Comparable<Float>, CharSequence
+//interface BooleanClone : Comparable<Boolean>, CharSequence
+//interface CharClone : Comparable<Char>
