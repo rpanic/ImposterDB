@@ -3,9 +3,46 @@ package example
 import db.DB
 import io.zeko.model.Entity
 import observable.Observable
+import ruleExtraction.*
 import sql.SqlBackend
 
+class RuleExtractorTest{
+    fun getOne() = RuleExtractorTestChild()
+
+    fun getStr() = "hello"
+}
+
+class RuleExtractorTestChild{
+    fun getTwo(s: String) = RuleExtractorTest3(s)
+}
+
+class RuleExtractorTest3(val x: String){
+
+    fun getThree() = x
+
+}
+
+fun callsToString(list: List<Parameterable>) : String{
+    return list.map { call ->
+        when(call){
+            is InputObject<*> -> "x"//"Input ${call.clazz.simpleName}"
+            is Call<*> -> "${callsToString(listOf(call.parent))}${""/*call.clazz.simpleName*/}.${call.method.name}(${call.parameters.map { callsToString(listOf(it)) }.joinToString(", ") })"
+            is ConstantParameter<*> -> "${call.value}"
+            else -> ""
+        }
+    }.joinToString("\n")
+}
+
 fun main2(){
+
+    var calls = RuleExtractionFramework(RuleExtractorTest::class)
+            .getAllExecutedFunctions {     it.getOne().getTwo(it.getStr()).getThree()     }
+
+    println("Lambda1: " + callsToString(calls))
+
+
+
+    System.exit(0)
 
 //    val db = DB();
 //    val backend = SqlBackend();
@@ -32,7 +69,7 @@ fun main3(){
 
 fun main() {
 
-    main3()
+    main2()
     
     mstart()
     val db = DB(); mpoint()
