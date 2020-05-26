@@ -1,27 +1,13 @@
 package integration
 
-import virtual.VirtualSet
-import ruleExtraction.eq
-import com.beust.klaxon.Klaxon
-import com.mchange.v2.sql.SqlUtils
+import ruleExtraction1.eq
 import db.DB
-import example.print
-import example.printData
-import integration.TestObject
-import io.mockk.*
-import observable.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
-import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import sql.SqlBackend
-import sql.SqlContext
 import sql.checkIfTableExists
-import sql.createOrUpdateTable
-import java.sql.ResultSet
-import kotlin.reflect.KClass
-import kotlin.reflect.full.memberProperties
 
 class SqlBackendTest{
 

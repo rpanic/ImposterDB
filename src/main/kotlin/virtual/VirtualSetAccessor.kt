@@ -1,7 +1,7 @@
 package virtual
 
 import collections.SetChangeArgs
-import ruleExtraction.Step
+import ruleExtraction1.Step
 import observable.LevelInformation
 import observable.Observable
 

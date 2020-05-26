@@ -1,4 +1,4 @@
-package ruleExtraction
+package ruleExtraction1
 
 import example.debug
 import io.mockk.Call
@@ -57,7 +57,7 @@ object RuleExtractionFramework {
         mock::class.memberProperties.forEach { prop ->
             val cache = Cache<Any>()
             every { (prop.javaGetter!!.invoke(mock)) } answers { call ->
-                cache{ answer(this, call) }
+                cache { answer(this, call) }
             }
         }
 

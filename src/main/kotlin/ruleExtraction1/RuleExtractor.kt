@@ -1,9 +1,8 @@
-package ruleExtraction
+package ruleExtraction1
 
-import observable.Observable
 import kotlin.reflect.KClass
 
-class RuleExtractor<T : Observable>(val clazz: KClass<T>){ //, V: (T) -> Any
+class RuleExtractor<T : Any>(val clazz: KClass<T>){ //, V: (T) -> Any
 
 //    fun extract(): List<NormalizedCompareRule<Any>> {
 //

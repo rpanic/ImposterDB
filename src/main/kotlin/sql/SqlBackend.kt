@@ -13,7 +13,7 @@ import mu.KotlinLogging
 import observable.LevelInformation
 import observable.Observable
 import observable.ObservableLevel
-import ruleExtraction.*
+import ruleExtraction1.*
 import java.sql.DriverManager
 import java.sql.ResultSet
 import kotlin.reflect.*

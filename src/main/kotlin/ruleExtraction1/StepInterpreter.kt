@@ -1,8 +1,5 @@
-package ruleExtraction
+package ruleExtraction1
 
-import io.zeko.db.sql.Query
-import observable.Observable
-import sql.query
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 

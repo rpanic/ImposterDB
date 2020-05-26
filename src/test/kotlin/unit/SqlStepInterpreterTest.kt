@@ -1,13 +1,11 @@
 package unit
 
-import example.ReflectionUtils
 import io.zeko.db.sql.Query
 import observable.Observable
 import org.assertj.core.api.Assertions
 import org.junit.Test
-import ruleExtraction.*
+import ruleExtraction1.*
 import sql.SqlStepInterpreter
-import kotlin.reflect.KClass
 
 class SqlStepInterpreterTest {
     
