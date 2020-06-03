@@ -1,15 +1,20 @@
 package example
 
 import db.DB
+import io.mockk.every
+import io.mockk.mockk
 import io.zeko.model.Entity
 import observable.Observable
 import ruleExtraction.*
 import sql.SqlBackend
+import kotlin.reflect.full.declaredMemberProperties
 
 class RuleExtractorTest{
     fun getOne() = RuleExtractorTestChild()
 
     fun getStr() = "hello"
+
+    val prop = "eyyy"
 }
 
 class RuleExtractorTestChild{
@@ -26,7 +31,14 @@ fun callsToString(list: List<Parameterable>) : String{
     return list.map { call ->
         when(call){
             is InputObject<*> -> "x"//"Input ${call.clazz.simpleName}"
-            is Call<*> -> "${callsToString(listOf(call.parent))}${""/*call.clazz.simpleName*/}.${call.method.name}(${call.parameters.map { callsToString(listOf(it)) }.joinToString(", ") })"
+            is Call<*> -> {
+                val args = if(call is FunctionCall<*>){
+                    "(${ call.parameters.map { callsToString(listOf(it)) }.joinToString(", ") })"
+                }else{
+                    ""
+                }
+                "${callsToString(listOf(call.parent))}${""/*call.clazz.simpleName*/}.${call.callable.name}$args"
+            }
             is ConstantParameter<*> -> "${call.value}"
             else -> ""
         }
@@ -42,7 +54,7 @@ fun main2(){
 
     var calls = RuleExtractionFramework(RuleExtractorTest::class)
 //            .getAllExecutedFunctions { it.getOne() eq RuleExtractorTestChild() }
-            .getAllExecutedFunctions { it.getStr()() == "hallo"() }
+            .getAllExecutedFunctions { it.prop() == "hallo"() }
 
     println("Lambda2: " + callsToString(calls))
 

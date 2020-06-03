@@ -1,12 +1,10 @@
 package ruleExtraction
 
 import io.mockk.*
-import kotlin.reflect.KCallable
-import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredMemberProperties
-import kotlin.reflect.full.declaredMembers
-import kotlin.reflect.full.memberFunctions
+import kotlin.reflect.*
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaGetter
 import kotlin.reflect.jvm.javaType
 
 interface Parameterable
@@ -21,12 +19,27 @@ data class ConstantParameter<T : Any?>(
         val value: T
 ) : Parameterable
 
-data class Call<T : Any>(
+abstract class Call<T : Any>(
         val clazz: KClass<T>,
-        val method: KCallable<*>,
+        val callable: KCallable<*>,
         val parameters: List<Parameterable>,
         val parent: Parameterable
 ) : Parameterable
+
+class FunctionCall<T : Any>(
+        clazz: KClass<T>,
+        val function: KFunction<*>,
+        parameters: List<Parameterable>,
+        parent: Parameterable
+) : Call<T>(clazz, function, parameters, parent)
+
+
+class PropertyCall<T : Any>(
+        clazz: KClass<T>,
+        val property: KProperty1<*, *>,
+        parameters: List<Parameterable>,
+        parent: Parameterable
+) : Call<T>(clazz, property, parameters, parent)
 
 
 class RuleExtractionFramework<T : Any>(val clazz: KClass<T>) {
@@ -35,7 +48,7 @@ class RuleExtractionFramework<T : Any>(val clazz: KClass<T>) {
         val frameworks = mutableListOf<ruleExtraction.RuleExtractionFramework<*>>()
 
         fun findFrameworkByMock(mock: Any) : RuleExtractionFramework<*> {
-            return frameworks.first()
+            return frameworks.first()//find { it.mocks.contains(mock) }
         }
     }
 
@@ -63,7 +76,8 @@ class RuleExtractionFramework<T : Any>(val clazz: KClass<T>) {
     fun <V : Any> mockRecursive(clazz: KClass<V>, parent: Parameterable): V {
         val mock = mockkClass(clazz, relaxed = true)
 
-        (clazz.declaredMembers + clazz.memberFunctions.find { it.name == "equals" }!!).forEach {
+        (clazz.declaredMembers + clazz.memberFunctions.find { it.name == "equals" }!!)
+        .forEach {
             every {
 
                 val callRecorder = this.getCallRecorder()
@@ -73,13 +87,35 @@ class RuleExtractionFramework<T : Any>(val clazz: KClass<T>) {
                     callRecorder.anyFromClass((param.type.javaType as Class<Any>).kotlin)
                 }
 
-                it.call(mock, *params.toTypedArray())
+                if(it is KProperty<*>){
+                    it.javaGetter!!.invoke(mock)
+                }else{
+                    it.call(mock, *params.toTypedArray())
+                }
+
             } answers {
                 if (!(this.method.returnsNothing || this.method.returnsUnit)) {
 
-                    answerMethod(this.args, this.method.declaringClass,
-                            this.method.declaringClass.declaredMembers.find { it.name == this.method.name }!!,
-                            this.method.returnType, parent)
+                    var callable: KCallable<*>? = this.method.declaringClass.declaredMemberFunctions.find { it.name == this.method.name }
+
+                    if(callable != null){
+
+                answerMethod(this.args, this.method.declaringClass,
+                        callable,
+                        true,
+                        this.method.returnType, parent)
+
+                    }else{
+
+                        callable = this.method.declaringClass.declaredMemberProperties.find { it.javaGetter?.name == this.method.name }
+
+                        answerMethod(this.args, this.method.declaringClass,
+                                callable!!,
+                                false,
+                                this.method.returnType, parent)
+
+                    }
+
 
                 } else {
                     //Return nothing
@@ -106,7 +142,7 @@ class RuleExtractionFramework<T : Any>(val clazz: KClass<T>) {
         return this.matcher(ConstantMatcher<Any>(true), clazz)
     }
 
-    fun answerMethod(methodArgs: List<Any?>, declaringClass: KClass<*>, method: KCallable<*>, returnType: KClass<*>, parent: Parameterable): Any {
+    fun answerMethod(methodArgs: List<Any?>, declaringClass: KClass<*>, method: KCallable<*>, isFunction: Boolean, returnType: KClass<*>, parent: Parameterable): Any {
         val args = methodArgs.map { arg ->
             val parameterable = mocks[arg]
 
@@ -117,10 +153,17 @@ class RuleExtractionFramework<T : Any>(val clazz: KClass<T>) {
                 ConstantParameter(arg) //TODO Test if arg can actually be a constant (not obj f.e.)
         }
 
-        val call = Call(declaringClass,
-                method,
-                args,
-                parent)
+        val call = if(isFunction) { //I know this flag is not the most beautiful solution
+            FunctionCall(declaringClass,
+                    method as KFunction<*>,
+                    args,
+                    parent)
+        }else{
+            PropertyCall(declaringClass,
+                    method as KProperty1<*, *>,
+                    args,
+                    parent)
+        }
 
         val stub = if (isClassPrimitive(returnType)) {
             var randomValue = ruleExtraction1.RuleExtractionFramework.getPrimitivesValue(returnType) {} //Replace by getPrimitivevalue without f

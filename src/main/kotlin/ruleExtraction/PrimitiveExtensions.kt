@@ -14,6 +14,7 @@ internal fun <T : Any> T.eq(b2: T, clazz: KClass<T>) : Boolean{
         val parent = framework.mocks[this]!!
         framework.answerMethod(listOf(b2), clazz,
                 clazz.memberFunctions.find { it.name == "equals" && it.parameters.size == 2 }!!,
+                true,
                 Boolean::class, parent)
 
 //    }else{
@@ -26,6 +27,7 @@ private fun <T : Any> createCloneMock(original: Any, clazz: KClass<T>): T {
 
     val framework = RuleExtractionFramework.findFrameworkByMock(original)
 
+    //TODO Figure out how to connect "abc"() mock to RuleExtractionFramework, since RuleExtractionFramework.findFramework(original) wont work
     val call = framework.mocks[original] ?: ConstantParameter(original) //If mock is not registered it can only be: someString() == "test"()
 
     val childmock = framework.mockRecursive(clazz, call)
