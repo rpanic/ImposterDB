@@ -20,7 +20,7 @@ object SqlStepInterpreter {
         
         if(step is FilterStep<*>){
             step.conditions.forEach { condition ->
-                if(condition is NormalizedCompareRule<*>) {
+                if(condition is CompareRule<*>) {
                     val field = getSqlFieldName(condition.prop!!)
                     val value = condition.obj2!!
                     val stringValue = "?".replaceWildCards(value)

@@ -18,7 +18,7 @@ object StepInterpreter {
     
     fun <T : Any> interpretFilter(step: FilterStep<T>, t: T) : Boolean{
         return step.conditions.map {
-            val rule = (it as NormalizedCompareRule<T>)
+            val rule = (it as CompareRule<T>)
 
             var last: Any = t
             rule.prop?.forEach {

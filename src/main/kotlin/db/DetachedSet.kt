@@ -93,7 +93,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
         
                     db.backendConnector.loadWithRules(table.tableName(), listOf(
                             FilterStep(listOf(
-                                    NormalizedCompareRule<String>(listOf(
+                                    CompareRule<String>(listOf(
                                             if (!table.namesFlipped()) MtoNTableEntry::m else MtoNTableEntry::n),
                                             parent.uuid,
                                             CompareType.EQUALS)
@@ -107,7 +107,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
     
                 val nSteps = mToNTableEntry.map { entry ->
                     FilterStep<T>(listOf(
-                            NormalizedCompareRule(listOf(
+                            CompareRule(listOf(
                                     clazz.memberProperties.find { it.name == "uuid" }!!),
                                     if (table.namesFlipped()) entry.m else entry.n,
                                     CompareType.EQUALS)

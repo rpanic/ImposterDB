@@ -4,13 +4,13 @@ import kotlin.reflect.KClass
 
 class RuleExtractor<T : Any>(val clazz: KClass<T>){ //, V: (T) -> Any
 
-//    fun extract(): List<NormalizedCompareRule<Any>> {
+//    fun extract(): List<CompareRule<Any>> {
 //
 //
 //
 //    }
 
-    fun extractFilterRules(f: (T) -> Boolean): List<NormalizedCompareRule<Any>> {
+    fun extractFilterRules(f: (T) -> Boolean): List<CompareRule<Any>> {
 
         val conditions = mutableListOf<ComparisonRule>()
         val mock = RuleExtractionFramework.createMock(clazz) {
@@ -29,7 +29,7 @@ class RuleExtractor<T : Any>(val clazz: KClass<T>){ //, V: (T) -> Any
 
                 if(actualCondition.type == CompareType.EQUALS){
     
-                    NormalizedCompareRule(rule.props, actualCondition.obj2, if (ret) CompareType.EQUALS else CompareType.NOT_EQUALS)
+                    CompareRule(rule.props, actualCondition.obj2, if (ret) CompareType.EQUALS else CompareType.NOT_EQUALS)
 
                 }else {
 
@@ -43,7 +43,7 @@ class RuleExtractor<T : Any>(val clazz: KClass<T>){ //, V: (T) -> Any
 
                     actualCondition.type = types[results]
     
-                    NormalizedCompareRule(rule.props, actualCondition.obj2, actualCondition.type)
+                    CompareRule(rule.props, actualCondition.obj2, actualCondition.type)
                 }
             } else {
                 throw IllegalStateException("Can't happen")

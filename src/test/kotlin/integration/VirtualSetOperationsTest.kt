@@ -106,8 +106,8 @@ class VirtualSetOperationsTest {
         assertThat(set2.steps.size).isEqualTo(1)
         assertThat(set2.steps[0]).isInstanceOf(FilterStep::class.java)
         (set2.steps[0] as FilterStep<*>).also { filterStep ->
-            assertThat(filterStep.conditions[0]).isInstanceOf(NormalizedCompareRule::class.java)
-            (filterStep.conditions[0] as NormalizedCompareRule<*>).apply {
+            assertThat(filterStep.conditions[0]).isInstanceOf(CompareRule::class.java)
+            (filterStep.conditions[0] as CompareRule<*>).apply {
                 assertThat(this.type).isEqualTo(type)
                 assertThat(this.prop!![0]).isEqualTo(prop)
                 if(obj != null){

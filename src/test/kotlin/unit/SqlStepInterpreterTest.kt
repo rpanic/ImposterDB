@@ -13,8 +13,8 @@ class SqlStepInterpreterTest {
     fun testFilter(){
         
         val steps = listOf<Step<*, *>>(
-                FilterStep<QueryObject>(listOf(NormalizedCompareRule(listOf(QueryObject::one), "filterValue", CompareType.NOT_EQUALS))),
-                FilterStep<QueryObject>(listOf(NormalizedCompareRule(listOf(QueryObject::two), "twoValue", CompareType.LESS_EQUALS)))
+                FilterStep<QueryObject>(listOf(CompareRule(listOf(QueryObject::one), "filterValue", CompareType.NOT_EQUALS))),
+                FilterStep<QueryObject>(listOf(CompareRule(listOf(QueryObject::two), "twoValue", CompareType.LESS_EQUALS)))
         )
         
         testInterpretSteps(steps, "SELECT one, two FROM table1 WHERE one != 'filterValue' AND two <= 'twoValue'")
@@ -26,7 +26,7 @@ class SqlStepInterpreterTest {
     
         val steps = listOf<Step<*, *>>(
                 FindStep(
-                    FilterStep<QueryObject>(listOf(NormalizedCompareRule(listOf(QueryObject::one), "filterValue", CompareType.NOT_EQUALS)))
+                    FilterStep<QueryObject>(listOf(CompareRule(listOf(QueryObject::one), "filterValue", CompareType.NOT_EQUALS)))
                 )
         )
     

@@ -24,7 +24,7 @@ class MtoNRule<T>() : Step<T, T> //TODO Make Generic work reasonable
 
 interface ExtractedRule
 
-open class NormalizedCompareRule<T>(
+open class CompareRule<T>(
         val prop: List<KProperty1<*, *>>?,
 //        val obj1: Any?, //TODO Enable cases where the mock is no used at all
         val obj2 : T,

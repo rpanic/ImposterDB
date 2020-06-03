@@ -66,7 +66,7 @@ open class ReadOnlyVirtualSet<T : Observable>(
         }
         return accessor.load(listOf(
                 FilterStep(listOf(
-                        NormalizedCompareRule(listOf(
+                        CompareRule(listOf(
                                 clazz.createInstance().key<T, Any>()),
                                 key)
                 ))
@@ -93,7 +93,7 @@ open class ReadOnlyVirtualSet<T : Observable>(
     override fun containsAll(elements: Collection<T>): Boolean {
         return loadedState?.containsAll(elements) ?:
                 elements.all { element ->
-                    accessor.count(listOf(FilterStep<T>(listOf(NormalizedCompareRule(
+                    accessor.count(listOf(FilterStep<T>(listOf(CompareRule(
                             listOf(clazz.memberProperties.find { it.name == "uuid" }!!),
                             element.uuid,
                             CompareType.EQUALS
