@@ -28,7 +28,9 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
     fun <T : Observable> initIfNotYet(key: String, clazz: KClass<T>){
         if(key !in initialized) {
             forEachBackend {
-                it.createSchema(key, clazz)
+                if(!it.keyExists(key)) {
+                    it.createSchema(key, clazz)
+                }
             }
             initialized += key
         }

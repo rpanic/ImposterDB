@@ -42,50 +42,48 @@ fun SqlContext.createMToNConstraints(table: MtoNTable) : String{
 
 fun <T : Observable> SqlContext.createOrUpdateTable(key: String, clazz: KClass<T>) : Boolean{
 
-    return if(checkIfTableExists(key)){
+     /* if(checkIfTableExists(key)){
 
         //TODO Check if the schema is the same as the DAO
         //this.executeQuery("SELECT * FROM $key ")
         true
-    }else{
+    }else{*/
 
-        val pkProp = ReflectionUtils.getPkOfClass(clazz)
+    val pkProp = ReflectionUtils.getPkOfClass(clazz)
 
-        val props = ReflectionUtils.getPropertySqlNames(clazz)
-                .map {
-                    val type = it.second.getter.returnType.javaType
-                    val notNull = " " + if(it.second.returnType.isMarkedNullable) "" else "NOT NULL"
-                    val datatype = if (it.second.javaField == pkProp?.javaField /* because uuid would be Observable.uuid and Test.uuid */
-                            && type == String::class.java) {
-                        "VARCHAR(255)"
-                    } else {
-                        typeMap[type]!!
-                    }
-                    it.first to (datatype) + notNull
+    val props = ReflectionUtils.getPropertySqlNames(clazz)
+            .map {
+                val type = it.second.getter.returnType.javaType
+                val notNull = " " + if(it.second.returnType.isMarkedNullable) "" else "NOT NULL"
+                val datatype = if (it.second.javaField == pkProp?.javaField /* because uuid would be Observable.uuid and Test.uuid */
+                        && type == String::class.java) {
+                    "VARCHAR(255)"
+                } else {
+                    typeMap[type]!!
                 }
-                .toMap().toMutableMap()
-        props["PRIMARY KEY"] = "(${pkProp.name})"
+                it.first to (datatype) + notNull
+            }
+            .toMap().toMutableMap()
+    props["PRIMARY KEY"] = "(${pkProp.name})"
 
-        val sql = "CREATE TABLE $key (${props.map { "${it.key} ${it.value}" }.joinToString (",\n")})"
+    val sql = "CREATE TABLE $key (${props.map { "${it.key} ${it.value}" }.joinToString (",\n")})"
 
-        this.execute(sql)
+    this.execute(sql)
 
-        val check = checkIfTableExists(key)
+    val check = checkIfTableExists(key)
 
-        if(!check){
-            example.error("Creation of table $key failed - Something went wrong on the SQL Server")
-            false
-        }else{
-            info("Created Table $key")
+    return if(!check){
+        example.error("Creation of table $key failed - Something went wrong on the SQL Server")
+        false
+    }else{
+        info("Created Table $key")
 
-            //Not needed, Mysql does this automatically
+        //Not needed, Mysql does this automatically
 //            val index = "CREATE UNIQUE INDEX pkidx_$key ON $key (${pkProp.name})"
 //            val indexRet = this.execute(index)
 //            info("Created PK-Index for $key: $indexRet")
 
-            true
-        }
-
+        true
     }
 
 }
