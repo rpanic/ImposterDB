@@ -11,6 +11,21 @@ import sql.SqlBackend
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.declaredMemberProperties
 
+fun main2(){
+
+    //TODO Create Test for this logic (lazyObservable)
+
+    val obj = Test()
+
+    obj.addListener { prop: KProperty<*>, old: Any?, new: Any, levels: LevelInformation ->
+        println("$old -> $new")
+    }
+
+    obj.s = "Hallo"
+
+    obj.s.print()
+
+}
 
 fun main3(){
     
@@ -28,6 +43,8 @@ fun main3(){
 fun main() {
 
     main2()
+
+    System.exit(0)
     
     mstart()
     val db = DB(); mpoint()
@@ -63,7 +80,7 @@ class GenericEntity : Entity {
 }
 
 open class Test : Observable(){
-    open var s: String by observable("")
+    open var s: String by lazyObservable()
     open var b: Int by observable(10)
 
 //    companion object{

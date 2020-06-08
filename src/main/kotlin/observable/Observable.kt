@@ -91,6 +91,16 @@ abstract class Observable : DBAwareObject(), Indexable{
         }
     }
 
+    fun <T : Any> lazyObservable() : ReadWriteProperty<Any?, T>{
+
+        return object : LazyObservableProperty<T>() {
+            override fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T){
+                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable, oldValue, newValue, property))))
+            }
+        }
+
+    }
+
     override fun equals(other: Any?): Boolean {
         return if(other is Observable){
             other.keyValue<Observable, Any>() == keyValue<Observable, Any>()

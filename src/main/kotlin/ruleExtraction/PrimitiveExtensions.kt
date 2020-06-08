@@ -7,19 +7,15 @@ inline infix fun <reified T : Any> T.eq(b2: T) = this.eq(b2, T::class)
 
 @PublishedApi
 internal fun <T : Any> T.eq(b2: T, clazz: KClass<T>) : Boolean{
-//    if(this is Comparable<*> && b2 is Comparable<*>){
 
-        val framework = RuleExtractionFramework.frameworks.first() //TODO find { this in it.mocks.values  }
+    val framework = RuleExtractionFramework.frameworks.first() //TODO find { this in it.mocks.values  }   (Connected with Line 26)
 
-        val parent = framework.mocks[this]!!
-        framework.answerMethod(listOf(b2), clazz,
-                clazz.memberFunctions.find { it.name == "equals" && it.parameters.size == 2 }!!,
-                true,
-                Boolean::class, parent)
+    val parent = framework.mocks[this]!!
+    framework.answerMethod(listOf(b2), clazz,
+            clazz.memberFunctions.find { it.name == "equals" && it.parameters.size == 2 }!!,
+            true,
+            Boolean::class, parent)
 
-//    }else{
-//        throw IllegalAccessException("Eq can only be called by Permitted Types")
-//    }
     return false //TODO Make gscheid
 }
 
