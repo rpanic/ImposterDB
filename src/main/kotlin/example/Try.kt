@@ -73,12 +73,6 @@ fun main() {
     TimeMeasurer.dump()
 }
 
-class GenericEntity : Entity {
-    constructor(map: Map<String, Any?>) : super(map)
-    constructor(vararg props: Pair<String, Any?>) : super(*props)
-    var test: String? by map
-}
-
 open class Test : Observable(){
     open var s: String by lazyObservable()
     open var b: Int by observable(10)

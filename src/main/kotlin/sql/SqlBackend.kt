@@ -2,13 +2,13 @@ package sql
 
 import db.Backend
 import db.VirtualSetReadOnlyProperty
-import example.GenericEntity
 import example.ReflectionUtils
 import io.zeko.db.sql.Delete
 import io.zeko.db.sql.Insert
 import io.zeko.db.sql.Query
 import io.zeko.db.sql.Update
 import io.zeko.db.sql.dsl.*
+import io.zeko.model.Entity
 import mu.KotlinLogging
 import observable.LevelInformation
 import observable.Observable
@@ -175,5 +175,13 @@ class SqlBackend (
                 .map { it.first to ReflectionUtils.getValue(it.second, t) }
                 .toMap()
     }
+
+
+    class GenericEntity : Entity {
+        constructor(map: Map<String, Any?>) : super(map)
+        constructor(vararg props: Pair<String, Any?>) : super(*props)
+        var test: String? by map
+    }
+
 
 }
