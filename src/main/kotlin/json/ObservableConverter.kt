@@ -70,7 +70,7 @@ class ObservableConverter(private val klaxon: Klaxon, private val allPaths: Hash
             }
             else -> {
                 val valueList = arrayListOf<String>()
-                val properties = Annotations.findNonIgnoredProperties(value::class, klaxon.propertyStrategies) //TODO Use ReflectionUtils.findPropertiesWithType
+                val properties = Annotations.findNonIgnoredProperties(value::class, klaxon.propertyStrategies)
                         .filter { it.findAnnotation<Ignored>() == null }
                         .filter {
                             it.isAccessible = true

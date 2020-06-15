@@ -97,7 +97,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         val mToNProperties = findDelegatingProperties(clazz, VirtualSetReadOnlyProperty::class)
 
         //1 to n
-        //TODO
+        //TODO 1 to n´s work with JSON Backend, check for SQL Backend, although that should be no issue
 
         //m to n
         mToNProperties.forEach { prop ->
