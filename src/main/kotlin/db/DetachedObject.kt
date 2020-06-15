@@ -29,14 +29,21 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
 
     private var initialized = false
     private var value: T? = null //TODO Nulls dont work, they throw a npe even if type is nullable
+    
+    internal var dbInserted = false //Gives an indication whether the detached object already got inserted into DB. Depending on if the parent DB Reference got set before the detached object was set
 
     /*open*/ fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T): Boolean = true
 
     private fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
-        if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
-            observable.getDB().backendConnector.insert(key, newValue, clazz) //Be careful that this will not be used in combination with ObservableArrayList
-
-            observable.getDB().addBackendUpdateListener(newValue, key, newValue::class as KClass<T>)
+        dbInserted = if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
+            if(observable.db != null) {
+                initValue()
+                true
+            }else{
+                false //dbInserted Stays false
+            }
+        }else{
+            true
         }
         //TODO Safely delete the new and old detached objects
         // + When will unused objects be deleted? When theres no reference any more or when it gets removed from the list?
@@ -48,7 +55,16 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
         observable.changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(observable, oldValue, newValue, property))))
     }
 
-    public override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    fun initValue(){
+        if(value != null) {
+            val finalizedValue = value!!
+            observable.getDB().backendConnector.insert(key, finalizedValue, clazz) //Be careful that this will not be used in combination with ObservableArrayList
+    
+            observable.getDB().addBackendUpdateListener(finalizedValue, key, finalizedValue::class as KClass<T>)
+        }
+    }
+    
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
         if(!initialized){
             value = initializer(a)
             observable.hookToObservable(value, property)

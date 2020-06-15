@@ -2,6 +2,7 @@ package db
 
 import collections.*
 import connection.ObjectCache
+import example.ReflectionUtils
 import main.kotlin.connection.BackendConnector
 import observable.*
 import ruleExtraction1.MappingStep
@@ -136,6 +137,7 @@ class DB{
         val initObservable = { obj : T ->
             obj.setDbReference(this)
             addBackendUpdateListener(obj, key, clazz)
+            ensureAllDetachedAreInserted(obj)
         }
         
         val accessor = object : VirtualSetAccessor<T>{
@@ -179,6 +181,20 @@ class DB{
 
         return set
         //TODO Hook Set to observable elements and relay Update events?
+    }
+    
+    /**
+     * If the Detached object got set when the parent Observable was not added to a DB VirtualSet yet, the detached object will not be in the database yet
+     */
+    fun <T : Observable> ensureAllDetachedAreInserted(obj: T){
+        ReflectionUtils.findPropertiesWithType(obj::class, listOf(DetachedObjectReadWriteProperty::class))
+                .map { it as KProperty1<T, Any> }
+                .forEach {
+                    val delegate = it.getDelegate(obj) as? DetachedObjectReadWriteProperty<*>
+                    if(delegate != null && !delegate.dbInserted){
+                        delegate.initValue()
+                    }
+                }
     }
 
     fun <T : Observable> performListAddEventsOnBackend(key: String, clazz: KClass<T>, args: ChangeArgs<T>){

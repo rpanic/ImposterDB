@@ -51,12 +51,6 @@ class ListTest{
             obj.child = child
 
             child.value = "asd"
-//
-//            obj.trait.value = 10
-//
-//            obj.traits.add(Trait())
-//
-//            obj.traits[0].value = 1337
 
             obj.name = "John Miller"
 

@@ -18,7 +18,7 @@ class Person : Observable(){
 
     val traits by detachedSet<Trait>("traits")
 
-//    var trait: Trait by detached<Trait>("trait") //TODO Better error message
+    var trait: Trait by detached<Trait>("trait") //TODO Better error message
 
     //var trait: Trait by relation()
 
@@ -57,18 +57,26 @@ fun main() {
 
     val list = db.getSet<Person>("persons")
 
-    val view = list.view()
-
-    val traits = view.first().traits.view()
-
-    println(traits.size == 1)
-
-    val person = Person()
-    list.add(person)
-
-    person.name = "test"
-    val trait = Trait()
-    person.traits.add(trait)
+    val p = list.first()
+    
+//    val person = Person()
+//
+//    person.trait = Trait()
+//
+//    list.add(person)
+    
+//    val view = list.view()
+//
+//    val traits = view.first().traits.view()
+//
+//    println(traits.size == 1)
+//
+//    val person = Person()
+//    list.add(person)
+//
+//    person.name = "test"
+//    val trait = Trait()
+//    person.traits.add(trait)
 
     //Test2: Remove Relation
 //    list[0].traits.removeAt(1)

@@ -29,6 +29,13 @@ object ReflectionUtils {
                 .map{ it as KProperty1<T, Any> }
                 .filter { !(VirtualSetReadOnlyProperty::class.java == it.javaField?.type) }
     }
+    
+    fun <T : Any, V: Any> findPropertiesWithType(clazz: KClass<T>, types: List<KClass<V>>) : List<KProperty1<T, Any>> {
+        val mappedTypes = types.map { it.java }
+        return clazz.memberProperties
+                .map { it as KProperty1<T, Any> }
+                .filter { it.javaField?.type in mappedTypes }
+    }
 
     fun <T : Any> getPropertyTree(clazz: KClass<T>, path: List<KProperty1<Any, Any>> = listOf()) : Set<Pair<String, List<KProperty1<Any, Any>>>> {
         return getNotIgnoredOrDelegatedProperties(clazz)
