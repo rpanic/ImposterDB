@@ -93,11 +93,12 @@ class DB{
                 read = init.invoke()
                 backendConnector.insert(key, read, clazz) //Be careful that this will not be used in combination with ObservableArrayList
             }
+        }else{
+            read.setDbReference(this) //Db Reference will be set in insert
         }
 
         addBackendUpdateListener(read, key, clazz)
 
-        read.setDbReference(this)
 
         return read
 
@@ -135,7 +136,6 @@ class DB{
 
     fun <T : Observable> getSet(key: String, clazz: KClass<T>) : VirtualSet<T>{
         val initObservable = { obj : T ->
-            obj.setDbReference(this)
             addBackendUpdateListener(obj, key, clazz)
             ensureAllDetachedAreInserted(obj)
         }
@@ -143,7 +143,10 @@ class DB{
         val accessor = object : VirtualSetAccessor<T>{
             override fun load(steps: List<Step<T, *>>): Set<T> {
                 val set = backendConnector.loadWithRules(key, steps, clazz)
-                set.forEach(initObservable)
+                set.forEach {
+                    initObservable(it)
+                    it.setDbReference(this@DB)
+                }
                 return set
             }
     
