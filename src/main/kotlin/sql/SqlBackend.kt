@@ -56,10 +56,6 @@ class SqlBackend (
     override fun <T : Observable> createSchema(key: String, clazz: KClass<T>) {
         context.createOrUpdateTable(key, clazz)
     }
-
-    override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
-        TODO("Not yet implemented")
-    }
     
     override fun <T : Observable, V : Any> loadTransformed(key: String, clazz: KClass<T>, steps: List<Step<T, *>>, to: KClass<V>): Set<V> {
     

@@ -1,12 +1,12 @@
 package main.kotlin.connection
 
-import ruleExtraction1.Step
 import com.beust.klaxon.internal.firstNotNullResult
 import connection.ObjectCache
 import db.*
 import example.findDelegatingProperties
 import observable.LevelInformation
 import observable.Observable
+import ruleExtraction1.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
@@ -68,7 +68,12 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
         val read = BackendObjectRetriever<T>(backends, cache)
             .tryCache { getCachedObject(key, pk) }
             .orBackends {
-                val loaded = it.loadByPK(key, pk, clazz)
+
+                val filterStep = FilterStep<T>(listOf(CompareRule(clazz.memberProperties.filter { it.name == "uuid" }, pk, CompareType.EQUALS)))
+                val loaded = it.load(key, clazz, listOf(filterStep))
+                        .also { set -> check(set.size <= 1){ "Size of result set for getDetached is greater than one - possible duplicate key" } }
+                        .firstOrNull()
+
                 if(loaded != null) {
                     resolveRelations(key, clazz, loaded)
                 }

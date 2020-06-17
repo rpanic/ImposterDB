@@ -28,12 +28,6 @@ open class JsonBackend : DBBackend() {
         this.baseFile.child("$key.json").writeText("[]")
     }
 
-    override fun <T : Observable, K> loadByPK(key: String, pk: K, clazz: KClass<T>): T? {
-        println("loadByPk $pk $key ${clazz.simpleName} ")
-        val list = load(key, clazz)
-        return list.find { it.keyValue<T, K>() == pk } //TODO For validation "!!"
-    }
-
     override fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>): Set<T> {
         println("load $key ${clazz.simpleName} [${steps.map { it.javaClass.simpleName }.joinToString(", ")}]")
         val loaded = load(key, clazz)

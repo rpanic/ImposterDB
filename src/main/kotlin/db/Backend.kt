@@ -13,8 +13,6 @@ interface Backend {
 
     fun <T : Observable> createSchema(key: String, clazz: KClass<T>)
 
-    fun <T : Observable, K> loadByPK (key: String, pk: K, clazz: KClass<T>) : T? //TODO Replace by load(FilterStep)
-
     fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>) : Set<T>
 
     fun <T : Observable> loadAll (key: String, clazz: KClass<T>) : List<T>

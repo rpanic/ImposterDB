@@ -118,7 +118,7 @@ class SqlBackendTest{
     }
 
     private fun <T : Any> resultsSetFromObject(t: T, clazz: KClass<T>) : ResultSet{
-        val rs = mockk<ResultSet>()  //TODO Write resultset mock for test
+        val rs = mockk<ResultSet>()
         every { rs.next() } returns true
 
         val getValue = { scope: MockKAnswerScope<*, *>, cl : KClass<T>, obj: T ->
