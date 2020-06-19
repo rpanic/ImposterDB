@@ -19,8 +19,8 @@ class FilterTest{
         val set2 = set.filter { it.testProperty != "" }
 
         Assertions.assertThat(set2.size).isEqualTo(3)
-        Assertions.assertThat(set2[objs[1].keyValue<TestObject, Any>()]).isEqualTo(objs[1])
-        Assertions.assertThat(set2[objs[3].keyValue<TestObject, Any>()]).isEqualTo(objs[3])
+        Assertions.assertThat(set2[objs[1].keyValue<TestObject>()]).isEqualTo(objs[1])
+        Assertions.assertThat(set2[objs[3].keyValue<TestObject>()]).isEqualTo(objs[3])
 
         val listenerMock = mock<SetElementChangedListener<TestObject>>()
 

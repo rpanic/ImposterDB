@@ -1,5 +1,6 @@
 package example
 
+import collections.Indexable
 import db.Ignored
 import db.VirtualSetReadOnlyProperty
 import observable.Observable
@@ -65,7 +66,11 @@ object ReflectionUtils {
     }
 
     fun <T : Observable> getPkOfClass(clazz: KClass<T>): KProperty1<T, Any> {
-        return clazz.createInstance().key<T, Any>()
+        return clazz.createInstance().key<T>()
+    }
+
+    fun <T : Any, A : Any> findMemberPropertiesWithAnnotation(clazz: KClass<T>, annotation: KClass<A>): List<KProperty1<T, *>> {
+        return clazz.memberProperties.filter { it.annotations.any { a -> a.javaClass.kotlin == annotation } }
     }
 
 }

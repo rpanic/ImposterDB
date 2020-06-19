@@ -226,7 +226,7 @@ class DB{
                     }
                 }
                 ElementChangeType.Remove -> {
-                    backendConnector.delete(key, obj.keyValue<T, Any>(), clazz)
+                    backendConnector.delete(key, obj.keyValue<T>(), clazz)
                 }
             }
         }

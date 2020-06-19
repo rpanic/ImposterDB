@@ -59,7 +59,7 @@ open class JsonBackend : DBBackend() {
     }
 
     override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>, levels: LevelInformation) {
-        println("update ${obj.keyValue<T, Any>()} ${prop.name} $key ${clazz.simpleName} ")
+        println("update ${obj.keyValue<T>()} ${prop.name} $key ${clazz.simpleName} ")
         if(prop.name == "uuid"){
             println("")
         }
@@ -69,7 +69,7 @@ open class JsonBackend : DBBackend() {
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
         println("delete $pk $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
-        (loaded[key] as? MutableList<T>)!!.removeIf { it.keyValue<T, K>() == pk }
+        (loaded[key] as? MutableList<T>)!!.removeIf { it.keyValue<T>() == pk }
         save(key, clazz)
     }
 
@@ -84,7 +84,7 @@ open class JsonBackend : DBBackend() {
     }
 
     override fun <T : Observable> insert(key: String, clazz: KClass<T>, obj: T) {
-        println("insert ${obj.keyValue<T, Any>()} $key ${clazz.simpleName} ")
+        println("insert ${obj.keyValue<T>()} $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
         (loaded[key] as? MutableList<T>)!!.add(obj)
         save(key, clazz)

@@ -131,7 +131,7 @@ class SqlBackend (
                 .where(pkProp.name eq "")
                 .toSql()
                 .replace("generic_entity", key)
-                .replaceWildCards(obj.keyValue<T, Any>().toString())
+                .replaceWildCards(obj.keyValue<T>().toString())
 
         logger.info(sql)
 

@@ -26,12 +26,12 @@ class ObjectCache (){
             parsedObjects[key] = mutableMapOf()
         }
 
-        if(containsObject(key, obj.keyValue<T, Any>())){
-            println("Object ${obj.keyValue<T, Any>()} already exists")
+        if(containsObject(key, obj.keyValue<T>())){
+            println("Object ${obj.keyValue<T>()} already exists")
 //            throw IllegalStateException()
         }
 
-        parsedObjects[key]?.set(obj.keyValue<T, Any>(), obj)
+        parsedObjects[key]?.set(obj.keyValue<T>(), obj)
     }
 
     fun <K : Any> removeObject(key: String, pk: K) : Boolean{

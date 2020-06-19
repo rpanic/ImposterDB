@@ -68,7 +68,7 @@ open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedL
         get() = collection.size
 
     operator fun get(key: Any?) : T?{
-        return collection.find { it.keyValue<T, Any>() == key }
+        return collection.find { it.keyValue<T>() == key }
     }
 
     override fun iterator() = collection.iterator()
@@ -81,7 +81,7 @@ open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedL
         return collection.contains(element)
     }
 
-    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.keyValue<T, Any>() == element.keyValue<T, Any>() } }
+    override fun containsAll(elements: Collection<T>) = elements.all { element -> collection.any { it.keyValue<T>() == element.keyValue<T>() } }
 
     override fun isEmpty() = collection.isEmpty()
 

@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty1
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
-abstract class Observable : DBAwareObject(), Indexable{
+abstract class Observable : Indexable(){
 
     @Json(ignored = true)
     @Ignored
@@ -23,8 +23,6 @@ abstract class Observable : DBAwareObject(), Indexable{
     @Json(ignored = true)
     @Ignored
     val classListeners = mutableListOf<ChangeListener<*>>()
-
-    var uuid: String = UUID.randomUUID().toString()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T, levels: LevelInformation){
 
@@ -58,14 +56,6 @@ abstract class Observable : DBAwareObject(), Indexable{
 
     fun <T : Any?> addListener(listener: ChangeListener<T>){ //TODO Use AbstractObservable
         classListeners.add(listener)
-    }
-
-    override fun <O : Observable, T> key() : KProperty1<O, T>{
-        return key as KProperty1<O, T>
-    }
-
-    override fun <O : Observable, T> keyValue() : T{
-        return key<O, T>().get(this as O)
     }
 
     companion object{
@@ -103,7 +93,7 @@ abstract class Observable : DBAwareObject(), Indexable{
 
     override fun equals(other: Any?): Boolean {
         return if(other is Observable){
-            other.keyValue<Observable, Any>() == keyValue<Observable, Any>()
+            other.keyValue<Observable>() == keyValue<Observable>()
         }else {
             super.equals(other)
         }

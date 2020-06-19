@@ -62,12 +62,12 @@ open class ReadOnlyVirtualSet<T : Observable>(
 
     override operator fun get(key: Any) : T?{
         if(loadedState != null) {
-            return loadedState!!.find { it.keyValue<T, Any>() == key }
+            return loadedState!!.find { it.keyValue<T>() == key }
         }
         return accessor.load(listOf(
                 FilterStep(listOf(
                         CompareRule(listOf(
-                                clazz.createInstance().key<T, Any>()),
+                                clazz.createInstance().key<T>()),
                                 key)
                 ))
         )).firstOrNull()

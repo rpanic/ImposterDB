@@ -34,7 +34,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
             db.performListUpdateEventsOnBackend(table.child(), clazz, args, LevelInformation(levelinfo)) //TODO Is this actually necessary or does this actually cause a second update call?
 
             args.elements.forEachIndexed { i, obj ->
-                var mnkeys = listOf(parent.keyValue<P, String>(), obj.keyValue<T, String>())
+                var mnkeys = listOf(parent.keyValue<P>() as String, obj.keyValue<T>() as String)
                 if (table.namesFlipped()) {
                     mnkeys = mnkeys.reversed()
                 }
@@ -58,12 +58,12 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
                     ElementChangeType.Set -> {
                         //TODO Is this ever used?
                         if (args is SetSetChangeArgs<T>) {
-                            var deleteKeys = listOf(parent.keyValue<P, String>(), args.replacedElements[i].keyValue<T, String>())
+                            var deleteKeys = listOf(parent.keyValue<P>() as String, args.replacedElements[i].keyValue<T>() as String)
                             if (table.namesFlipped()) {
                                 deleteKeys = deleteKeys.reversed()
                             }
                             val deleteEntry = findEntry(deleteKeys[0], deleteKeys[1])
-                            db.backendConnector.delete(table.tableName(), deleteEntry.keyValue<MtoNTableEntry, Any>(), MtoNTableEntry::class)
+                            db.backendConnector.delete(table.tableName(), deleteEntry.keyValue<MtoNTableEntry>(), MtoNTableEntry::class)
 
                             val insertEntry = createEntry()
                             db.backendConnector.insert(table.tableName(), insertEntry, MtoNTableEntry::class)
@@ -76,7 +76,7 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
 
                     ElementChangeType.Remove -> {
                         val removeEntry = findEntry(mnkeys[0], mnkeys[1])
-                        db.backendConnector.delete(table.tableName(), removeEntry.keyValue<MtoNTableEntry, Any>(), MtoNTableEntry::class)
+                        db.backendConnector.delete(table.tableName(), removeEntry.keyValue<MtoNTableEntry>(), MtoNTableEntry::class)
                         db.cache.removeObject(table.tableName(), removeEntry)
 
                     }

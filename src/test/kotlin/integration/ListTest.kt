@@ -90,7 +90,7 @@ class ListTest{
         val klaxon = Klaxon()
         klaxon.converter(ObservableConverter(klaxon, hashMapOf()))
         val jsonObject = klaxon.parseJsonObject(klaxon.toJsonString(obj).reader())
-        jsonObject["child"] = child.keyValue<Child, String>()
+        jsonObject["child"] = child.keyValue<Child>() as String
         assertThat(content).isEqualTo("[${jsonObject.toJsonString()}]")
 
     }

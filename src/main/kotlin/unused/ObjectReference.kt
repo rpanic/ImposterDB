@@ -15,7 +15,7 @@ class ObjectReference <T : Observable> { //TODO Figure out how to make this Inde
     }
 
     constructor (obj: T) {
-        this.pk = obj.keyValue<T, Any>()
+        this.pk = obj.keyValue<T>()
         this.loaded = true
         this.obj = obj
         this.load = null

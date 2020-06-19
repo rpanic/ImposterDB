@@ -43,14 +43,14 @@ class RelationalTest{
 
         verify { backend.delete(match { it == "ChildrenTest11" }, match<KClass<Observable>> { it == MtoNTableEntry::class }, match <Any> {
             val record = mToN.captured
-            assertThat(record.keyValue<MtoNTableEntry, Any>()).isEqualTo(it)
-            assertThat(record.m).isEqualTo(child.keyValue<MtoNTableEntry, Any>())
-            assertThat(record.n).isEqualTo(parent.keyValue<MtoNTableEntry, Any>())
+            assertThat(record.keyValue<MtoNTableEntry>()).isEqualTo(it)
+            assertThat(record.m).isEqualTo(child.keyValue<MtoNTableEntry>())
+            assertThat(record.n).isEqualTo(parent.keyValue<MtoNTableEntry>())
             true
         } ) }
 
         verify { backend.delete("children", Child::class, match <Any> {
-            it == child.keyValue<Child, String>()
+            it == child.keyValue<Child>()
         }) }
     }
 
@@ -100,15 +100,15 @@ class RelationalTest{
             verify("ChildrenTest12", MtoNTableEntry::class as KClass<Observable>){
                 assertThat (this).isInstanceOf(MtoNTableEntry::class.java)
                 if(this is MtoNTableEntry){
-                    assertThat (this.n).isEqualTo(parent1.keyValue<MtoNTableEntry, Any>())
-                    assertThat (this.m).isEqualTo(child.keyValue<MtoNTableEntry, Any>())
+                    assertThat (this.n).isEqualTo(parent1.keyValue<MtoNTableEntry>())
+                    assertThat (this.m).isEqualTo(child.keyValue<MtoNTableEntry>())
                 }
             }
             verify("ChildrenTest12", MtoNTableEntry::class as KClass<Observable>){
                 assertThat (this).isInstanceOf(MtoNTableEntry::class.java)
                 if(this is MtoNTableEntry){
-                    assertThat (this.n).isEqualTo(parent2.keyValue<MtoNTableEntry, Any>())
-                    assertThat (this.m).isEqualTo(child.keyValue<MtoNTableEntry, Any>())
+                    assertThat (this.n).isEqualTo(parent2.keyValue<MtoNTableEntry>())
+                    assertThat (this.m).isEqualTo(child.keyValue<MtoNTableEntry>())
                 }
             }
         }

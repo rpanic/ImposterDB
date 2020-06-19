@@ -190,7 +190,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
         obj.setDbReference(db)
 
-        if(!cache.containsObject(key, obj.keyValue<T, Any>())) { //Since all Objects which can be inserted have to be loaded and therefore put into the cache, this Check is sufficient
+        if(!cache.containsObject(key, obj.keyValue<T>())) { //Since all Objects which can be inserted have to be loaded and therefore put into the cache, this Check is sufficient
             forEachBackend {
                 if(!it.keyExists(key)){
                     it.createSchema(key, clazz)
@@ -211,7 +211,7 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
 
         //TODO Make a decicion whether delete should be called with a PK or Object and then unify the interfaces
         val pk2 = if(pk is Observable){
-            pk.keyValue<T, Any>()
+            pk.keyValue<T>()
         }else
             pk
 
