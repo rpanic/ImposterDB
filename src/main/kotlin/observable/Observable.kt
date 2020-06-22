@@ -58,10 +58,6 @@ abstract class Observable : Indexable(){
         classListeners.add(listener)
     }
 
-    companion object{
-        val key = Observable::uuid
-    }
-
     internal fun <T> hookToObservable(obj: T, parentProperty: KProperty<*>?){
         if(obj is Observable){
             obj.addListener { childProp: KProperty<*>, old: T, new: T, levels: LevelInformation ->

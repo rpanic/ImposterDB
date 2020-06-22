@@ -10,9 +10,6 @@ import kotlin.reflect.full.memberProperties
 
 abstract class Indexable : DBAwareObject(){
 
-    //TODO Remove all direct references to uuid
-    //TODO Enable other types than String to be PK, See f.e. MtoNTableEntry
-
     var uuid: String = UUID.randomUUID().toString()
 
     companion object {

@@ -94,8 +94,8 @@ open class ReadOnlyVirtualSet<T : Observable>(
         return loadedState?.containsAll(elements) ?:
                 elements.all { element ->
                     accessor.count(listOf(FilterStep<T>(listOf(CompareRule(
-                            listOf(clazz.memberProperties.find { it.name == "uuid" }!!),
-                            element.uuid,
+                            listOf(element.key<T>()),
+                            element.keyValue<T>(),
                             CompareType.EQUALS
                             )))) + steps) > 0
                 }

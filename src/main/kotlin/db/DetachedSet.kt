@@ -1,6 +1,7 @@
 package db
 
 import collections.ElementChangeType
+import collections.Indexable
 import collections.SetChangeArgs
 import collections.SetSetChangeArgs
 import connection.MtoNTable
@@ -93,9 +94,9 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
         
                     db.backendConnector.loadWithRules(table.tableName(), listOf(
                             FilterStep(listOf(
-                                    CompareRule<String>(listOf(
+                                    CompareRule(listOf(
                                             if (!table.namesFlipped()) MtoNTableEntry::m else MtoNTableEntry::n),
-                                            parent.uuid,
+                                            parent.keyValue<P>(),
                                             CompareType.EQUALS)
                             ))
                     ), MtoNTableEntry::class)
@@ -107,8 +108,8 @@ fun <P : Observable, T : Observable> detachedSet(parent: P, key: String, clazz: 
     
                 val nSteps = mToNTableEntry.map { entry ->
                     FilterStep<T>(listOf(
-                            CompareRule(listOf(
-                                    clazz.memberProperties.find { it.name == "uuid" }!!),
+                            CompareRule(
+                                    listOf(Indexable.getKeyProperty(clazz)),
                                     if (table.namesFlipped()) entry.m else entry.n,
                                     CompareType.EQUALS)
                     ))

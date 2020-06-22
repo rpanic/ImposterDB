@@ -1,5 +1,6 @@
 package main.kotlin.connection
 
+import collections.Indexable
 import com.beust.klaxon.internal.firstNotNullResult
 import connection.ObjectCache
 import db.*
@@ -69,7 +70,11 @@ class BackendConnector (private val cache: ObjectCache, private val db: DB){
             .tryCache { getCachedObject(key, pk) }
             .orBackends {
 
-                val filterStep = FilterStep<T>(listOf(CompareRule(clazz.memberProperties.filter { it.name == "uuid" }, pk, CompareType.EQUALS)))
+                val filterStep = FilterStep<T>(listOf(CompareRule(
+                        listOf(Indexable.getKeyProperty(clazz)),
+                        pk,
+                        CompareType.EQUALS)))
+                
                 val loaded = it.load(key, clazz, listOf(filterStep))
                         .also { set -> check(set.size <= 1){ "Size of result set for getDetached is greater than one - possible duplicate key" } }
                         .firstOrNull()

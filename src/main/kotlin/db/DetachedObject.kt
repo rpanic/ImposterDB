@@ -49,7 +49,8 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
         // + When will unused objects be deleted? When theres no reference any more or when it gets removed from the list?
         // + I guess the first options would be more compliant with the "consistent state" paradigm
         //TODO What does this line?
-        newValue.classListeners.map { it as ChangeListener<Any?> }.forEach { it(newValue::uuid, null, newValue.uuid, LevelInformation(listOf(ObservableLevel(newValue, null, newValue.uuid, newValue::uuid)))) }
+        //Also, this will probably throw an exception if called with the wrong type
+        newValue.classListeners.map { it as ChangeListener<Any?> }.forEach { it(newValue.key<T>(), null, newValue.keyValue<T>(), LevelInformation(listOf(ObservableLevel(newValue, null, newValue.keyValue<T>(), newValue.key<T>())))) }
 //        TODO notify this@Observable about changes in the object (hookToObservable)
         //TODO Edit: Done?
         observable.changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(observable, oldValue, newValue, property))))

@@ -1,5 +1,6 @@
 package json
 
+import collections.Indexable
 import ruleExtraction1.Step
 import ruleExtraction1.StepInterpreter
 import com.beust.klaxon.JsonArray
@@ -42,13 +43,14 @@ open class JsonBackend : DBBackend() {
     fun <T : Observable> load(key: String, clazz: KClass<T>) : List<T> {
         val arr = klaxon.parseJsonArray(FileReader(this.baseFile.child("$key.json"))) as JsonArray<JsonObject>
         val properties = findDelegatingProperties(clazz, DetachedObjectReadWriteProperty::class)
-        val values = properties.map { arr.map { json -> json.string("uuid") to json.string(it.name).apply { json.remove(it.name) } } }
+        val pk = Indexable.getKeyProperty(clazz)
+        val values = properties.map { arr.map { json -> json.string(pk.name) to json.string(it.name).apply { json.remove(it.name) } } }
 
         val list = klaxon.parseFromJsonArray2(clazz, arr)
         values.forEachIndexed { i, propValues ->
             val property = properties[i]
             propValues.forEach { pair ->
-                val observable = list.find { it.uuid == pair.first }!!
+                val observable = list.find { it.keyValue<T>() == pair.first }!!
                 val delegate = property.getDelegate(observable) as DetachedObjectReadWriteProperty<*>
                 delegate.setPk(pair.second)
             }
@@ -60,9 +62,7 @@ open class JsonBackend : DBBackend() {
 
     override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>, levelInformation: LevelInformation) {
         println("update ${obj.keyValue<T>()} ${prop.name} $key ${clazz.simpleName} ")
-        if(prop.name == "uuid"){
-            println("")
-        }
+        
         save(key, clazz)
     }
     
@@ -96,7 +96,7 @@ open class JsonBackend : DBBackend() {
     
     fun <T : Observable> save(key: String, clazz : KClass<T>) {
         val intermediateList = if(loaded.containsKey(key)) (loaded[key] as List<T>) else listOf()
-        val list = intermediateList.distinctBy { it.uuid }
+        val list = intermediateList.distinctBy { it.keyValue<T>() }
         if(intermediateList.size != list.size) {
             println("Something is wrong with the caching")
         }
@@ -106,8 +106,8 @@ open class JsonBackend : DBBackend() {
 
         json.forEach {
 
-            val uuid = it.string("uuid")
-            val obj = list.find { it.uuid == uuid }!!
+            val pk = it.string(Indexable.getKeyProperty(clazz).name)
+            val obj = list.find { obj -> obj.keyValue<T>() == pk }!!
             clazz.memberProperties.forEach { prop ->
                 prop.isAccessible = true
                 val delegate = prop.getDelegate(obj)
@@ -116,9 +116,9 @@ open class JsonBackend : DBBackend() {
                     //Remove Detached Objects
                     if(delegate is DetachedObjectReadWriteProperty<*>){
                         if(delegate.isInitialized())
-                            it.set(prop.name, (prop.get(obj) as Observable).uuid)
+                            it.set(prop.name, (prop.get(obj) as Observable).keyValue<Observable>())
                         else if(delegate.getPkOrNull<String>() != null){
-                            it.set(prop.name, delegate.getPkOrNull()) //TODO Unify Usage of PK, not necessarly uuid
+                            it.set(prop.name, delegate.getPkOrNull()) 
                         }else
                             it.remove(prop.name)
                     }
