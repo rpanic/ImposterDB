@@ -58,14 +58,14 @@ open class JsonBackend : DBBackend() {
         return list
     }
 
-    override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>, levels: LevelInformation) {
+    override fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>, levelInformation: LevelInformation) {
         println("update ${obj.keyValue<T>()} ${prop.name} $key ${clazz.simpleName} ")
         if(prop.name == "uuid"){
             println("")
         }
         save(key, clazz)
     }
-
+    
     override fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K) {
         println("delete $pk $key ${clazz.simpleName} ")
         loadIfNotLoaded(key, clazz)
