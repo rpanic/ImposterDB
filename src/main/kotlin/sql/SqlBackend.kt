@@ -22,10 +22,10 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaType
 
 class SqlBackend (
-        val url: String = "jdbc:mysql://localhost", //TODO Remove default (+user, password, dbName)
-        val dbname: String = "test",
-        val user: String = "root",
-        val password: String = "root",
+        val connectionString: String,
+        val dbname: String,
+        val user: String,
+        val password: String,
         val driver: String? = "com.mysql.jdbc.Driver",
         val createContextFun: (SqlBackend) -> SqlContext = SqlBackend::createContext
 ) : Backend{
@@ -39,12 +39,12 @@ class SqlBackend (
     }
 
     private fun createContext(): SqlContext {
-        val connectionString = url + (if (url.endsWith("/")) "" else "/") + dbname
+        val connString = connectionString + (if (connectionString.endsWith("/")) "" else "/") + dbname
 
         if(driver != null){
             Class.forName(driver).newInstance()
         }
-        val conn = DriverManager.getConnection(connectionString, user, password)
+        val conn = DriverManager.getConnection(connString, user, password)
 
         return SqlContext(conn, dbname )
     }
@@ -178,6 +178,14 @@ class SqlBackend (
         constructor(vararg props: Pair<String, Any?>) : super(*props)
         var test: String? by map
     }
-
-
+    
+    companion object {
+        internal fun createDefaultSqlBackend() =
+                SqlBackend("jdbc:mysql://localhost",
+                        "test",
+                        "root",
+                        "root")
+    
+    }
+    
 }

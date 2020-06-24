@@ -30,7 +30,7 @@ fun main2(){
 fun main3(){
     
     val db = DB()
-    val backend = SqlBackend()
+    val backend = SqlBackend.createDefaultSqlBackend()
     db += backend
     
     val virtualSet = db.getSet<Person>("person")
@@ -48,7 +48,7 @@ fun main() {
     
     mstart()
     val db = DB(); mpoint()
-    val backend = SqlBackend(); mpoint()
+    val backend = SqlBackend.createDefaultSqlBackend(); mpoint()
     db += backend; mpoint()
 
     val virtualSet = db.getSet<Person>("person"); mpoint()

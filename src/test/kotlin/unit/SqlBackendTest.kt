@@ -23,7 +23,7 @@ class SqlBackendTest{
         
         val resultSet = createIntResultSet(100)
         
-        val backend = SqlBackend(createContextFun = {
+        val backend = SqlBackend("", "", "", "", createContextFun = {
             val context = mockk<SqlContext>()
             every { context.executeQuery(any()) } returns resultSet
             context
@@ -114,7 +114,7 @@ class SqlBackendTest{
             mock
         }
 
-        return SqlBackend(createContextFun = function)
+        return SqlBackend("", "", "", "", createContextFun = function)
     }
 
     private fun <T : Any> resultsSetFromObject(t: T, clazz: KClass<T>) : ResultSet{
