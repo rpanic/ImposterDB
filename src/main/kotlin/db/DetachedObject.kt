@@ -35,7 +35,7 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
     /*open*/ fun beforeChange(property: KProperty<*>, oldValue: T, newValue: T): Boolean = true
 
     private fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T?): Unit {
-        dbInserted = if(newValue!!.classListeners.none { it is DB.DetachedBackendListener<*> }){
+        dbInserted = if(newValue!!.listeners.none { it is DB.DetachedBackendListener<*> }){
             if(observable.db != null) {
                 initValue()
                 true
@@ -50,7 +50,7 @@ class DetachedObjectReadWriteProperty<T : Observable>(val observable : Observabl
         // + I guess the first options would be more compliant with the "consistent state" paradigm
         //TODO What does this line?
         //Also, this will probably throw an exception if called with the wrong type
-        newValue.classListeners.map { it as ChangeListener<Any?> }.forEach { it(newValue.key<T>(), null, newValue.keyValue<T>(), LevelInformation(listOf(ObservableLevel(newValue, null, newValue.keyValue<T>(), newValue.key<T>())))) }
+        newValue.listeners.map { it as ChangeListener<Any?> }.forEach { it(newValue.key<T>(), null, newValue.keyValue<T>(), LevelInformation(listOf(ObservableLevel(newValue, null, newValue.keyValue<T>(), newValue.key<T>())))) }
 //        TODO notify this@Observable about changes in the object (hookToObservable)
         //TODO Edit: Done?
         observable.changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(observable, oldValue, newValue, property))))

@@ -35,14 +35,12 @@ class SqlBackendTest{
         
     }
     
+    /**
+     * This test checks a complete SQL VirutalSet operation. Creation, Filtering and retrieval
+     * At first is checks if the Count() Select Statement gets called correctly to check if the table already exists.
+     * After that, the create Table statement and the select statement get checked
+     */
     @Test
-//    @Ignore
-    //TODO
-            /**
-             * This test checks a complete SQL VirutalSet operation. Creation, Filtering and retrieval
-             * At first is checks if the Count() Select Statement gets called correctly to check if the table already exists.
-             * After that, the create Table statement and the select statement get checked
-             */
     fun testCreateTableAndFilterSelect(){
 
         val testObject = TestObject().apply { testProperty = "TestProp" }
@@ -64,10 +62,6 @@ class SqlBackendTest{
         db += backend
 
         val virtualSet = db.getSet<TestObject>("table2")
-//    backend.context.createOrUpdateTable("table2", Test::class)
-//    backend.insert("table2", Test::class, Test().apply { b = 1337; s = "Hallo"; test = Test2().apply { s2 = "String 2" } })
-//    val loaded = backend.load("table2", Test::class, listOf())
-
 
         val loaded = virtualSet.filter { it.testProperty eq "hello" }.view()
 
@@ -80,9 +74,10 @@ class SqlBackendTest{
         assertThat(loaded.first()).isEqualTo(testObject)
 
 //        val obj = loaded.first()
-//        obj.s = "Updated"
-//        obj.test!!.s2 = "Updated S2"
 //        virtualSet.remove(obj)
+        
+//        verify (exactly = 1){ backend.context.execute("DELETE FROM table2 WHERE uuid = ${obj.keyValue<TestObject>()}") }
+        
         println(loaded)
     }
     

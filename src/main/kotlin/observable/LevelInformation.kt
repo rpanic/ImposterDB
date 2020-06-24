@@ -16,7 +16,7 @@ class LevelInformation(val list: List<Level>){
 interface Level{
     fun isObservable() : Boolean
     fun getObservable() : Observable
-    fun getSet() : Set<*> //TODO Check if ArrayList would be possible
+    fun getSet() : Set<*>
 }
 
 class ObservableLevel(

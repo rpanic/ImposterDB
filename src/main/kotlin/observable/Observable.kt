@@ -5,24 +5,23 @@ import db.ChangeObserver
 import db.Ignored
 import db.RevertableAction
 import collections.Indexable
-import java.util.*
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
 abstract class Observable : Indexable(){
+    //TODO Use AbstractObservable at some point in the future, but requires restructuring of Type Hierachy
 
     @Json(ignored = true)
     @Ignored
-    val listeners = mutableMapOf<String, MutableList<ChangeListener<*>>>()
+    val propListeners = mutableMapOf<String, MutableList<ChangeListener<*>>>()
 
     @Json(ignored = true)
     @Ignored
-    val classListeners = mutableListOf<ChangeListener<*>>()
+    val listeners = mutableListOf<ChangeListener<*>>()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T, levels: LevelInformation){
 
@@ -31,11 +30,11 @@ abstract class Observable : Indexable(){
         val action = object : ObservableRevertableAction<T>(this, prop, old, new){
 
             override fun executeListeners(prop: KProperty<*>, old_p: T, new_p: T) {
-                if(listeners.containsKey(prop.name)){
-                    val list = listeners[prop.name]!! as List<ChangeListener<T>>
+                if(propListeners.containsKey(prop.name)){
+                    val list = propListeners[prop.name]!! as List<ChangeListener<T>>
                     list.forEach { it(prop, old_p, new_p, levels) }
                 }
-                (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old_p, new_p, levels) }
+                (listeners as List<ChangeListener<T>>).toList().forEach { it(prop, old_p, new_p, levels) }
             }
         }
 
@@ -48,14 +47,14 @@ abstract class Observable : Indexable(){
     }
 
     fun <T> addListener(prop: KProperty<T>, listener: ChangeListener<T>){
-        if(!listeners.containsKey(prop.name)){
-            listeners[prop.name] = mutableListOf()
+        if(!propListeners.containsKey(prop.name)){
+            propListeners[prop.name] = mutableListOf()
         }
-        listeners[prop.name]!!.add(listener)
+        propListeners[prop.name]!!.add(listener)
     }
 
-    fun <T : Any?> addListener(listener: ChangeListener<T>){ //TODO Use AbstractObservable
-        classListeners.add(listener)
+    fun <T : Any?> addListener(listener: ChangeListener<T>){
+        listeners.add(listener)
     }
 
     internal fun <T> hookToObservable(obj: T, parentProperty: KProperty<*>?){
