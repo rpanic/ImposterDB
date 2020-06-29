@@ -83,10 +83,6 @@ class SqlBackend (
 
     }
 
-    override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> { //TODO To Set
-        return load(key, clazz, listOf()).toList()
-    }
-
     fun <T : Any> parse(set : ResultSet, clazz: KClass<T>) : Set<T>{
         val parsed = mutableSetOf<T>()
         while(set.next()) {

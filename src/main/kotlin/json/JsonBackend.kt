@@ -35,11 +35,6 @@ open class JsonBackend : DBBackend() {
         return StepInterpreter.interpretSteps(steps, loaded.toSet(), clazz)
     }
 
-    override fun <T : Observable> loadAll(key: String, clazz: KClass<T>): List<T> {
-        println("loadAll $key ${clazz.simpleName} ")
-        return load(key, clazz)
-    }
-
     fun <T : Observable> load(key: String, clazz: KClass<T>) : List<T> {
         val arr = klaxon.parseJsonArray(FileReader(this.baseFile.child("$key.json"))) as JsonArray<JsonObject>
         val properties = findDelegatingProperties(clazz, DetachedObjectReadWriteProperty::class)
@@ -79,7 +74,7 @@ open class JsonBackend : DBBackend() {
             createSchema(key, clazz)
         }
         if(keyExists(key) && !loaded.containsKey(key)){
-            loadAll(key, clazz)
+            load(key, clazz, listOf())
         }
     }
 

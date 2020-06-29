@@ -14,9 +14,6 @@ interface Backend {
     fun <T : Observable> createSchema(key: String, clazz: KClass<T>)
 
     fun <T : Observable> load(key: String, clazz: KClass<T>, steps: List<Step<T, *>>) : Set<T>
-
-    fun <T : Observable> loadAll (key: String, clazz: KClass<T>) : List<T>
-
     fun <T : Observable> update(key: String, clazz: KClass<T>, obj: T, prop: KProperty<*>, levelInformation: LevelInformation)
 
     fun <T : Observable, K> delete(key: String, clazz: KClass<T>, pk: K)
