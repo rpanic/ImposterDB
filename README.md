@@ -27,7 +27,6 @@ dependencies {
 or Maven:
 
 ```xml
-<pom>
 <repositories>
   <repository>
       <id>jitpack.io</id>
@@ -40,7 +39,6 @@ or Maven:
     <artifactId>ImposterDB</artifactId>
     <version>master-SNAPSHOT</version>
 </dependency>
-</pom>
 ```
 
 ## Implementation
