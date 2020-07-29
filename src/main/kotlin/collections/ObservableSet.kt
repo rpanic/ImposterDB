@@ -27,8 +27,6 @@ open class ObservableSet<T : Observable> : AbstractObservable<SetElementChangedL
 
     protected fun signalChanged(args: SetChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
-        println("New size: $size")
-
         val action = object : RevertableAction {
             override fun action() {
                 if(db != null) {//Db is null when addAll() is called in the constructor

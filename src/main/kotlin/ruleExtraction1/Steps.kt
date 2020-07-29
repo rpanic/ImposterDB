@@ -1,5 +1,6 @@
 package ruleExtraction1
 
+import ruleExtraction.Call
 import kotlin.reflect.KProperty1
 
 interface Step<T, V>
@@ -19,6 +20,10 @@ class MappingStep<T, V>(
 enum class MappingType {
     COUNT
 }
+
+class SortingStep<T, V>(
+    val calls: List<Call<*>>
+) : Step<T, V>
 
 class MtoNRule<T>() : Step<T, T> //TODO Make Generic work reasonable
 

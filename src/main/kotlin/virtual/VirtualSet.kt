@@ -26,7 +26,7 @@ open class ReadOnlyVirtualSet<T : Observable>(
         return view().iterator()
     }
 
-    internal var loadedState: MutableSet<T>? = null
+    internal open var loadedState: MutableSet<T>? = null
 
     //View is a 1:1 display of the state of a VirtualView, but concret
     override fun view(): IObservableSet<T> {
@@ -153,6 +153,13 @@ open class VirtualSet<T : Observable>(
 //   TODO     t.classListeners.remove(objListener)
     }
 
+    fun <K : Any> sortedBy(f: (T) -> K){
+        val extractor = ruleExtraction.RuleExtractionFramework(clazz)
+        val calls = extractor.getAllExecutedFunctions(f)
+        
+//        val newSet = MutableSet
+    }
+    
     fun <K> groupBy(f: (T) -> K){
 
     }
