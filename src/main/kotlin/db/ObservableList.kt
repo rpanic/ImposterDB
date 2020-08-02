@@ -1,7 +1,6 @@
 package db
 
 import com.beust.klaxon.Json
-import com.sun.org.apache.xpath.internal.operations.Bool
 import java.lang.Exception
 
 typealias ElementChangedListener<X> = (ElementChangeType, X) -> Unit
