@@ -18,7 +18,8 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
-open class JsonBackend : DBBackend() {
+open class JsonBackend  (val baseFile: File)
+    : DBBackend() {
 
     val loaded = mutableMapOf<String, MutableList<*>>()
 
@@ -125,11 +126,10 @@ open class JsonBackend : DBBackend() {
 
     val klaxon = Klaxon().apply { converter(ObservableConverter(this, hashMapOf())) }
 
-    val baseFile = userdir().child("data/")
+    constructor() : this("data/")
 
-//    constructor(basedir: File){ //TODO Better configurability of Json Backend
-//        baseFile = basedir
-//    }
+    constructor(basedir: String) :
+            this(userdir().child(basedir))
 
     override fun keyExists(key: String) = this.baseFile.child("$key.json").exists()
 
