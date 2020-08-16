@@ -1,8 +1,7 @@
-package observable
+package unused
 
-import db.*
-import java.lang.Exception
-import kotlin.reflect.KProperty
+import collections.ElementChangeType
+import observable.LevelInformation
 
 class ObservableArrayList<X> : ObservableList<X> {
 
@@ -90,7 +89,7 @@ class ObservableArrayList<X> : ObservableList<X> {
 
     fun set(index: Int, element: X): X {
         val old = collection.set(index, element)
-        val args = ListChangeArgs(ElementChangeType.Set, element, index)
+        val args = SetListChangeArgs(ElementChangeType.Set, listOf(element), listOf(index), listOf(old))
         signalChanged(args){
             set(index, old)
         }
@@ -102,11 +101,5 @@ class ObservableArrayList<X> : ObservableList<X> {
     }
 }
 
-class GenericChangeObserver <X : Observable> (t : X, val f: (LevelInformation) -> Unit) : ChangeObserver<X>(t){
-
-    fun all(prop: KProperty<*>, new: Any?, old: Any?, levels: LevelInformation){
-        f(levels)
-    }
-}
-
 fun <X> observableListOf(vararg initial: X) = ObservableArrayList(*initial)
+fun <X> observableListOf(initial: List<X>) = ObservableArrayList(initial)

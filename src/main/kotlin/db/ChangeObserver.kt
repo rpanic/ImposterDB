@@ -1,6 +1,5 @@
 package db
 
-import observable.GenericChangeObserver
 import observable.LevelInformation
 import observable.Observable
 import kotlin.reflect.KParameter

@@ -1,15 +1,19 @@
-package observable
+package unused
 
+import collections.ElementChangeType
 import com.beust.klaxon.Json
-import db.*
+import db.ChangeObserver
+import db.Ignored
+import db.RevertableAction
+import observable.AbstractObservable
+import observable.DBAwareObject
+import observable.LevelInformation
+import observable.Observable
 
 typealias ElementChangedListener<X> = (ListChangeArgs<X>, LevelInformation) -> Unit
 
-enum class ElementChangeType {
-    Add, Update, Remove, Set
-}
 
-open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, List<T> {
+open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, IObservableList<T> {
     override fun subList(fromIndex: Int, toIndex: Int): List<T> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -29,15 +33,24 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
     var collection = mutableListOf<T>()
 
     protected fun signalChanged(args: ListChangeArgs<T>, revert: () -> Unit){
-        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
+//        signalChanged(args, LevelInformation(listOf(ObservableListLevel(this, args))), revert)
     }
 
     protected fun signalChanged(args: ListChangeArgs<T>, levels: LevelInformation, revert: () -> Unit) {
 
-        println("New size: $size")
+        println("signalChanged: ${args.elementChangeType.name}")
 
         val action = object : RevertableAction {
             override fun action() {
+                if(db != null) {//Db is null when addAll() is called in the constructor
+                    if (args.elementChangeType == ElementChangeType.Add || args.elementChangeType == ElementChangeType.Set) {
+                        args.elements.forEach {
+                            if(it is DBAwareObject) {
+                                it.setDbReference(getDB())
+                            }
+                        }
+                    }
+                }
                 listeners.forEach { it.invoke(args, levels) }
             }
 
@@ -47,8 +60,8 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
 
         }
 
-        if (DB.txActive) {
-            DB.txQueue.add(action)
+        if (db != null && getDB().txActive) {
+            getDB().txQueue.add(action)
         } else {
             action.action()
         }
@@ -62,10 +75,10 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
     fun addHook(element: T) {
 
         if (element is Observable) {
-            hooks.add(GenericChangeObserver(element) { levels ->
+            hooks.add(GenericChangeObserver(element) { prop, levels ->
                 //TODO Check, if element references and indizes are 1 to 1 in all ListChangeArgs, so element and indizes can be correlated. Like below
-                val indizes = getIndizesFromElements<T>(listOf(element), this)
-                signalChanged(ListChangeArgs(ElementChangeType.Update, indizes.indices.map { element }, indizes), levels) {}
+                val indizes = getIndizesFromElements(listOf(element))
+                signalChanged(UpdateListChangeArgs(ElementChangeType.Update, indizes.indices.map { element }, indizes, prop), levels) {}
             })
         }
     }
@@ -78,8 +91,7 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
 
     fun list() = collection.toList()
 
-    override operator fun get(i: Int) = collection.get(i)
-
+    override operator fun get(i: Int) = collection[i]
 
     override fun contains(element: T): Boolean {
         return collection.contains(element)
@@ -97,31 +109,14 @@ open class ObservableList<T> : AbstractObservable<ElementChangedListener<T>>, Li
 
     override fun listIterator(index: Int) = collection.listIterator(index)
 
-//    lateinit var transform: (ObservableList<T>) -> ObservableList<S>
-
-//    fun <S> map(f: (T) -> S){
-//
-//        val next = ObservableList<S>()
-//
-//        val criteria = {type: ElementChangeType, t: T ->
-//            true
-//        }
-//
-//        addListener{ type, t ->
-//            if(criteria(type, t)){
-//                next.listeners.forEach { it(type, t) }
-//            }
-//        }
-//
-//        next.transform = {
-//            ObservableArrayList(it.map(f))
-//        }
-//
-//    }
-//
-//    fun forEach(f: (T) -> Unit){
-//
-//    }
+    fun getIndizesFromElements(list: List<T>) : List<Int>{
+        val indizes = mutableListOf<Int>()
+        this.collection.forEachIndexed { index, t ->
+            if(t in list)
+                indizes += index
+        }
+        return indizes
+    }
 
 
 }

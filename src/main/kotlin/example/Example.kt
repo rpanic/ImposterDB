@@ -1,12 +1,13 @@
 package example
 
-import db.*
+import com.beust.klaxon.Json
+import db.ChangeObserver
+import db.DB
+import db.detached
+import db.detachedSet
 import json.JsonBackend
-import json.userdir
 import observable.LevelInformation
 import observable.Observable
-import observable.ObservableArrayList
-import java.io.File
 import kotlin.reflect.KProperty
 
 class Person : Observable(){
@@ -15,9 +16,11 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
-    var traits: ObservableArrayList<Trait> by observableList()
+    val traits by detachedSet<Trait>("traits")
 
-    var trait: Trait by observable(Trait())
+    var trait: Trait by detached<Trait>("trait") //TODO Better error message
+
+    //var trait: Trait by relation()
 
 }
 
@@ -47,32 +50,110 @@ class ExamplePersonObserver(t: Person) : ChangeObserver<Person>(t){
 
 fun main() {
 
-    File(userdir().absolutePath + "/data/person.json").delete()
-    DB.primaryBackend = JsonBackend()
+//    userdir().resolve("data").listFiles()?.forEach { it.delete() }
+//    File(userdir().absolutePath + "/data/persons.json").delete()
+    val db = DB()
+    db += JsonBackend()
 
-    val obj = DB.getObject("person") {
-        Person()
-    }
+    val list = db.getSet<Person>("persons")
 
-    DB.tx {
+    val p = list.first()
+    
+//    val person = Person()
+//
+//    person.trait = Trait()
+//
+//    list.add(person)
+    
+//    val view = list.view()
+//
+//    val traits = view.first().traits.view()
+//
+//    println(traits.size == 1)
+//
+//    val person = Person()
+//    list.add(person)
+//
+//    person.name = "test"
+//    val trait = Trait()
+//    person.traits.add(trait)
 
-        ExamplePersonObserver(obj)
+    //Test2: Remove Relation
+//    list[0].traits.removeAt(1)
 
-        obj.description = "This is some random stuff"
+//    list[0].traits.add(Trait().apply { value = 100 })
 
-        obj.trait = Trait()
+    println()
 
-        obj.trait.value = 10
+    //TODO Collect all the i.e. Traits in Complete List, so that no double references are there and to remove that hideous JsonBackend stuff
 
-        obj.traits.add(Trait())
+    //TODO Test what happens if you add an existing Reference, if that gets added again or not
 
-        obj.traits[0].value = 1337
+//    val obj = DB.getDetached("person", "asd", false) {
+//        println("Person init")
+//        Person().apply { uuid = "asd" }
+//    }
 
-        obj.name = "John Miller"
+//    obj.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
+//        println("person listener")
+//    }
 
-        println("Finished")
+//    obj.trait = Trait()
+//    val trait2 = obj.traitc
 
-    }
+//    trait2.addListener { prop: KProperty<*>, old: Any?, new: Any?, levels: LevelInformation ->
+//        println("trait listener")
+//    }
+//
+//    trait2.value = 1999
+
+
+
+//    obj.trait = Trait()
+
+//    val trait = obj.trait
+
+//    println(obj.key<UUID>())
+//
+//    println(obj.trait.uuid)
+//
+//    val trait = obj.trait
+
+//    obj.description = "asd"
+
+//    obj.trait = Trait()
+
+//    obj.trait.value = 1337
+
+//    obj.name = "asdsadg"
+
+//    obj.trait.value = 13387
+
+//    val trait = obj::trait
+//    trait.isAccessible = true
+//    val delegate = trait.getDelegate()
+
+    println()
+
+//    DB.tx {
+//
+//        ExamplePersonObserver(obj)
+//
+//        obj.description = "This is some random stuff"
+//
+//        obj.trait = Trait()
+//
+//        obj.trait.value = 10
+//
+//        obj.traits.add(Trait())
+//
+//        obj.traits[0].value = 1337
+//
+//        obj.name = "John Miller"
+//
+//        println("Finished")
+//
+//    }
 
 //    val mapped = obj.traits.map ({ "${it.value}Heyo" })
 //    {

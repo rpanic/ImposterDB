@@ -3,14 +3,24 @@ package observable
 import com.beust.klaxon.Json
 import db.Ignored
 
-abstract class AbstractObservable<T : Any?>{
+interface IAbstractObservable<T : Any?>{
+
+    fun addListener(listener: T) {}
+    fun removeListener(listener: T)
+}
+
+abstract class AbstractObservable<T : Any?> : DBAwareObject(), IAbstractObservable<T>{
 
     @Json(ignored = true)
     @Ignored
     val listeners = mutableListOf<T>()
 
-    fun addListener(listener: T){
+    override fun addListener(listener: T){
         listeners.add(listener)
     }
-
+    
+    override fun removeListener(listener: T) {
+        listeners.remove(listener)
+    }
+    
 }

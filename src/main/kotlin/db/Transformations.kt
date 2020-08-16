@@ -1,16 +1,17 @@
 package db
 
-import observable.ListChangeArgs
-import observable.ObservableList
+import collections.ObservableSet
+import collections.SetChangeArgs
+import observable.Observable
 
-fun <T, R> ObservableList<T>.map(f: (T) -> R) : ObservableList<R> {
-    val next = ObservableList<R>()
+fun <T : Observable, R : Observable> ObservableSet<T>.map(f: (T) -> R) : ObservableSet<R> {
+    val next = ObservableSet<R>()
 
     val transform = { next.collection = this.collection.map(f).toMutableList()}
 
     addListener { args, levels ->
         transform()
-        val newListChangeArgs = ListChangeArgs(args.elementChangeType, args.elements.map(f), args.indizes?.toList())
+        val newListChangeArgs = SetChangeArgs(args.elementChangeType, args.elements.map(f))
         next.listeners.forEach { it(newListChangeArgs, levels) }
     }
     transform()
@@ -36,27 +37,15 @@ fun <T, R> ObservableList<T>.map(f: (T) -> R) : ObservableList<R> {
 //    return next
 //}
 
-fun <T> ObservableList<T>.filter(f: (T) -> Boolean) : ObservableList<T> {
+fun <T : Observable> ObservableSet<T>.filter(f: (T) -> Boolean) : ObservableSet<T> {
 
-    val next = ObservableList<T>()
+    val next = ObservableSet<T>()
     addListener{ args, levels ->
         if(args.elements.any(f)){
 
-            val elements = mutableListOf<T>()
-            val indices = mutableListOf<Int>()
+            val elements = args.elements.filter(f)
 
-            var cindex = 0
-            this.collection.forEachIndexed { index, t ->
-                if(f(t)){
-                    if(index in args.indizes){
-                        elements += t
-                        indices += cindex
-                    }
-                    cindex++
-                }
-            }
-
-            val newListChangeArgs = ListChangeArgs(args.elementChangeType, elements, indices)
+            val newListChangeArgs = SetChangeArgs(args.elementChangeType, elements)
             next.listeners.forEach { it(newListChangeArgs, levels) }
         }
     }

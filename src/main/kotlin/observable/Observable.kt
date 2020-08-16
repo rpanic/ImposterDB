@@ -1,7 +1,10 @@
 package observable
 
 import com.beust.klaxon.Json
-import db.*
+import db.ChangeObserver
+import db.Ignored
+import db.RevertableAction
+import collections.Indexable
 import kotlin.properties.ObservableProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KMutableProperty
@@ -9,35 +12,34 @@ import kotlin.reflect.KProperty
 
 typealias ChangeListener<T> = (prop: KProperty<*>, old: T, new: T, levels: LevelInformation) -> Unit
 
-//typealias GeneralChangeListener = (prop: KProperty<*>, old: Any?, new: Any?) -> Unit
-
-abstract class Observable{
-
-    @Json(ignored = true)
-    @Ignored
-    val listeners = mutableMapOf<String, MutableList<ChangeListener<*>>>()
+abstract class Observable : Indexable(){
+    //TODO Use AbstractObservable at some point in the future, but requires restructuring of Type Hierachy
 
     @Json(ignored = true)
     @Ignored
-    val classListeners = mutableListOf<ChangeListener<*>>()
+    val propListeners = mutableMapOf<String, MutableList<ChangeListener<*>>>()
+
+    @Json(ignored = true)
+    @Ignored
+    val listeners = mutableListOf<ChangeListener<*>>()
 
     fun <T : Any?> changed(prop: KProperty<*>, old: T, new: T, levels: LevelInformation){
-//        println("${prop.name}: $old -> $new")
-        hookToObservable(new)
+
+        hookToObservable(new, prop)
 
         val action = object : ObservableRevertableAction<T>(this, prop, old, new){
 
             override fun executeListeners(prop: KProperty<*>, old_p: T, new_p: T) {
-                if(listeners.containsKey(prop.name)){
-                    val list = listeners[prop.name]!! as List<ChangeListener<T>>
+                if(propListeners.containsKey(prop.name)){
+                    val list = propListeners[prop.name]!! as List<ChangeListener<T>>
                     list.forEach { it(prop, old_p, new_p, levels) }
                 }
-                (classListeners as List<ChangeListener<T>>).toList().forEach { it(prop, old_p, new_p, levels) }
+                (listeners as List<ChangeListener<T>>).toList().forEach { it(prop, old_p, new_p, levels) }
             }
         }
 
-        if(DB.txActive){
-            DB.txQueue.add(action)
+        if(db != null && getDB().txActive){
+            getDB().txQueue.add(action)
         }else{
             action.action()
         }
@@ -45,59 +47,51 @@ abstract class Observable{
     }
 
     fun <T> addListener(prop: KProperty<T>, listener: ChangeListener<T>){
-        if(!listeners.containsKey(prop.name)){
-            listeners[prop.name] = mutableListOf()
+        if(!propListeners.containsKey(prop.name)){
+            propListeners[prop.name] = mutableListOf()
         }
-        listeners[prop.name]!!.add(listener)
+        propListeners[prop.name]!!.add(listener)
     }
 
     fun <T : Any?> addListener(listener: ChangeListener<T>){
-        classListeners.add(listener)
+        listeners.add(listener)
     }
 
-    private fun <T> hookToObservable(obj: T){
+    internal fun <T> hookToObservable(obj: T, parentProperty: KProperty<*>?){
         if(obj is Observable){
-            obj.addListener { prop: KProperty<*>, old: T, new: T, levels: LevelInformation ->
-                changed(prop, old, new, levels.append(this))
-            }
-        } else if(obj is ObservableArrayList<*>){
-            obj.addListener { args, levels ->
-                changed(ObservableArrayList<*>::collection, args.elements[0], args.elements[0], levels.append(ObservableListLevel(obj, args)))
+            obj.addListener { childProp: KProperty<*>, old: T, new: T, levels: LevelInformation ->
+                changed(childProp, old, new, levels.append(this, old, new, parentProperty))
             }
         }
     }
 
     fun <T : Any?> observable(initialValue: T) : ReadWriteProperty<Any?, T>{
 
-        hookToObservable(initialValue)
+        hookToObservable(initialValue, null) //Is null atm, because there is technically no real way of getting the correct Property. But this should only be a outside api issue
 
         return object : ObservableProperty<T>(initialValue) {
             override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T){
-                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable))))
+                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable, oldValue, newValue, property))))
             }
         }
     }
 
-    fun <S> observableList(vararg initialValues: S) : ReadWriteProperty<Any?, ObservableArrayList<S>>{
+    fun <T : Any> lazyObservable() : ReadWriteProperty<Any?, T>{
 
-        val list = observableListOf(*initialValues)
-        hookToObservable(list)
-
-        return object : ObservableProperty<ObservableArrayList<S>>(list) {
-            override fun afterChange(property: KProperty<*>, oldValue: ObservableArrayList<S>, newValue: ObservableArrayList<S>){
-
-                if(newValue !is ObservableArrayList<*>){
-                    if(property is KMutableProperty<*>){
-                        val tranformedlist = ObservableArrayList(newValue)
-                        property.setter.call(this@Observable, tranformedlist)
-                    }else{
-                        throw Exception("Property ${property.name} is not mutable but has by observable")
-                    }
-                } else
-                    changed(property, oldValue, newValue, LevelInformation(emptyList()))
+        return object : LazyObservableProperty<T>() {
+            override fun afterChange(property: KProperty<*>, oldValue: T?, newValue: T){
+                changed(property, oldValue, newValue, LevelInformation(listOf(ObservableLevel(this@Observable, oldValue, newValue, property))))
             }
         }
 
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return if(other is Observable){
+            other.keyValue<Observable>() == keyValue<Observable>()
+        }else {
+            super.equals(other)
+        }
     }
 
 }
@@ -116,4 +110,11 @@ abstract class ObservableRevertableAction<T>(val observable: Observable, val pro
 
     abstract fun executeListeners(prop: KProperty<*>, old_p: T, new_p: T)
 
+}
+
+class GenericChangeObserver <X : Observable> (t : X, val f: (KProperty<*>, LevelInformation) -> Unit) : ChangeObserver<X>(t){
+
+    fun all(prop: KProperty<*>, new: Any?, old: Any?, levels: LevelInformation){
+        f(prop, levels)
+    }
 }

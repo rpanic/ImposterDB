@@ -1,13 +1,12 @@
-package test
+package integration
 
 import com.beust.klaxon.Klaxon
 import com.nhaarman.mockitokotlin2.argumentCaptor
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import db.*
-import example.Person
-import example.Trait
 import json.JsonBackend
+import json.ObservableConverter
 import observable.LevelInformation
 import observable.Observable
 import org.assertj.core.api.Assertions.assertThat
@@ -27,33 +26,31 @@ class ListTest{
     fun exampleTest(){
         val jsonBackend = JsonBackend()
         val file = jsonBackend.baseFile.resolve("exampleTest.json")
+        jsonBackend.baseFile.resolve("children_1toM.json").delete()
         file.delete()
-        DB.primaryBackend = jsonBackend
+        val db = DB()
+        db.addBackend(jsonBackend)
 
-        val obj = DB.getObject("exampleTest") {
-            Person()
+        val obj = db.getDetached("exampleTest", "pk") {
+            OneToManyParent()
         }
 
-        val imposter = PersonObserver(obj)
+        val imposter = OneToManyParentObserver(obj)
 
-        val mock = Mockito.spy(imposter as IPersonObserver)
+        val mock = Mockito.spy(imposter as IOneToManyObserver)
 
         imposter.target(mock)
 
-        val originalTrait = obj.trait
-        val trait = Trait()
+//        val originalTrait = obj.trait
+        val child = Child()
 
-        DB.tx {
+        db.tx {
 
             obj.description = "This is some random stuff"
 
-            obj.trait = trait
-//
-//            obj.trait.value = 10
-//
-//            obj.traits.add(Trait())
-//
-//            obj.traits[0].value = 1337
+            obj.child = child
+
+            child.value = "asd"
 
             obj.name = "John Miller"
 
@@ -65,17 +62,17 @@ class ListTest{
         val new = argumentCaptor<Any>()
         val levelInfo = argumentCaptor<LevelInformation>()
 
-        verify(mock, times(3)).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
+        verify(mock, times(4)).all(property.capture(), old.capture(), new.capture(), levelInfo.capture())
 
         val verifier = QuadrupleVerifier(property.allValues, old.allValues, new.allValues, levelInfo.allValues)
         verifier.apply {
 
-            verify(Person::description, null, "This is some random stuff"){
+            verify(OneToManyParent::description, null, "This is some random stuff"){
                 assertThat(list.size).isEqualTo(1)
                 assertThat(list[0].getObservable()).isEqualTo(obj)
             }
 
-            verify(Person::trait, originalTrait, trait){
+            verify(OneToManyParent::child, null, child){
                 assertThat(list.size).isEqualTo(1)
                 assertThat(list[0].getObservable()).isEqualTo(obj)
             }
@@ -90,8 +87,11 @@ class ListTest{
         val content = file.readText()
         assertThat(content).isNotEmpty() //Remove?
 
-        val controlContent = Klaxon().toJsonString(obj)
-        assertThat(content).isEqualTo(controlContent)
+        val klaxon = Klaxon()
+        klaxon.converter(ObservableConverter(klaxon, hashMapOf()))
+        val jsonObject = klaxon.parseJsonObject(klaxon.toJsonString(obj).reader())
+        jsonObject["child"] = child.keyValue<Child>() as String
+        assertThat(content).isEqualTo("[${jsonObject.toJsonString()}]")
 
     }
 
@@ -99,17 +99,18 @@ class ListTest{
     fun additionTest(){
 
         val jsonBackend = Mockito.mock(JsonBackend::class.java)
-        DB.primaryBackend = jsonBackend
+        val db = DB()
+        db.addBackend(jsonBackend)
 
-        val list = DB.getList<TestObject>("test1")
+        val set = db.getSet<TestObject>("test1")
 
         val obj2 = TestObject()
 
-        list.add(obj2)
+        set.add(obj2)
 
         verify(jsonBackend).keyExists("test1")
 
-        verify(jsonBackend).saveList("test1", TestObject::class, list.collection)
+        verify(jsonBackend).insert("test1", TestObject::class, obj2)
 
     }
 
@@ -122,7 +123,7 @@ class ListTest{
         fun target(mock: M) = init(mock)
     }
 
-    open class PersonObserver(t: Person) : MockableImposter<Person, IPersonObserver>(t), IPersonObserver{
+    open class OneToManyParentObserver(t: OneToManyParent) : MockableImposter<OneToManyParent, IOneToManyObserver>(t), IOneToManyObserver{
 
         override fun name(new: String){
             println("New name: $new!!!!")
@@ -150,27 +151,9 @@ class ListTest{
         }
     }
 
-    interface IPersonObserver{
+    interface IOneToManyObserver{
         fun name(new: String)
         fun all(prop: KProperty<Any?>, new: Any?, old: Any?, levelInformation: LevelInformation)
     }
 
-}
-
-open class X : L{
-    override fun x(x: String){
-        println(x)
-    }
-}
-
-interface L{
-    fun x(x: String)
-}
-
-class TestObject() : Observable(){
-    var testProperty: String by observable("")
-
-    constructor(s: String) : this(){
-        testProperty = s
-    }
 }
