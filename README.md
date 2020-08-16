@@ -1,9 +1,32 @@
 # ImposterDB
 
-ImposterDB is a database which uses a unique concept for abstraction. It combines a classical data layer in the background with the observer pattern to allow the creation of imposter classes which control immediate events connected with the data. This system will get more obvious in the Usage section.
-
 [![Build Status](https://drone.rpanic.com/api/badges/rpanic/ImposterDB/status.svg)](https://drone.rpanic.com/rpanic/ImposterDB)
 [![Release](https://jitpack.io/v/rpanic/ImposterDB.svg)](https://jitpack.io/#rpanic/ImposterDB)
+
+ImposterDB is a database which uses a unique concept for abstraction. It combines a classical data layer in the background with the observer pattern to allow the creation of imposter classes which control immediate events connected with the data. This system will get more obvious in the Usage section.
+
+```kotlin
+val db = DB()
+db += JsonBackend()
+
+val persons = db.getSet<Person>("persons")
+
+persons.add(Person())
+
+persons.find { name == "Peter Sullivan" }
+       .hobbies
+       .forEach { println(it) }
+       
+
+class Person : Observable(){
+    var name: String by observable("")
+    val hobbies by detachedSet<Hobby>("hobbies")
+}
+```
+
+- Creates a new database instance and assigns it a JSON Backend
+- Adds a new `Person` instance to the `person` table
+- Prints out the hobbies of the person named Peter Sullivan
 
 ## Installation
 
@@ -54,14 +77,14 @@ class Person : Observable(){
 
     var description: String? by observable(null)
 
-    var hobbies: MutableList<Hobby> by observableList()
+    var hobbies: VirtualSet<Hobby> by detachedSet("hobbies")
 
 }
 ```
 
 It's your typical class with the only difference being it extending Observable and each variable being a delegated property of `observable`. You can pass the default value of the variable in the parentheses of `observable`. 
 
-If you need collections in your class, you can use `observableList` to make changes to your lists and to objects in that list get passed down to the base object or list. This process can be repeated indefinitely.
+If you need collections in your class, you can use `observableSet` to make changes to your lists and to objects in that list get passed down to the base object or list. This process can be repeated indefinitely.
 
 ### Connections
 
@@ -83,20 +106,22 @@ Custom Backends can be implemented using the `Backend` interface
 
 To get the reference to a set of objects, `DB.getSet(key)` is called.
 ```kotlin
-val list = DB.getList<Person>("persons")
+val set = db.getSet<Person>("persons")
 
 val p = Person()
 
-list.add(p)
+set.add(p)
 
 p.name = "John Miller"
 p.description = "Some text"
 p.hobbies.add(Hobby("Coding"))
 ```
 
+In above example, all changes to the set or `Person` object are synchronized to the backend immediately. 
+
 ### Imposter Pattern
 
-Any changes made to the observable gets outsourced as events to another class, in this case called `PersonObserver`. Every Imposter or Observer is attached to one object and is used to relay the state of an Observable object to another layer or system. 
+Any changes made to the observable get relayed as events to another class, in this case called `PersonObserver`. Every Imposter or Observer is attached to one object and is used to relay the state of an Observable object to another layer or system. 
 
 ```kotlin
 class PersonObserver(t: Person) : ChangeObserver<Person>(t){
@@ -106,7 +131,7 @@ class PersonObserver(t: Person) : ChangeObserver<Person>(t){
     }
 
     fun all(prop: KProperty<Any?>, old: Any?, new: Any?){
-        println("Prop changed $new")
+        println("Property ${prop.name} changed $new")
     }
 
 }
